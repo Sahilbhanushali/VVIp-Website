@@ -1,0 +1,152 @@
+.hero-thumb6-1 {
+    margin-left: -232px;
+    margin-right: 0;
+    @media (max-width: 1700px) {
+        margin-left: -136px;
+    }
+    @include xxl {
+        margin-left: 0;
+    }
+}
+.hero-6 {
+    .property-search-form {
+        right: 0;
+        left: auto;
+        padding-left: 0;
+        .form-control, 
+        .form-select {
+            border: 1px solid $border-color;   
+        }
+    }
+    .hero-thumb6-2 {
+        .play-btn {
+            left: 85px;
+            right: auto;
+            @include sm {
+                left: auto;
+                right: 50%;
+            }
+        }
+        
+    }
+}
+
+.property-card4 {
+    .property-card-thumb {
+        .property-card-tag {
+            right: 16px;
+            left: auto;
+        }
+        .th-btn {
+            left: 24px;
+            right: auto;
+        }
+    }
+}
+
+.team-slider6 {
+    .swiper-slide {
+        opacity: 0 !important;
+        &.swiper-slide-active {
+            opacity: 1 !important;
+        }
+    }
+    .icon-box {
+        position: absolute;
+        left: 50%;
+        bottom: 40px;
+        transform: translate(calc(-50% + 102px), 0);
+        z-index: 1;
+        --icon-size: 64px;
+        gap: 10px;
+        .slider-arrow {
+            background: transparent;
+            border: 1px solid $white-color;
+            &:not(:last-child) {
+                margin-right: 15px;
+            }
+            img {
+                filter: brightness(1) invert(1);
+                width: 24px;
+                height: 24px;
+            }
+            &:hover {
+                background: $white-color;
+                img {
+                    filter: none;
+                }
+            }
+        }
+        @include ml {
+            transform: translate(calc(-50% + 120px), 0);
+        }
+        @include xl {
+            transform: translate(calc(-50% + 170px), 0);
+        }
+        @include md {
+            .slider-arrow img {
+                width: auto;
+                height: auto;
+            }
+        }
+        @include sm {
+            left: auto;
+            right: 0;
+            transform: none;
+            bottom: 0;
+            .slider-arrow {
+                &:not(:last-child) {
+                    margin-right: 10px;
+                }
+            }
+        }
+        @include vxs {
+            display: none;
+        }
+    }
+}
+
+.team-slider6 {
+    .icon-box {
+        right: 50%;
+        left: auto;
+        transform: translate(calc(50% - 102px), 0);
+        .slider-arrow {
+            &:not(:last-child) {
+                margin-left: 15px;
+                margin-right: 0;
+            }
+        }
+        @include ml {
+            transform: translate(calc(50% - 120px), 0);
+        }
+        @include xl {
+            transform: translate(calc(50% - 170px), 0);
+        }
+        @include sm {
+            right: auto;
+            left: 0;
+            .slider-arrow {
+                &:not(:last-child) {
+                    margin-left: 10px;
+                }
+            }
+        }
+    }
+}
+.team-thumb-slider-wrap {
+    direction: ltr;
+}
+
+/* Destination Area 1 ---------------------------------- */
+.destination-wrap1 {
+    left: auto;
+    right: calc((100% - var(--main-container)) / 2);
+    @include xl {
+        left: 0;
+        padding: 0 40px;
+    }
+    @include xs {
+        padding: 0;
+    }
+}

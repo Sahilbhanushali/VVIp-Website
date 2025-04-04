@@ -1,0 +1,59 @@
+/* Process Card ---------------------------------- */
+.process-card {
+    position: relative;
+    z-index: 2;
+    .box-number {
+        height: 60px;
+        width: 60px;
+        border-radius: 50%;
+        background: $theme-color;
+        border: 6px solid $white-color;
+        color: $white-color;
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 50px;
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translate(0,-50%);
+        z-index: 1;
+        text-align: center;
+        transition: 0.4s;
+    }
+    .box-content {
+        background: $white-color;
+        margin-left: 10px;
+        padding: 27px 51px 27px 54px;
+    }
+    .box-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 3px;
+    }
+    .box-text {
+        font-size: 14px;
+        line-height: 1.5em;
+        margin-bottom: -0.4em;
+    }
+    &:hover {
+        .box-number {
+            background: $theme-color2;
+            color: $theme-color;
+        }
+    }
+    @include ml {
+        .box-title {
+            font-size: 22px;
+        }
+    }
+    @include sm {
+        .box-content {
+            padding: 27px 90px 27px 84px;
+        }
+    }
+    @include xs {
+        .box-content {
+            padding: 27px 50px 27px 64px;
+        }
+    }
+}

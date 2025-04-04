@@ -1,0 +1,6 @@
+.preloader-image {
+  width: 380px; /* Adjust size as needed */
+  height: auto;
+  display: block;
+  margin: 0 auto 10px;
+}

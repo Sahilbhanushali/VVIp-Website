@@ -1,0 +1,37 @@
+/* Counter 1 ---------------------------------- */
+.rent-card {
+    background: $theme-color;
+    border-radius: 16px;
+    text-align: center;
+    padding: 40px;
+    .box-icon {
+        display: inline-block;
+        height: 114px;
+        width: 114px;
+        line-height: 112px;
+        border-radius: 50%;
+        background: rgba($color: #ffffff, $alpha: 0.1);
+        margin-bottom: 38px;
+        img {
+            transition: 0.4s;
+        }
+    }
+    .box-title {
+        font-weight: 500;
+        margin-bottom: 8px;
+        a {
+            color: $white-color;
+        }
+    }
+    .box-text {
+        color: $light-color;
+        margin-bottom: 32px;
+    }
+    &:hover {
+        .box-icon {
+            img {
+                transform: rotateY(180deg);
+            }
+        }
+    }
+}

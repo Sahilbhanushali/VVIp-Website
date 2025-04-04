@@ -1,0 +1,169 @@
+/* Home 10 ---------------------------------- */
+.hero-slider10 {
+    @include lg {
+        .slider-banner-dots {
+            .single-banner-dot-wrap1-2 {
+                left: 15% !important;
+            }
+            .single-banner-dot-wrap2-2 {
+                left: 15% !important;
+            }
+        }
+    }
+}
+.hero-10 {
+    .hero-bottom-wrap {
+        .hero-thumb-content {
+            margin-right: -220px;
+            margin-left: 0;
+            p {
+                padding: 64px 275px 64px 176px;
+            }
+        }
+        .about-tag {
+            right: auto;
+            left: 0;
+            transform: translate(-50%, -50%);   
+        }
+        @include xxl {
+            .hero-thumb-content {
+                p {
+                    padding: 64px 260px 64px 220px;
+                }
+            }
+            .about-tag {
+                transform: translate(0%, -50%);
+                left: 35px;
+                right: auto;
+            }
+        }
+        @include lg {
+            .hero-thumb-content {
+                margin-right: 0;
+                padding: 20px;
+                p {
+                    padding-right: 15px;
+                }
+            }
+        }
+        @include sm {
+            .hero-thumb-content {
+                padding: 0;
+                p {
+                    padding: 30px 30px 220px 30px;
+                }
+            }
+            .about-tag {
+                transform: translate(50%, 0);
+                right: 50%;
+                bottom: 30px;
+                top: auto;
+            }
+        }
+        @include xs {
+            .hero-slider-thumb-wrap .slider-arrow {
+                --pos-x: 40px;
+            }
+            .hero-grid-thumb {
+                padding: 11px 5px;
+                .swiper-slide {
+                    filter: blur(2px);
+                    &.swiper-slide-active {
+                        filter: none;
+                    }
+                }
+            }
+        }
+        @include vxs {
+            .hero-slider-thumb-wrap .slider-arrow {
+                --pos-x: 32px;
+            }
+            .hero-grid-thumb .box-img .thumb-slider-title {
+                font-size: 14px;
+            }
+        }
+        @media (max-width: 320px) {
+            .hero-grid-thumb .box-img .thumb-slider-title {
+                font-size: 12px;
+            }
+            .hero-grid-thumb {
+                .swiper-slide {
+                    &.swiper-slide-active {
+                        transform: scale(1.2);
+                    }
+                }
+            }
+            .hero-slider-thumb-wrap .slider-arrow {
+                --pos-x: 25px;
+            }
+        }
+    }
+}
+/*why area 2**************/
+.why-img-box2 {
+    border-radius: 0 0 0 50px;
+    margin-right: -315px;
+    margin-left: 0;
+    @include xxl {
+        margin-right: -200px;
+    }
+    @include ml {
+        margin-right: 0;
+        border-radius: 20px;
+    }
+}
+.why-feature-list {
+    .why-feature-list-wrap {
+        &:after {
+            right: 20px;
+            left: auto;
+        }
+    }
+}
+
+/* Property Area 7 ---------------------------------- */
+.property-card7 {
+    .property-card-meta {
+        span {
+            border-left: 1px solid rgba($color: #ffffff, $alpha: 0.2);
+            padding-left: 26px;
+            margin-left: 26px;
+            border-right: 0;
+            padding-right: 0;
+            margin-right: 0;
+            @include xxl {
+                padding-left: 34px;
+                margin-left: 33px;
+            }
+            @include ml {
+                padding-left: 28px;
+                margin-left: 27px;
+            }
+            @include xl {
+                border-left: 0;
+                padding-left: 0;
+                margin-left: 20px;
+            }
+            &:last-child {
+                border-left: 0;
+                padding-left: 0;
+                margin-left: 0;
+            }
+        }
+    }
+}
+
+/* Testimonial area 7 -------------------------------*/
+.testi-thumb-wrap7 {
+    margin: -120px -162px 0 -315px;
+    border-radius: 0 50px 50px 0;
+    @include hd {
+        border-radius: 50px;
+    }
+    @include lg {
+        margin: 0;
+    }
+    @include sm {
+        border-radius: 30px;
+    }
+}

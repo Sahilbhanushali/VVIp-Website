@@ -1,0 +1,159 @@
+.hero-thumb4-1 {
+    left: 0;
+    right: auto;
+}
+.hero-style4 {
+    .property-search-form {
+        padding-left: 0;
+        padding-right: 48px;
+        .form-group {
+            margin-right: 0;
+        }
+        .th-btn {
+            margin-right: 72px;
+            margin-left: 0;
+        }
+        @include lg {
+            padding-right: 0;
+            .form-group {
+                margin-right: 40px;
+            }
+            .th-btn {
+                margin: 30px 40px 40px;
+            }
+        }
+    }
+}
+/*home4 directorist-form*******************/
+.hero-style4 {
+    .search-form2 {
+        .directorist-search-contents .directorist-search-form-top .directorist-search-field {
+            i {
+                right: 0;
+            }
+        }
+        .directorist-search-form-wrap.directorist-with-search-border .directorist-search-form-top {
+            @include ml {
+                margin-right: 50px;
+                margin-left: 0;
+            }
+            @include xl {
+                margin-right: 30px;
+                .directorist-search-form-action {
+                    margin-left: auto;
+                    margin-right: 0;
+                }
+            }
+            @include lg {
+                margin-left: 30px;
+            }
+        }
+        .select2-container .directorist-select2-addons-area .directorist-select2-dropdown-toggle {
+            left: -10px;
+            right: auto;
+        }
+        .directorist-btn.directorist-btn-lg.directorist-btn-dark.directorist-btn-search.th-btn {
+            margin-right: 20px;
+            margin-left: 0;
+            i {
+                margin-left: 0;
+            }
+            @include xs {
+                margin-right: 0;
+            }
+        }
+        .select2.select2-container .select2-selection--single .select2-selection__rendered {
+            @include md {
+                padding-right: 0;
+            }
+        }
+        .directorist-search-contents .directorist-search-form-top .directorist-search-field:not(:first-child) {
+            border-right: 1px solid $theme-color;
+            border-left: 0;
+            padding-right: 20px;
+            padding-left: 0;
+            margin-right: 15px;
+            margin-left: 0;
+            @include md {
+                border-right: 0;
+                padding-right: 0;
+                margin-right: 0;
+            }
+        }
+    }
+}
+
+/* Property Area 3-------------------------------*/
+.property-card3 {
+    .property-card-meta {
+        span {
+            border-left: 1px solid rgba($color: #1C2D37, $alpha: 0.2);
+            padding-left: 35px;
+            margin-left: 35px;
+            border-right: 0;
+            padding-right: 0;
+            margin-right: 0;
+            @include xxl {
+                padding-left: 34px;
+                margin-left: 33px;
+            }
+            @include ml {
+                padding-left: 28px;
+                margin-left: 27px;
+            }
+            @include xl {
+                border-left: 0;
+                padding-left: 0;
+                margin-left: 20px;
+            }
+            &:last-child {
+                border-left: 0;
+                padding-left: 0;
+                margin-left: 0;
+            }
+        }
+        @include md {
+            span {
+                margin: 0;
+            }
+        }
+    }
+}
+
+/* About 5 ---------------------------------- */
+.img-box5 {
+    padding-left: 30px;
+    padding-right: 0;
+    .client-group-wrap {
+        left: -150px;
+        right: auto;
+        @include xxl {
+            left: -20px;
+        }
+        @include sm {
+            left: 0;
+        }
+    }
+    @include xs {
+        padding-left: 0;
+    }
+}
+
+/* Portfolio Area 4-------------------------------*/
+.portfolio-card.style4 {
+    .property-card-meta {
+        span {
+            &:after {
+                left: -32px;
+                right: auto;
+            }
+        }
+    }
+}
+
+.testi-slider4 {
+    margin: 0 0 0 -750px;
+    @include xxl {
+        margin: 0;
+    }
+}

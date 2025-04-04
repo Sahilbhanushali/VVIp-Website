@@ -1,0 +1,76 @@
+/* Why Choose Us Area ---------------------------------- */
+.why-img-box2 {
+    border-radius: 0 0 50px 0;
+    overflow: hidden;
+    margin-left: -315px;
+    margin-top: -120px;
+    img {
+        width: 100%;
+    }
+    @include xxl {
+        margin-left: -200px;
+    }
+    @include ml {
+        margin-left: 0;
+        margin-top: 0;
+        border-radius: 20px;
+    }
+}
+.why-feature-list {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0 40px;
+    padding-top: 40px;
+    .why-feature-list-wrap {
+        display: flex;
+        gap: 30px;
+        position: relative;
+        padding-bottom: 40px;
+        &:after {
+            content: '';
+            position: absolute;
+            width: 1px;
+            height: calc(100% + 40px);
+            background: $border-color;
+            left: 20px;
+            z-index: -1;
+            bottom: 0;
+        }
+        .number {
+            flex: none;
+            font-size: 18px;
+            font-weight: 500;
+            color: $theme-color;
+            box-shadow: 0px 0px 20px 10px rgba(190, 190, 190, 0.17);
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            border-radius: 50%;
+            display: inline-block;
+            text-align: center;
+            background: $white-color;
+        }
+        .feature-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-top: 4px;
+            color: $theme-color;
+            border-bottom: 1px solid $border-color;
+            padding-bottom: 22px;
+            margin-bottom: 21px;
+        }
+        .feature-text {
+            margin-bottom: -0.5em;
+            color: $theme-color;
+        }
+    }
+    @include sm {
+        grid-template-columns: repeat(1, 1fr);
+        .why-feature-list-wrap {
+            gap: 20px;
+        }
+    }
+}

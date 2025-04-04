@@ -1,0 +1,197 @@
+/* Hero 2 ---------------------------------- */
+.hero-2 {    
+    .about-tag {
+        left: 62px;
+        right: auto;
+        
+        @include lg {
+            right: 50%;
+            left: auto;
+            transform: translate(50%, 0);
+        }
+    }
+}
+
+@include lg {
+    .hero-style2 {
+        .about-tag {
+            margin-right: 0;
+            margin-left: 0;
+        }
+    }
+}
+
+/* About 2 ---------------------------------- */
+.about-wrap2 {
+    margin-left: -20px;
+    margin-right: 0;
+    .checklist {
+        padding-left: 40px;
+        padding-right: 0;
+        border-left: 1px solid #C2D6C2;
+        border-right: 0;
+        margin-left: 40px;
+        margin-right: 0;
+    }
+    @include xl {
+        .checklist {
+            padding-left: 30px;
+            margin-left: 30px;
+        }
+    }
+    @include md {
+        .checklist {
+            padding-left: 40px;
+            margin-left: 40px;
+        }
+    }
+    @include xs {
+        .checklist {
+            padding-left: 0;
+            margin-left: 0;
+            border-left: 0;
+        }
+    }
+}
+.img-box2 {
+    .about-tag {
+        @include md {
+            .about-experience-tag {
+                margin-right: -110px;
+            }
+        }
+        @include xs {
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    }
+    .slider-area {
+        margin-right: 105px;
+        margin-left: -230px;
+        .slider-arrow.slider-next {
+            left: var(--pos-x, -120px);
+            right: auto;
+        }
+    }
+    .about-thumb-slider {
+        margin-right: -938px;
+        margin-left: 0;
+        transform: translate(-331px, 0);
+    }
+    @include xxl {
+        .slider-area {
+            margin-left: 0;
+        }
+        .about-thumb-slider {
+            margin-right: -877px;
+            transform: translate(-366px, 0);
+        }
+    }
+    @include ml {
+        .about-thumb-slider {
+            margin-right: -871px;
+            transform: translate(-370px, 0);
+        }
+    }
+    @include xl {
+        .about-thumb-slider {
+            margin-right: -853px;
+            transform: translate(-383px, 0);
+        }
+    }
+    @include lg {
+        .about-thumb-slider {
+            margin-right: -930px;
+            transform: translate(-336px, 0);
+        }
+    }
+    @include md {
+        .slider-area {
+            margin-right: 0;
+        }
+        .about-thumb-slider {
+            margin-right: 0;
+            transform: none;
+        }
+    }
+}
+
+/* Testimonial Area 2 ---------------------------------- */
+.testi-wrap2 {
+    left: auto;
+    right: calc((100% - var(--main-container)) / 2);
+    @include xl {
+        right: 0;
+        padding: 0 40px;
+    }
+    @include xs {
+        padding: 0;
+    }
+}
+.testi-card.style2 {
+    margin-right: -306px;
+    margin-left: 0;
+    @include xxl {
+        margin-right: -506px;
+    }
+    @include ml {
+        margin-right: -406px;
+    }
+    @include xl {
+        margin-right: -300px;
+    }
+    @include md {
+        margin-right: 0;
+    }
+}
+
+/* Contact ---------------------------------- */ 
+.location-map {
+    .location-map-address {
+        left: 95px;
+        right: auto;
+        @include vxs {
+            left: 15px;
+        }
+    }
+}
+
+/* Contact Area 1---------------------------------- */ 
+.contact-sec-map {
+    left: 0;
+    right: auto;
+    .location-map-address {
+        left: 15%;
+    }
+}
+
+.property-card2 {
+    .property-card-meta {
+        span {
+            border-left: 1px solid rgba($color: #1C2D37, $alpha: 0.2);
+            padding-left: 25px;
+            margin-left: 25px;
+            border-right: 0;
+            padding-right: 0;
+            margin-right: 0;
+            @include xxl {
+                padding-left: 34px;
+                margin-left: 33px;
+            }
+            @include ml {
+                padding-left: 27px;
+                margin-left: 27px;
+            }
+            @include xl {
+                border-left: 0;
+                padding-left: 0;
+                margin-left: 20px;
+            }
+            &:last-child {
+                border-left: 0;
+                padding-left: 0;
+                margin-left: 0;
+            }
+        }
+    }
+}

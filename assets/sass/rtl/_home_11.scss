@@ -1,0 +1,61 @@
+/* Home 11 ---------------------------------- */
+/* Project Area 5 ---------------------------------- */
+.project-slider5 {
+    margin-left: -492px;
+    margin-right: -90px;
+    .th-slider {
+        padding-right: 90px;
+        padding-left: 0;
+        &:after {
+            right: 0px;
+            left: auto;
+        }
+    }
+    @include hd {
+        margin-right: 0;
+        .th-slider {
+            padding-right: 0;
+        }
+    }
+    @include xxl {
+        margin-left: 0;
+    }
+    .slider-pagination-progressbar2 {
+        right: 8px;
+        left: auto;
+    }
+    .slider-pagination2 {
+        right: 0px;
+        left: auto;
+    }
+}
+
+/*testimonial 6*****************/
+.testi-card.style6 {
+    margin-left: 0;
+} 
+
+/*contact area 6*****************/
+.contact-thumb6-1 {
+    left: auto;
+    right: 0;
+}
+.contact-wrap6 {
+    padding-right: 90px;
+    padding-left: 0;
+    margin-left: -120px;
+    margin-right: 0;
+    @include xxl {
+        margin-left: 0;
+        padding-right: 50px;
+    }
+    @include ml {
+        padding-right: 20px;
+    }
+    @include xl {
+        padding-right: 30px;
+    }
+    @include md {
+        padding-right: 0;
+    }
+}

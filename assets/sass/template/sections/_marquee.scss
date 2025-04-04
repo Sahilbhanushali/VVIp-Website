@@ -1,0 +1,47 @@
+/* Marquee Area ---------------------------------- */
+.marquee-slider1 {
+    margin: 0 -50px;
+    .swiper-wrapper {
+        transition-timing-function: linear;
+    }
+    .swiper-slide {
+        width: auto;
+    }
+}
+.marquee-card{
+    margin-bottom: 0;
+    padding: 51px 0 46px;
+    display: inline-block;
+    a {
+        font-size: 54px;
+        font-weight: 600;
+        font-family: $title-font;
+        color: $theme-color;
+        letter-spacing: 0.02em;
+        display: inline-flex;
+        line-height: 1;
+        text-transform: uppercase;
+        gap: 30px;
+    }
+    @include lg {
+        padding: 35px 0 30px;
+        a {
+            font-size: 46px;
+        }
+    }
+    @include sm {
+        padding: 40px 0 25px;
+        a {
+            font-size: 36px;
+        }
+    }
+    @include xs {
+        padding: 30px 0 20px;
+        a {
+            font-size: 24px;
+            img {
+                width: 24px;
+            }
+        }
+    }
+}

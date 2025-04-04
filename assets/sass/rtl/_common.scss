@@ -1,0 +1,55 @@
+.link-btn:before {
+    left: auto;
+    right: 0;
+}
+.th-btn,
+.link-btn {
+    i.fa-arrow-up-right {
+        transform: rotateY(180deg);
+    }
+    &:hover,
+    &:active {
+        i.fa-arrow-up-right {
+            transform: rotate(-45deg) rotateY(180deg);
+        }
+    }
+}
+
+select, .form-control, .form-select, textarea, input {
+    direction: ltr;
+}
+.checklist ul {
+    padding: 0;
+    text-align: right;
+}
+.th-menu-wrapper {
+    direction: ltr;
+}
+.sidemenu-wrapper .closeButton {
+    left: 20px;
+    right: auto;
+}
+.preloader {
+    direction: ltr;
+}
+
+.th-btn.th-btn-icon:after {
+    transform: rotateY(180deg);
+}
+.rtl-thumb {
+    transform: rotateY(180deg);
+}
+.icon-box .slider-arrow:not(:last-child) {
+    margin-left: 8px;
+    margin-right: 0;
+}
+
+.sub-title:before,
+.sub-title:after {
+    left: auto;
+    right: 0;
+}
+.title-area.text-center .sub-title:before, .title-area.text-center .sub-title:after {
+    right: auto;
+}
+

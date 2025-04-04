@@ -1,0 +1,122 @@
+/* Hero 3 ---------------------------------- */
+.property-search-form {
+    padding-left: 40px;
+    padding-right: 0;
+    .form-group {
+        margin-right: 130px;
+        margin-left: 0;
+        > i {
+            right: 0;
+            left: auto;  
+        }
+    }
+    .form-select {
+        border-right: 1px solid $theme-color;
+        border-left: 0;
+    }
+    .th-btn {
+        margin-right: auto;
+        margin-left: 0;
+    }
+    @include xl {
+        .form-group {
+            margin-right: 40px;
+        }
+    }
+    @include lg {
+        padding: 0;
+        .form-group {
+            margin: 20px 40px 0;
+        }
+        input {
+            padding-left: 0;
+        }
+        .form-select {
+            margin: 20px 40px 0;
+            max-width: -webkit-fill-available;
+            border: 0;
+            padding-left: 0;
+            background-position: right 0 center;
+            width: calc(50% - 83px);
+            display: inline-block;
+        }
+        .th-btn {
+            margin: 30px 40px 40px;
+            width: -webkit-fill-available;
+        }
+    }
+}
+.hero-style3 {
+    .property-search-form.directorist-search-form {
+        .directorist-search-form-wrap.directorist-with-search-border .directorist-search-form-top {
+            margin-right: 100px;
+            margin-left: 0;
+            @include ml {
+                margin-right: 50px;
+            }
+            @include xl {
+                margin-right: 30px;
+                .directorist-search-form-action {
+                    margin-left: auto;
+                }
+            }
+            @include lg {
+                margin-left: 30px;
+            }
+        }
+        .select2-container .directorist-select2-addons-area .directorist-select2-dropdown-toggle {
+            left: -10px;
+            right: auto;
+        }
+        .directorist-btn.directorist-btn-lg.directorist-btn-dark.directorist-btn-search.th-btn {
+            margin-right: 20px;
+            margin-left: 0;
+            i {
+                margin-left: 0;
+            }
+            @include xs {
+                margin-right: 0;
+            }
+        }
+        .select2.select2-container .select2-selection--single .select2-selection__rendered {
+            padding: 0 20px;
+            @include md {
+                padding-right: 0;
+            }
+        }
+    }
+    .directorist-search-contents .directorist-search-form-top .directorist-search-field:not(:last-child) {
+        border-left: 1px solid $theme-color;
+        border-right: 0;
+        padding-left: 20px;
+        padding-right: 0;
+        @include md {
+            border-left: 0;
+            padding-left: 0;
+        }
+    }
+}
+
+/* Testimonial Area 3 ---------------------------------- */
+.testi-slider3 {
+    .swiper-wrapper {
+        margin: 0 -350px 0 0;
+    }
+    @include xxl {
+        .swiper-wrapper {
+            margin: 0 -315px 0 0;
+        }
+    }
+    @include ml {
+        .swiper-wrapper {
+            margin: 0;
+        }
+    }
+}
+.testi-card.style3 {
+    margin-left: 0;
+    .testi-card_profile .quote-icon {
+        left: 0;
+        right: auto;
+    }
+}

@@ -1,0 +1,156 @@
+/* Home 9 ---------------------------------- */
+.hero-thumb9-1 {
+    margin-left: -272px;
+    margin-right: 0;
+    @include xxl {
+        margin-left: 0px;
+    }
+}
+.hero-style9 {
+    .property-search-form {
+        padding: 0 80px 0 0;
+        margin-left: -433px;
+        margin-right: 0;
+        select, 
+        .form-control, 
+        .form-select, 
+        textarea, 
+        input {
+            direction: rtl;
+        }
+        .form-select, select {
+            background-position: left 26px center;
+        }
+        .form-group {
+            margin-right: 0;
+            border-right: 1px solid $theme-color;
+            border-left: 0;
+            input {
+                padding-right: 25px;
+            }
+            &:first-child {
+                border-right: 0;
+            }
+        }
+        .btn-wrap {
+            margin-right: auto;
+            margin-left: 0;
+        }
+    }
+    @include xxl {
+        .property-search-form {
+            margin-left: 0px;
+            padding: 30px;
+            .form-group {
+                border: 0;
+                padding-right: 0;
+                &:has(i) input {
+                    padding-right: 25px;
+                    padding-left: 0;
+                }
+                input {
+                    padding-right: 0;
+                }
+            }
+            .form-select {
+                border: 0;
+                padding-right: 0;
+            }
+            .btn-wrap {
+                .th-btn {
+                    margin-right: 0;
+                }
+            }
+        }
+    }
+    @include lg {
+        padding: 80px 0 0;
+        .property-search-form {
+            padding: 40px 22px;
+            .form-group {
+                margin: 20px 8px 0;
+                &:first-child {
+                    margin-top: 0;
+                }
+                input {
+                    border: 1px solid $theme-color;
+                    padding-right: 20px;
+                }
+                &:has(i) {
+                    i {
+                        right: 20px;
+                    }
+                    input {
+                        padding-right: 50px;
+                    }
+                }
+            }
+            .form-select {
+                margin: 20px 8px 0;
+                border: 1px solid $theme-color;
+                padding: 0 25px;
+                width: -webkit-fill-available;
+                background-position: left 22px center;
+            }
+            .btn-wrap {
+                .th-btn {
+                    margin: 25px 8px 0;
+                }
+            }
+        }
+    }
+    @include xs {
+        padding: 60px 0 0;
+    }
+    @include vxs {
+        .property-search-form {
+            .form-group {
+                width: -webkit-fill-available;
+            }
+        }
+    }
+}
+
+/* Property Area 6-------------------------------*/
+.property-card6 {
+    .property-card-meta {
+        span {
+            border-left: 1px solid rgba($color: #1C2D37, $alpha: 0.2);
+            padding-left: 35px;
+            margin-left: 35px;
+            border-right: 0;
+            padding-right: 0;
+            margin-right: 0;
+            @include xxl {
+                padding-left: 34px;
+                margin-left: 33px;
+            }
+            @include ml {
+                padding-left: 28px;
+                margin-left: 27px;
+            }
+            @include xl {
+                border-left: 0;
+                padding-left: 0;
+                margin-left: 20px;
+            }
+            &:last-child {
+                border-left: 0;
+                padding-left: 0;
+                margin-left: 0;
+            }
+        }
+        @include md {
+            span {
+                margin: 0;
+            }
+        }
+    }
+}
+
+/* Testimonial Area 6 -------------------------------*/
+.testi-slider6 {
+    .swiper-pagination-bullets .swiper-pagination-bullet:first-child {
+        margin-right: 0;
+    }
+}
