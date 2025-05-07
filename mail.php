@@ -71,7 +71,7 @@ try {
     $mail->isSMTP();
     $mail->Host = 'mail.smtp2go.com';
     $mail->SMTPAuth = true;
-    $mail->Username = 'info@itsmedezino.com'; // Your SMTP2Go username
+    $mail->Username = 'vapisvip'; // Your SMTP2Go username
     $mail->Password = 'Givemeredp0wer@123'; // Your SMTP2Go password
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port = 587;
