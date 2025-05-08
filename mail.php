@@ -80,7 +80,7 @@ try {
 
     // Recipients with additional headers
     $mail->setFrom('mail@vapisvip.com', 'Website Contact Form');
-    $mail->addAddress('neovistaconnect@gmail.com', 'Vapisvip');
+    $mail->addAddress('mail@vapisvip.com', 'Vapisvip');
     $mail->addReplyTo($email, $name);
     $mail->addCustomHeader('X-Mailer', 'PHPMailer');
     $mail->addCustomHeader('X-Originating-IP', $_SERVER['REMOTE_ADDR']);

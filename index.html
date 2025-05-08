@@ -21,7 +21,7 @@
     />
     <meta name="robots" content="index, follow" />
     <meta name="revisit-after" content="7 days" />
-    <link rel="canonical" href="https://www.yourwebsite.com/" />
+    <link rel="canonical" href="https://vapisvip.com/" />
 
     <!-- Mobile Specific Metas -->
     <meta
@@ -39,10 +39,10 @@
       content="Premium commercial properties in Vapi offering luxury office spaces and business amenities for elite entrepreneurs."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.yourwebsite.com/" />
+    <meta property="og:url" content="https://vapisvip.com/" />
     <meta
       property="og:image"
-      content="https://www.yourwebsite.com/assets/img/logo.png"
+      content="https://vapisvip.com/assets/img/logo.png"
     />
     <meta property="og:site_name" content="VVIP Properties" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -175,8 +175,8 @@
           "addressCountry": "IN"
         },
         "telephone": "+91991370584",
-        "image": "https://www.yourwebsite.com/assets/img/logo.png",
-        "url": "https://www.yourwebsite.com/",
+        "image": "https://vapisvip.com/assets/img/logo.png",
+        "url": "https://vapisvip.com/",
         "openingHours": "Mo-Fr 09:00-18:00"
       }
     </script>
@@ -281,7 +281,10 @@
             width="320"
             height="240"
           >
-            <source src="assets/img/hero/preloader.mp4" type="video/mp4" />
+            <source
+              src="https://res.cloudinary.com/cheemscoder/video/upload/v1746695201/preloader_odfjnz.mp4"
+              type="video/mp4"
+            />
             Your browser does not support the video tag.
           </video>
         </div>
@@ -378,7 +381,7 @@
         </div>
         <div class="widget newsletter-widget">
           <h3 class="widget_title">Subscribe Now</h3>
-          <form class="newsletter-form">
+          <!-- <form class="newsletter-form">
             <div class="form-group">
               <input
                 class="form-control"
@@ -390,7 +393,7 @@
                 <i class="far fa-paper-plane text-theme"></i>
               </button>
             </div>
-          </form>
+          </form> -->
           <div class="th-social style2">
             <a href="https://www.facebook.com/"
               ><i class="fab fa-facebook-f"></i
@@ -492,7 +495,7 @@ Hero Area
             >
               <div
                 class="th-hero-bg"
-                data-bg-src="assets/img/hero/hero_bg_1.jpg"
+                data-bg-src="https://res.cloudinary.com/cheemscoder/image/upload/v1746695156/hero_bg_1_hbwzur.jpg"
               ></div>
               <div class="hero-big-text">VVIP</div>
               <div class="container">
@@ -553,7 +556,7 @@ Hero Area
             >
               <div
                 class="th-hero-bg"
-                data-bg-src="assets/img/hero/hero_bg_2.jpg"
+                data-bg-src="https://res.cloudinary.com/cheemscoder/image/upload/v1746695167/hero_bg_2_jmhc6f.jpg"
               ></div>
               <div class="hero-big-text">VVIP</div>
               <div class="container">
@@ -1487,8 +1490,8 @@ Video Area
               </p>
             </div>
             <div class="btn-wrap mb-55">
-              <a href="property.html" class="th-btn style2 btn-mask th-btn-icon"
-                >Reques A Visit</a
+              <a href="#contact-sec" class="th-btn style2 btn-mask th-btn-icon"
+                >Request A Visit</a
               >
             </div>
             <div class="author-grid">
@@ -1808,7 +1811,7 @@ Contact Area
                 </div>
               </div>
               <div class="col-md-6 col-xl-auto">
-                <div class="widget widget_nav_menu footer-widget">
+                <!-- <div class="widget widget_nav_menu footer-widget">
                   <h3 class="widget_title">Useful Link</h3>
                   <div class="menu-all-pages-container">
                     <ul class="menu">
@@ -1819,7 +1822,7 @@ Contact Area
                       <li><a href="#">FAQ</a></li>
                     </ul>
                   </div>
-                </div>
+                </div> -->
               </div>
               <div class="col-md-6 col-xl-auto">
                 <div class="widget widget_nav_menu footer-widget">
@@ -1827,11 +1830,10 @@ Contact Area
                   <div class="menu-all-pages-container">
                     <div class="menu-all-pages-container">
                       <ul class="menu">
-                        <li><a href="#">All Properties</a></li>
-                        <li><a href="#">Our Agents</a></li>
-                        <li><a href="#">All Projects</a></li>
-                        <li><a href="#">Our Process</a></li>
-                        <li><a href="#">Neighborhood</a></li>
+                        <li><a href="#about-sec">About Us</a></li>
+                        <li><a href="#property-sec">Properties</a></li>
+                        <li><a href="#team-sec">Agents</a></li>
+                        <li><a href="#contact-sec">Contact Us</a></li>
                       </ul>
                     </div>
                   </div>
@@ -1841,7 +1843,7 @@ Contact Area
                 <h5 class="newsletter-title">
                   Newsletter To Get Updated The Latest News
                 </h5>
-                <form action="#" class="newsletter-form">
+                <!-- <form action="#" class="newsletter-form">
                   <div class="form-group">
                     <input
                       type="text"
@@ -1855,12 +1857,12 @@ Contact Area
                       ><img src="assets/img/icon/paper-plane.svg" alt="img"
                     /></span>
                   </button>
-                </form>
+                </form> -->
               </div>
             </div>
           </div>
 
-          <div class="copyright-wrap">
+          <div class="copyright-wrap" style="margin-top: 30px">
             <div class="container">
               <div class="row gy-2 align-items-center">
                 <div class="col-lg-6">
@@ -1968,7 +1970,7 @@ Contact Area
         // Reset the 60-second timer
         function resetModalTimer() {
           clearTimeout(modalTimer);
-          modalTimer = setTimeout(showModal, 50000); // 60 seconds
+          modalTimer = setTimeout(showModal, 60000); // 60 seconds
         }
 
         // Event listeners
