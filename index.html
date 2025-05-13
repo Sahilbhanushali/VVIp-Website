@@ -42,7 +42,7 @@
     <meta property="og:url" content="https://vapisvip.com/" />
     <meta
       property="og:image"
-      content="https://vapisvip.com/assets/img/logo.png"
+      content="https://vapisvip.com/assets/img/VVIP logo-01.png"
     />
     <meta property="og:site_name" content="VVIP Properties" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -84,6 +84,8 @@
     />
     <meta name="msapplication-TileColor" content="#da532c" />
     <meta name="theme-color" content="#ffffff" />
+    <meta http-equiv="Cache-Control" content="max-age=31536000, public" />
+    <meta http-equiv="Expires" content="31536000" />
 
     <!-- Google Fonts with preload -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -175,7 +177,7 @@
           "addressCountry": "IN"
         },
         "telephone": "+91991370584",
-        "image": "https://vapisvip.com/assets/img/logo.png",
+        "image": "https://vapisvip.com/assets/img/VVIP logo-01.png",
         "url": "https://vapisvip.com/",
         "openingHours": "Mo-Fr 09:00-18:00"
       }
@@ -272,6 +274,7 @@
     <div id="preloader" class="preloader">
       <div id="loader" class="th-preloader">
         <div class="animation-preloader">
+          <!-- Optimize preloader video -->
           <video
             autoplay
             muted
@@ -280,12 +283,10 @@
             id="preloader-video"
             width="320"
             height="240"
+            preload="auto"
+            poster="assets/img/video-poster.jpg"
           >
-            <source
-              src="https://res.cloudinary.com/cheemscoder/video/upload/v1746695201/preloader_odfjnz.mp4"
-              type="video/mp4"
-            />
-            Your browser does not support the video tag.
+            <source src="assets/img/hero/preloader.mp4" type="video/mp4" />
           </video>
         </div>
       </div>
@@ -299,7 +300,7 @@
         <button class="th-menu-toggle"><i class="fal fa-times"></i></button>
         <div class="mobile-logo">
           <a href="index.html">
-            <img src="assets/img/logo.png" alt="VVIP" />
+            <img src="assets/img/VVIP logo-01.png" alt="VVIP" />
           </a>
         </div>
         <div class="th-mobile-menu">
@@ -332,7 +333,7 @@
           <div class="th-widget-about">
             <div class="about-logo">
               <a href="index.html"
-                ><img src="assets/img/logo.png" alt="VVIP"
+                ><img src="assets/img/VVIP logo-01.png" alt="VVIP"
               /></a>
             </div>
             <p class="about-text">
@@ -363,7 +364,6 @@
                     >+91 991370584</a
                   >
                 </p>
-                <!-- <p><a href="tel:+09876543210" class="info-box_link">+09 876 543 210</a></p> -->
               </div>
             </div>
             <div class="info-box_text">
@@ -374,26 +374,13 @@
                 <p>
                   <a href="mailto:VVIP.com" class="info-box_link">VVIP.com</a>
                 </p>
-                <!-- <p><a href="mailto:support24@realar.com" class="info-box_link">support24@realar.com</a></p> -->
               </div>
             </div>
           </div>
         </div>
         <div class="widget newsletter-widget">
           <h3 class="widget_title">Subscribe Now</h3>
-          <!-- <form class="newsletter-form">
-            <div class="form-group">
-              <input
-                class="form-control"
-                type="email"
-                placeholder="Email Address"
-                required=""
-              />
-              <button type="submit" class="th-btn">
-                <i class="far fa-paper-plane text-theme"></i>
-              </button>
-            </div>
-          </form> -->
+
           <div class="th-social style2">
             <a href="https://www.facebook.com/"
               ><i class="fab fa-facebook-f"></i
@@ -425,9 +412,9 @@
                 <div class="header-logo">
                   <a href="index.html">
                     <img
-                      src="assets/img/logo.png"
+                      src="assets/img/VVIP logo-01.png"
                       alt="VVIP"
-                      style="height: 135px"
+                      style="height: 100px"
                     />
                   </a>
                 </div>
@@ -495,7 +482,7 @@ Hero Area
             >
               <div
                 class="th-hero-bg"
-                data-bg-src="https://res.cloudinary.com/cheemscoder/image/upload/v1746695156/hero_bg_1_hbwzur.jpg"
+                data-bg-src="assets/img/hero/banner_1-01.webp"
               ></div>
               <div class="hero-big-text">VVIP</div>
               <div class="container">
@@ -507,6 +494,7 @@ Hero Area
                           class="title1"
                           data-ani="slideindown"
                           data-ani-delay="0.3s"
+                          style="visibility: hidden"
                         >
                           A Masterpiece of
                         </span>
@@ -514,6 +502,7 @@ Hero Area
                           class="title2"
                           data-ani="slideindown"
                           data-ani-delay="0.4s"
+                          style="visibility: hidden"
                         >
                           Business Luxury
                         </span>
@@ -522,6 +511,7 @@ Hero Area
                         class="hero-text text-white"
                         data-ani="slideinup"
                         data-ani-delay="0.5s"
+                        style="visibility: hidden"
                       >
                         A space where business meets grandeur, where every
                         detail is curated for excellence, and where only the
@@ -529,7 +519,6 @@ Hero Area
                         a statement of prestige, an address of power, and an
                         icon of success
                       </p>
-                      <!-- <a href="property.html" class="th-btn btn-mask th-btn-icon" data-ani="slideinup" data-ani-delay="0.6s">Explore Properties</a> -->
                     </div>
                   </div>
                   <div class="col-lg-4">
@@ -556,7 +545,7 @@ Hero Area
             >
               <div
                 class="th-hero-bg"
-                data-bg-src="https://res.cloudinary.com/cheemscoder/image/upload/v1746695167/hero_bg_2_jmhc6f.jpg"
+                data-bg-src="assets/img/hero/hero_bg_2.jpg"
               ></div>
               <div class="hero-big-text">VVIP</div>
               <div class="container">
@@ -568,16 +557,16 @@ Hero Area
                           class="title1"
                           data-ani="slideindown"
                           data-ani-delay="0.3s"
+                          style="visibility: hidden"
                         >
                           Where Visionaries Belong
                         </span>
-                        <!-- <span class="title2" data-ani="slideindown" data-ani-delay="0.4s">
-                                                Flexible Living  </span> -->
                       </h1>
                       <p
                         class="hero-text text-white"
                         data-ani="slideinup"
                         data-ani-delay="0.5s"
+                        style="visibility: hidden"
                       >
                         Every great empire has an address, and for business
                         leaders, that address is VVIP. Designed for visionaries,
@@ -589,7 +578,6 @@ Hero Area
                         From grand lobbies to concierge services ✔ Exclusive
                         Networking – A league of business magnates
                       </p>
-                      <!-- <a href="property.html" class="th-btn btn-mask th-btn-icon" data-ani="slideinup" data-ani-delay="0.6s">Explore Properties</a> -->
                     </div>
                   </div>
                   <div class="col-lg-4">
@@ -628,6 +616,7 @@ Hero Area
                           class="title1"
                           data-ani="slideindown"
                           data-ani-delay="0.3s"
+                          style="visibility: hidden"
                         >
                           The Pinnacle of
                         </span>
@@ -635,6 +624,7 @@ Hero Area
                           class="title2"
                           data-ani="slideindown"
                           data-ani-delay="0.4s"
+                          style="visibility: hidden"
                         >
                           Business Prestige</span
                         >
@@ -643,6 +633,7 @@ Hero Area
                         class="hero-text text-white"
                         data-ani="slideinup"
                         data-ani-delay="0.5s"
+                        style="visibility: hidden"
                       >
                         More than just a workspace, VVIP offers an environment
                         of opulence, ensuring that every meeting, every deal,
@@ -652,7 +643,6 @@ Hero Area
                         Foyer & Valet Parking Exclusive Lounge & VIP Business
                         Zones
                       </p>
-                      <!-- <a href="property.html" class="th-btn btn-mask th-btn-icon" data-ani="slideinup" data-ani-delay="0.6s">Explore Properties</a> -->
                     </div>
                   </div>
                   <div class="col-lg-4">
@@ -902,12 +892,8 @@ Portfolio Area
               <div class="project-title-wrap1">
                 <div class="title-area mb-40">
                   <span class="shadow-title">PROJECTS</span>
-                  <!-- <h2 class="sec-title text-white">Discover Modern Living At Realar Residence.</h2>
-                                <p class="sec-text text-white mt-15">Residence takes advantage of abundant sunlight by incorporating solar panels into its architecture.</p> -->
                 </div>
-                <div class="btn-wrap">
-                  <!-- <a href="property.html" class="th-btn btn-mask th-btn-icon">Explore More</a> -->
-                </div>
+                <div class="btn-wrap"></div>
               </div>
             </div>
             <div class="col-xl-6">
@@ -1037,9 +1023,7 @@ Property Area
             </div>
           </div>
           <div class="col-auto">
-            <div class="sec-btn">
-              <!-- <a href="property.html" class="th-btn btn-mask th-btn-icon">All Properties</a> -->
-            </div>
+            <div class="sec-btn"></div>
           </div>
         </div>
         <div class="property-card-wrap">
@@ -1737,7 +1721,7 @@ Contact Area
                   <div class="th-widget-about">
                     <div class="about-logo">
                       <a href="index.html"
-                        ><img src="assets/img/logo_2.png" alt="Realar"
+                        ><img src="assets/img/VVIP logo-01.png" alt="Realar"
                       /></a>
                     </div>
                     <p class="about-text">
@@ -1799,7 +1783,6 @@ Contact Area
                         <img src="assets/img/icon/envelope.svg" alt="img" />
                       </div>
                       <div class="details">
-                        <!-- <p><a href="mailto:mailinfo00@realar.com" class="info-box_link">.com</a></p> -->
                         <p>
                           <a href="mailto:VVIP.com" class="info-box_link"
                             >VVIP.com</a
@@ -1810,20 +1793,7 @@ Contact Area
                   </div>
                 </div>
               </div>
-              <div class="col-md-6 col-xl-auto">
-                <!-- <div class="widget widget_nav_menu footer-widget">
-                  <h3 class="widget_title">Useful Link</h3>
-                  <div class="menu-all-pages-container">
-                    <ul class="menu">
-                      <li><a href="#about-sec">About us</a></li>
-                      <li><a href="#">Featured Properties</a></li>
-                      <li><a href="#">Our Best Services</a></li>
-                      <li><a href="#">Request Visit</a></li>
-                      <li><a href="#">FAQ</a></li>
-                    </ul>
-                  </div>
-                </div> -->
-              </div>
+              <div class="col-md-6 col-xl-auto"></div>
               <div class="col-md-6 col-xl-auto">
                 <div class="widget widget_nav_menu footer-widget">
                   <h3 class="widget_title">Explore</h3>
@@ -1843,21 +1813,6 @@ Contact Area
                 <h5 class="newsletter-title">
                   Newsletter To Get Updated The Latest News
                 </h5>
-                <!-- <form action="#" class="newsletter-form">
-                  <div class="form-group">
-                    <input
-                      type="text"
-                      class="form-control"
-                      placeholder="Enter Email"
-                    />
-                  </div>
-                  <button class="th-btn btn-mask">
-                    Subscribe Now
-                    <span class="btn-icon"
-                      ><img src="assets/img/icon/paper-plane.svg" alt="img"
-                    /></span>
-                  </button>
-                </form> -->
               </div>
             </div>
           </div>
@@ -1940,7 +1895,7 @@ Contact Area
     <script src="assets/js/main.js" defer></script>
 
     <!-- Modal Script with SEO considerations -->
-    <script>
+    <!-- <script>
       document.addEventListener("DOMContentLoaded", function () {
         const modal = document.getElementById("contactModal");
         const closeBtn = document.querySelector(".modal-close");
@@ -1991,6 +1946,6 @@ Contact Area
           formSubmitted = true;
         }
       });
-    </script>
+    </script> -->
   </body>
 </html>
