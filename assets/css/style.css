@@ -11959,7 +11959,7 @@ ul.comment-list .th-comment-item:first-child > .th-post-comment {
 .hero-1 .hero-big-text {
   position: absolute;
   bottom: -30px;
-  font-size: 250px;
+  font-size: 15vw;
   font-family: var(--title-font);
   font-weight: 500;
   line-height: 1;
@@ -11974,9 +11974,9 @@ ul.comment-list .th-comment-item:first-child > .th-post-comment {
   /* Extra small devices */
 }
 
-@media (max-width: 1500px) {
+@media (max-width: 1501px) {
   .hero-1 .hero-big-text {
-    font-size: 200px;
+    font-size: 12vw;
   }
 }
 
@@ -12000,7 +12000,7 @@ ul.comment-list .th-comment-item:first-child > .th-post-comment {
 
 @media (max-width: 575px) {
   .hero-1 .hero-big-text {
-    font-size: 80px;
+    font-size: 18vw;
   }
 }
 
