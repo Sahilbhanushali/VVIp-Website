@@ -11928,17 +11928,17 @@ ul.comment-list .th-comment-item:first-child > .th-post-comment {
   height: 100%;
   width: 100%;
 }
-.th-hero-bg {
-  aspect-ratio: 16/9; /* Adjust as needed */
-}
+/* .th-hero-bg {
+  aspect-ratio: 16/9; 
+} */
 
-.th-hero-bg img {
+/* .th-hero-bg img {
   height: 100%;
   width: 100%;
   object-fit: cover;
   object-position: center;
   display: block;
-}
+} */
 
 /* Hero 1 ---------------------------------- */
 .hero-title {
@@ -12015,20 +12015,17 @@ ul.comment-list .th-comment-item:first-child > .th-post-comment {
   }
 }
 
-.hero-1 .hero-slider1 {
+/* .hero-1 .hero-slider1 {
   max-width: 1604px;
   margin: auto;
   -webkit-transform: translate(0, 165px);
       -ms-transform: translate(0, 165px);
           transform: translate(0, 165px);
   margin-top: -165px;
-  height: calc(100vh - 165px); /* Adjust height based on viewport */
+  height: calc(100vh - 165px); 
   min-height: 700px;
-  /* Extra large devices */
-  /* Medium Large devices */
-  /* Medium devices */
-  /* Extra small devices */
-}
+  
+} */
 
 .hero-1 .hero-slider1 .hero-inner {
   -webkit-mask-size: 100% 100%;
@@ -18827,9 +18824,9 @@ span.select2-selection.select2-selection--single:focus {
 
 /*------------------- 4.00. Counter  -------------------*/
 /* Counter 1 ---------------------------------- */
-.counter-area-1 {
+/* .counter-area-1 {
   padding-top: 165px;
-}
+} */
 
 .counter-card {
   text-align: center;
