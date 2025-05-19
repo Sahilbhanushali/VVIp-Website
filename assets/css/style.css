@@ -16341,7 +16341,7 @@ span.select2-selection.select2-selection--single:focus {
 }
 
 .about-contact-grid.style2 .about-contact-details-title {
-  font-size: 20px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--white-color);
 }
@@ -16352,6 +16352,7 @@ span.select2-selection.select2-selection--single:focus {
 
 .about-contact-grid.style2 .about-contact-details-text a {
   color: var(--light-color);
+  font-size: larger;
 }
 
 .about-contact-grid.style2 .about-contact-details-text a:hover {
