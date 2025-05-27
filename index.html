@@ -1,15 +1,13 @@
 <!DOCTYPE html>
-<html
-  class="no-js"
-  lang="en"
-  dir="ltr"
-  itemscope
-  itemtype="https://schema.org/CommercialBuilding"
->
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
     <title>Commercial Real Estate Insights | VVIP Properties Blog</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
     <meta name="author" content="VVIP Properties" />
     <meta
       name="description"
@@ -24,10 +22,6 @@
     <link rel="canonical" href="https://vapisvip.com/" />
 
     <!-- Mobile Specific Metas -->
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no"
-    />
 
     <!-- Social Media Meta Tags -->
     <meta
@@ -86,20 +80,13 @@
     <meta http-equiv="Cache-Control" content="max-age=31536000, public" />
     <meta http-equiv="Expires" content="31536000" />
 
-    <!-- Google Fonts with preload -->
+    <!-- Preconnect and Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      rel="preload"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600&display=swap"
-      as="style"
-      onload="this.onload=null;this.rel='stylesheet'"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
     />
-    <noscript
-      ><link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600&display=swap"
-    /></noscript>
 
     <!-- Non-critical CSS -->
     <link
@@ -153,17 +140,24 @@
         "@type": "CommercialBuilding",
         "name": "VVIP Commercial Properties",
         "description": "Premium commercial properties in Vapi offering luxury office spaces and business amenities",
+        "image": "https://vapisvip.com/assets/img/VVIP logo-01.png",
         "address": {
           "@type": "PostalAddress",
+          "streetAddress": "NeoVista, Nr, Forest Ply & Hardware, 4 Rasta, Silvassa - Vapi Rd",
           "addressLocality": "Vapi",
           "addressRegion": "Gujarat",
           "postalCode": "396191",
           "addressCountry": "IN"
         },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": "20.3687889",
+          "longitude": "72.9167278"
+        },
         "telephone": "+91991370584",
-        "image": "https://vapisvip.com/assets/img/VVIP logo-01.png",
         "url": "https://vapisvip.com/",
-        "openingHours": "Mo-Fr 09:00-18:00"
+        "openingHours": "Mo-Fr 09:00-18:00",
+        "priceRange": "$$$"
       }
     </script>
 
@@ -2422,7 +2416,7 @@ Contact Area
     <script src="assets/js/main.js" defer></script>
 
     <!-- Modal Script with SEO considerations -->
-    <!-- <script>
+    <script>
       document.addEventListener("DOMContentLoaded", function () {
         const modal = document.getElementById("contactModal");
         const closeBtn = document.querySelector(".modal-close");
@@ -2519,6 +2513,6 @@ Contact Area
           });
         }
       });
-    </script> -->
+    </script>
   </body>
 </html>
