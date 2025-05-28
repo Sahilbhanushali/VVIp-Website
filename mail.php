@@ -18,11 +18,6 @@ $response = [
 ];
 
 try {
-    // Validate CSRF token if you have one
-    // if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-    //     throw new Exception('Invalid CSRF token');
-    // }
-
     // Get and sanitize form data with more rigorous filtering
     $name = trim(filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW));
     $email = trim(filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL));
@@ -64,10 +59,10 @@ try {
         exit;
     }
 
-    // Create PHPMailer instance with more configuration options
+    // Create PHPMailer instance
     $mail = new PHPMailer(true);
 
-    // SMTP2Go Configuration with timeout settings
+    // SMTP Configuration
     $mail->isSMTP();
     $mail->Host = 'mail.smtp2go.com';
     $mail->SMTPAuth = true;
@@ -75,66 +70,78 @@ try {
     $mail->Password = 'Givemeredp0wer@123'; // Your SMTP2Go password
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port = 587;
-    $mail->Timeout = 15; // 15 seconds timeout
-    $mail->SMTPDebug = 0; // Set to 2 for debugging
+    $mail->Timeout = 15;
+    $mail->SMTPDebug = 0;
+    
+    // Important anti-spam settings
+    $mail->Priority = 3; // Normal priority
+    $mail->CharSet = 'UTF-8';
+    $mail->Encoding = 'base64';
+    $mail->XMailer = ' '; // Remove X-Mailer header
 
-    // Recipients with additional headers
-    $mail->setFrom('mail@vapisvip.com', 'Website Contact Form');
-    $mail->addAddress('mail@vapisvip.com', 'Vapisvip');
+    // Sender and recipient configuration
+    $mail->setFrom('mail@vapisvip.com', 'Vapisvip Website');
+    $mail->addAddress('mail@vapisvip.com', 'Vapisvip Support');
     $mail->addReplyTo($email, $name);
-    $mail->addCustomHeader('X-Mailer', 'PHPMailer');
+    
+    // Add important headers to prevent spam marking
+    $mail->addCustomHeader('List-Unsubscribe', '<mailto:unsubscribe@vapisvip.com>, <https://vapisvip.com/unsubscribe>');
+    $mail->addCustomHeader('Precedence', 'bulk');
+    $mail->addCustomHeader('X-Auto-Response-Suppress', 'All');
     $mail->addCustomHeader('X-Originating-IP', $_SERVER['REMOTE_ADDR']);
+    $mail->addCustomHeader('MIME-Version', '1.0');
+    $mail->MessageID = '<' . time() . '.' . md5($mail->From . $mail->addAddress) . '@vapisvip.com>';
 
-    // Content with improved HTML structure
+    // Email content
     $mail->isHTML(true);
     $mail->Subject = "New Contact: " . htmlspecialchars($subject) . " - " . htmlspecialchars($name);
     
+    // Improved HTML email template
     $mail->Body = "
         <!DOCTYPE html>
         <html>
         <head>
+            <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">
             <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
                 h2 { color: #2c3e50; }
                 hr { border: 0; height: 1px; background: #ddd; margin: 20px 0; }
                 .footer { font-size: 0.8em; color: #777; }
+                a { color: #3498db; }
             </style>
         </head>
         <body>
-            <div class='container'>
-                <h2>New Contact Form Submission</h2>
-                <p><strong>Name:</strong> " . htmlspecialchars($name) . "</p>
-                <p><strong>Email:</strong> " . htmlspecialchars($email) . "</p>
-                <p><strong>Service Type:</strong> " . htmlspecialchars($subject) . "</p>
-                <p><strong>Message:</strong></p>
-                <p>" . nl2br(htmlspecialchars($message)) . "</p>
-                <hr>
-                <p class='footer'>This message was sent from the website contact form on " . date('Y-m-d H:i:s') . "</p>
+            <h2>New Contact Form Submission</h2>
+            <p><strong>Name:</strong> " . htmlspecialchars($name) . "</p>
+            <p><strong>Email:</strong> <a href=\"mailto:" . htmlspecialchars($email) . "\">" . htmlspecialchars($email) . "</a></p>
+            <p><strong>Subject:</strong> " . htmlspecialchars($subject) . "</p>
+            <p><strong>Message:</strong></p>
+            <p>" . nl2br(htmlspecialchars($message)) . "</p>
+            <hr>
+            <div class=\"footer\">
+                <p>This message was sent from the contact form on " . date('F j, Y \a\t g:i a') . "</p>
+                <p>© " . date('Y') . " Vapisvip. All rights reserved.</p>
+                <p><small><a href=\"https://vapisvip.com/privacy\">Privacy Policy</a> | <a href=\"https://vapisvip.com/unsubscribe\">Unsubscribe</a></small></p>
             </div>
         </body>
         </html>
     ";
 
-    // Plain text version with better formatting
+    // Plain text version
     $mail->AltBody = "NEW CONTACT FORM SUBMISSION\n\n" .
         "Name: " . $name . "\n" .
         "Email: " . $email . "\n" .
-        "Service Type: " . $subject . "\n\n" .
+        "Subject: " . $subject . "\n\n" .
         "Message:\n" . str_repeat("-", 50) . "\n" .
         $message . "\n\n" .
-        "Sent from website contact form on " . date('Y-m-d H:i:s');
-
-    // Additional security headers
-    $mail->addCustomHeader('MIME-Version', '1.0');
-    $mail->addCustomHeader('Content-Transfer-Encoding', '8bit');
-    $mail->addCustomHeader('X-Priority', '3');
-    $mail->addCustomHeader('X-MSMail-Priority', 'Normal');
+        "Sent from website contact form on " . date('F j, Y \a\t g:i a') . "\n" .
+        "© " . date('Y') . " Vapisvip. All rights reserved.\n" .
+        "Privacy Policy: https://vapisvip.com/privacy\n" .
+        "Unsubscribe: https://vapisvip.com/unsubscribe";
 
     if ($mail->send()) {
         $response['success'] = true;
         $response['message'] = 'Thank you! Your message has been sent successfully.';
-        $response['debug']['mailer_info'] = 'Message sent successfully';
     } else {
         throw new Exception('Mailer Error: ' . $mail->ErrorInfo);
     }
@@ -142,17 +149,14 @@ try {
 } catch (Exception $e) {
     $response['message'] = 'There was a problem sending your message. Please try again later.';
     $response['debug']['error'] = $e->getMessage();
-    
-    // Log the error for admin review
     error_log('Mailer Error: ' . $e->getMessage());
     
-    // For security, don't expose full error details in production
     if (strpos($_SERVER['HTTP_HOST'], 'localhost') !== false) {
         $response['debug']['full_error'] = $e->getTraceAsString();
     }
 }
 
-// In production, you might want to remove debug info
+// Remove debug info in production
 if (!in_array($_SERVER['REMOTE_ADDR'], ['127.0.0.1', '::1'])) {
     unset($response['debug']);
 }
