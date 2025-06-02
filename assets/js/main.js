@@ -561,6 +561,8 @@
         dataType: "json", // Expect JSON response
       })
         .done(function (response) {
+          console.log(response);
+
           if (response.success) {
             $(formElement)
               .find(".form-messages")
@@ -575,7 +577,7 @@
               .find(".form-messages")
               .removeClass("success")
               .addClass("error")
-              .html(response.message);
+              .html(response.errors);
           }
         })
         .fail(function (xhr, status, error) {
