@@ -126,6 +126,8 @@ html,
 body {
   scroll-behavior: auto !important;
   overflow-x: hidden;
+  overscroll-behavior: none; 
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
