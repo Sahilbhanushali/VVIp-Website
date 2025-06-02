@@ -216,6 +216,85 @@
         }
       }
     </style>
+    <style>
+      /* Center the loader and make it responsive */
+      .loader-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #1a1a1a;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        transition: opacity 0.5s ease;
+      }
+
+      /* Hide loader when loading is complete */
+      .loader-container.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* Style the key image with reveal effect */
+      .loader-key {
+        width: 250px;
+        height: auto;
+        max-width: 150px;
+        mask-image: linear-gradient(to right, black 50%, transparent 50%);
+        -webkit-mask-image: linear-gradient(
+          to right,
+          black 50%,
+          transparent 50%
+        );
+        animation: reveal 1s infinite ease-in-out;
+      }
+
+      /* Reveal animation */
+      @keyframes reveal {
+        0% {
+          mask-image: linear-gradient(to right, black 0%, transparent 0%);
+          -webkit-mask-image: linear-gradient(
+            to right,
+            black 0%,
+            transparent 0%
+          );
+        }
+        50% {
+          mask-image: linear-gradient(to right, black 50%, transparent 50%);
+          -webkit-mask-image: linear-gradient(
+            to right,
+            black 50%,
+            transparent 50%
+          );
+        }
+        100% {
+          mask-image: linear-gradient(to right, black 100%, transparent 100%);
+          -webkit-mask-image: linear-gradient(
+            to right,
+            black 100%,
+            transparent 100%
+          );
+        }
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .loader-key {
+          width: 80px;
+          max-width: 120px;
+        }
+      }
+
+      /* Sample content styling */
+      .content {
+        padding: 20px;
+        text-align: center;
+        font-family: Arial, sans-serif;
+      }
+    </style>
   </head>
 
   <body class="bg-smoke">
@@ -246,6 +325,10 @@
       }
     </script>
 
+    <!-- loader section -->
+    <div class="loader-container" id="loader">
+      <img src="assets/img/Key.png  " alt="Loading Key" class="loader-key" />
+    </div>
     <!-- Contact Modal -->
     <div id="contactModal" class="modal-overlay">
       <div class="modal-container">
@@ -325,19 +408,6 @@
         </div>
       </div>
     </div>
-
-    <!--********************************
-   		Code Start From Here 
-	******************************** -->
-    <!-- <div class="cursor-follower"></div> -->
-
-    <!-- slider drag cursor -->
-    <!-- <div class="slider-drag-cursor">
-      <i class="fas fa-angle-left me-2"></i> DRAG
-      <i class="fas fa-angle-right ms-2"></i>
-    </div> -->
-
-    <!--==============================Preloader==============================-->
 
     <!--==============================
     Mobile Menu
@@ -612,10 +682,7 @@ About Area
             </div>
           </div>
           <div class="col-lg-auto">
-            <div class="sec-btn">
-              <!-- <a href="about.html" class="th-btn btn-mask th-btn-icon"
-                >Learn More</a -->
-            </div>
+            <div class="sec-btn"></div>
           </div>
         </div>
         <div class="row gy-4">
@@ -645,9 +712,6 @@ About Area
             <div class="col-xl-3 text-xl-end">
               <div class="about-tag">
                 <div class="about-experience-tag"></div>
-                <!-- <div class="about-tag-thumb">
-                  <img src="assets/img/hero/CAM_03_02.jpg" alt="img" />
-                </div> -->
               </div>
             </div>
             <div class="col-xl-9">
@@ -681,12 +745,12 @@ Service Area
             <div class="service-card">
               <div class="service-card-icon">
                 <div class="icon">
-                  <img src="assets/img/icon/service-icon1-1.png" alt="Icon" />
+                  <img src="assets/img/icon/hotel_4312531.png" alt="Icon" />
                 </div>
               </div>
               <div class="box-content">
                 <h3 class="box-title">
-                  <a href="#">Tower - A The Powerhouse of Business </a>
+                  <a href="#">Tower A The Powerhouse of Business </a>
                 </h3>
                 <p class="box-text" style="text-align: justify">
                   From elite lounges and designer offices to curated retail and
@@ -701,12 +765,15 @@ Service Area
             <div class="service-card">
               <div class="service-card-icon">
                 <div class="icon">
-                  <img src="assets/img/icon/service-icon1-2.png" alt="Icon" />
+                  <img
+                    src="assets/img/icon/office-building_10374593.png"
+                    alt="Icon"
+                  />
                 </div>
               </div>
               <div class="box-content">
                 <h3 class="box-title">
-                  <a href="">Tower A's Dedicated Retail Showrooms. </a>
+                  <a href="#">Tower A's Dedicated Retail Showrooms. </a>
                 </h3>
                 <p class="box-text" style="text-align: justify">
                   a curated space where luxury brands meet discerning buyers in
@@ -720,13 +787,13 @@ Service Area
             <div class="service-card">
               <div class="service-card-icon">
                 <div class="icon">
-                  <img src="assets/img/icon/service-icon1-3.png" alt="Icon" />
+                  <img src="assets/img/icon/hotel_5875941.png" alt="Icon" />
                 </div>
               </div>
               <div class="box-content">
                 <h3 class="box-title">
-                  <a href=""
-                    >Tower - B Vapi’s Most Advanced Healthcare & Hospitality Hub
+                  <a href="#"
+                    >Tower B Vapi’s Most Advanced Healthcare & Hospitality Hub
                   </a>
                 </h3>
                 <p class="box-text" style="text-align: justify">
@@ -796,19 +863,10 @@ Portfolio Area
                           class="portfolio-img img-shine"
                           data-mask-src="assets/img/shape/project-card1-img-mask.png"
                         >
-                          <!-- <img
-                            src="assets/img/hero/Cam_08_02.jpg"
-                            alt="project image"
-                          /> -->
                           <div
                             class="portfolio-card-shape"
                             data-mask-src="assets/img/shape/project-card1-img-mask.png"
-                          >
-                            <!-- <img
-                              src="assets/img/hero/Cam_08_02.jpg"
-                              alt="img"
-                            /> -->
-                          </div>
+                          ></div>
                         </div>
                         <div class="portfolio-content"></div>
                       </div>
@@ -820,16 +878,10 @@ Portfolio Area
                           class="portfolio-img img-shine"
                           data-mask-src="assets/img/shape/project-card1-img-mask.png"
                         >
-                          <!-- <img
-                            src="assets/img/hero/Cam_07.jpg"
-                            alt="project image"
-                          /> -->
                           <div
                             class="portfolio-card-shape"
                             data-mask-src="assets/img/shape/project-card1-img-mask.png"
-                          >
-                            <!-- <img src="assets/img/hero/Cam_07.jpg" alt="img" /> -->
-                          </div>
+                          ></div>
                         </div>
                         <div class="portfolio-content"></div>
                       </div>
@@ -841,19 +893,10 @@ Portfolio Area
                           class="portfolio-img img-shine"
                           data-mask-src="assets/img/shape/project-card1-img-mask.png"
                         >
-                          <!-- <img
-                            src="assets/img/hero/Cam_06_02.jpg"
-                            alt="project image"
-                          /> -->
                           <div
                             class="portfolio-card-shape"
                             data-mask-src="assets/img/shape/project-card1-img-mask.png"
-                          >
-                            <!-- <img
-                              src="assets/img/hero/Cam_06_02.jpg"
-                              alt="img"
-                            /> -->
-                          </div>
+                          ></div>
                         </div>
                         <div class="portfolio-content"></div>
                       </div>
@@ -865,19 +908,10 @@ Portfolio Area
                           class="portfolio-img img-shine"
                           data-mask-src="assets/img/shape/project-card1-img-mask.png"
                         >
-                          <!-- <img
-                            src="assets/img/hero/Cam_08_02.jpg"
-                            alt="project image"
-                          /> -->
                           <div
                             class="portfolio-card-shape"
                             data-mask-src="assets/img/shape/project-card1-img-mask.png"
-                          >
-                            <!-- <img
-                              src="assets/img/hero/Cam_08_02.jpg"
-                              alt="img"
-                            /> -->
-                          </div>
+                          ></div>
                         </div>
                         <div class="portfolio-content"></div>
                       </div>
@@ -917,11 +951,7 @@ Property Area
             class="property-thumb img-shine"
             data-mask-src="assets/img/shape/property-card1-img-mask.png"
           >
-            <img
-              src="assets/img/hero/amenites-01.webp"
-              alt="img"
-              style="height: 370px"
-            />
+            <img src="assets/img/hero/amenites-01.webp" alt="img" />
           </div>
           <div class="property-card">
             <div class="property-card-number">01</div>
@@ -945,11 +975,7 @@ Property Area
             class="property-thumb img-shine"
             data-mask-src="assets/img/shape/property-card1-img-mask.png"
           >
-            <img
-              src="assets/img/hero/amenites-02.webp"
-              alt="img"
-              style="height: 370px"
-            />
+            <img src="assets/img/hero/amenites-02.webp" alt="img" />
           </div>
           <div class="property-card">
             <div class="property-card-number">02</div>
@@ -971,11 +997,7 @@ Property Area
             class="property-thumb img-shine"
             data-mask-src="assets/img/shape/property-card1-img-mask.png"
           >
-            <img
-              src="assets/img/hero/amenites-03.webp"
-              alt="img"
-              style="height: 370px"
-            />
+            <img src="assets/img/hero/amenites-03.webp" alt="img" />
           </div>
           <div class="property-card">
             <div class="property-card-number">03</div>
@@ -997,11 +1019,7 @@ Property Area
             class="property-thumb img-shine"
             data-mask-src="assets/img/shape/property-card1-img-mask.png"
           >
-            <img
-              src="assets/img/hero/amenites-04.webp"
-              alt="img"
-              style="height: 370px"
-            />
+            <img src="assets/img/hero/amenites-04.webp" alt="img" />
           </div>
           <div class="property-card">
             <div class="property-card-number">04</div>
@@ -1242,30 +1260,6 @@ Property Area
               </a>
             </div>
 
-            <!-- <div class="swiper-slide">
-              <a
-                href=""
-                class="aminities-card"
-                data-mask-src="assets/img/theme-img/aminities-shape1.png"
-              >
-                <div class="aminities-card-img">
-                  <img
-                    src="assets/img/hero/rooftop_image.jpg"
-                    alt="aminities image"
-                  />
-                </div>
-                <div class="aminities-content">
-                  <div class="aminities-card-icon">
-                    <img
-                      src="assets/img/custom-icons/Open Area-01.svg"
-                      alt="aminities icon"
-                    />
-                  </div>
-                  <h3 class="box-title">Rooftop Garden</h3>
-                </div>
-              </a>
-            </div> -->
-
             <div class="swiper-slide">
               <a
                 class="aminities-card"
@@ -1368,11 +1362,6 @@ Video Area
               alt="img"
               style="border-radius: 10px"
             />
-            <!-- <a
-              href="https://www.youtube.com/watch?v=_sI_Ps7JSEk"
-              class="play-btn style3 popup-video"
-              ><i class="fa-sharp fa-solid fa-play"></i
-            ></a> -->
           </div>
           <div class="video-wrap-details">
             <div class="title-area mb-45">
@@ -1387,24 +1376,13 @@ Video Area
                 tower, every detail is curated for those who demand more.
               </p>
             </div>
-            <div class="btn-wrap mb-55">
-              <!-- <a href="#contact-sec" class="th-btn style2 btn-mask th-btn-icon"
-                >Request A Visit</a
-              > -->
-            </div>
+            <div class="btn-wrap mb-55"></div>
             <div class="author-grid">
               <div class="author-profile">
-                <div class="avater">
-                  <!-- <img src="assets/img/normal/author_1_1.png" alt="img" /> -->
-                </div>
-                <div class="media-body">
-                  <!-- <h5 class="author-profile-name">Basila Smith</h5>
-                  <p class="author-desig">CEO of Realar</p> -->
-                </div>
+                <div class="avater"></div>
+                <div class="media-body"></div>
               </div>
-              <div class="author-sign">
-                <!-- <img src="assets/img/normal/sign_1_1.png" alt="img" /> -->
-              </div>
+              <div class="author-sign"></div>
             </div>
           </div>
         </div>
@@ -1431,17 +1409,6 @@ Blog Area
                 /></a>
               </div>
               <div class="blog-content">
-                <!-- <div class="blog-meta">
-                  <a class="author" href="blog.html"
-                    ><i class="far fa-user"></i>by David Smith</a
-                  >
-                  <a href="blog.html"
-                    ><i class="far fa-clock"></i>05 June, 2025</a
-                  >
-                  <a href="blog.html"
-                    ><i class="far fa-house-building"></i>Modern House</a
-                  >
-                </div> -->
                 <h2 class="blog-title">
                   <a href="blog-details.html"
                     >Odhav Developers: A Real Commitment, Not Just a Tagline</a
@@ -1462,336 +1429,9 @@ Blog Area
                 >
               </div>
             </div>
-
-            <!-- <div class="th-blog blog-single has-post-thumbnail">
-              <div
-                class="blog-img th-slider"
-                data-slider-options='{"effect":"fade"}'
-              >
-                <div class="swiper-wrapper">
-                  <div class="swiper-slide">
-                    <a href="blog-details.html"
-                      ><img
-                        src="assets/img/blog/1st blog-01.webp"
-                        alt="Blog Image"
-                    /></a>
-                  </div>
-                  <div class="swiper-slide">
-                    <a href="blog-details.html"
-                      ><img
-                        src="assets/img/blog/1st blog-01.webp"
-                        alt="Blog Image"
-                    /></a>
-                  </div>
-                </div>
-                <button class="slider-arrow slider-prev">
-                  <i class="far fa-arrow-left"></i>
-                </button>
-                <button class="slider-arrow slider-next">
-                  <i class="far fa-arrow-right"></i>
-                </button>
-              </div>
-              <div class="blog-content">
-                <div class="blog-meta">
-                  <a class="author" href="blog.html"
-                    ><i class="far fa-user"></i>by David Smith</a
-                  >
-                  <a href="blog.html"
-                    ><i class="far fa-clock"></i>10 June, 2025</a
-                  >
-                  <a href="blog.html"
-                    ><i class="far fa-house-building"></i>Modern House</a
-                  >
-                </div>
-                <h2 class="blog-title">
-                  <a href="blog-details.html"
-                    >Exploring The Green Spaces Of Realar Residence Harmony with
-                    Nature</a
-                  >
-                </h2>
-                <p class="blog-text">
-                  Uniquely pursue emerging experiences before liemerging
-                  content. Efficiently underwhelm customer directed total
-                  linkage after B2C synergy. Dynamically simplify superior human
-                  capital whereas efficient infrastructures generate business
-                  web-readiness after wireless outsourcing.
-                </p>
-                <a
-                  href="blog-details.html"
-                  class="th-btn style-border2 th-btn-icon"
-                  >Read More</a
-                >
-              </div>
-            </div> -->
-
-            <!-- <div class="th-blog blog-single">
-              <div class="blog-content">
-                <div class="blog-meta">
-                  <a class="author" href="blog.html"
-                    ><i class="far fa-user"></i>by David Smith</a
-                  >
-                  <a href="blog.html"
-                    ><i class="far fa-clock"></i>12 June, 2025</a
-                  >
-                  <a href="blog.html"
-                    ><i class="far fa-house-building"></i>Modern House</a
-                  >
-                </div>
-                <h2 class="blog-title">
-                  <a href="blog-details.html"
-                    >Enrich Your Mind Envision Your Future Education for
-                    Success</a
-                  >
-                </h2>
-                <p class="blog-text">
-                  An effective marketing involves market research target
-                  audience identification, competitive. providing opportunities
-                  for professional growth a maintaining positive work
-                  environment. To enhance online presence, consider optimizing
-                  your web utilizing social with your channels
-                </p>
-                <a
-                  href="blog-details.html"
-                  class="th-btn style-border2 th-btn-icon"
-                  >Read More</a
-                >
-              </div>
-            </div> -->
-
-            <!-- <div class="th-blog blog-single has-post-thumbnail">
-              <div class="blog-img" data-overlay="black" data-opacity="5">
-                <a href="blog-details.html"
-                  ><img src="assets/img/blog/1st blog-01.webp" alt="Blog Image"
-                /></a>
-                <a
-                  href="https://www.youtube.com/watch?v=_sI_Ps7JSEk"
-                  class="play-btn popup-video"
-                  ><i class="fas fa-play"></i
-                ></a>
-              </div>
-              <div class="blog-content">
-                <div class="blog-meta">
-                  <a class="author" href="blog.html"
-                    ><i class="far fa-user"></i>by David Smith</a
-                  >
-                  <a href="blog.html"
-                    ><i class="far fa-clock"></i>12 June, 2025</a
-                  >
-                  <a href="blog.html"
-                    ><i class="far fa-house-building"></i>Modern House</a
-                  >
-                </div>
-                <h2 class="blog-title">
-                  <a href="blog-details.html"
-                    >University class starting soon while the lovely valley team
-                    work</a
-                  >
-                </h2>
-                <p class="blog-text">
-                  From strategic planning to operational optimization, our
-                  business consulting team is committed to guiding you through
-                  every stage of development, ensuring sustainable growth.Our
-                  seasoned consultants bring a wealth of experience to the
-                  table.
-                </p>
-                <a
-                  href="blog-details.html"
-                  class="th-btn style-border2 th-btn-icon"
-                  >Read More</a
-                >
-              </div>
-            </div> -->
-
-            <!-- <div class="th-blog blog-single has-post-thumbnail">
-              <div class="blog-audio">
-                <iframe
-                  title="Tell Me U Luv Me (with Trippie Redd) by Juice WRLD"
-                  src="https://w.soundcloud.com/player/?visual=true&amp;url=https%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F830279092&amp;show_artwork=true&amp;maxwidth=751&amp;maxheight=1000&amp;dnt=1"
-                ></iframe>
-              </div>
-              <div class="blog-content">
-                <div class="blog-meta">
-                  <a class="author" href="blog.html"
-                    ><i class="far fa-user"></i>by David Smith</a
-                  >
-                  <a href="blog.html"
-                    ><i class="far fa-clock"></i>12 June, 2025</a
-                  >
-                  <a href="blog.html"
-                    ><i class="far fa-house-building"></i>Modern House</a
-                  >
-                </div>
-                <h2 class="blog-title">
-                  <a href="blog-details.html"
-                    >Discover unparalleled expertise in market</a
-                  >
-                </h2>
-                <p class="blog-text">
-                  Take the first step towards a brighter business future.
-                  Contact us today to explore how our business consulting
-                  services can drive innovation, increase efficiency, and
-                  position your company for enduring success. At the core of our
-                  business consulting philosophy.
-                </p>
-                <a
-                  href="blog-details.html"
-                  class="th-btn style-border2 th-btn-icon"
-                  >Read More</a
-                >
-              </div>
-            </div> -->
-
-            <!-- <div class="th-pagination">
-              <ul>
-                <li>
-                  <a class="prev-page" href="blog.html"
-                    ><i class="far fa-arrow-left me-2"></i>Previous</a
-                  >
-                </li>
-                <li><a class="active" href="blog.html">1</a></li>
-                <li><a href="blog.html">2</a></li>
-                <li><a href="blog.html">3</a></li>
-                <li>
-                  <a class="next-page" href="blog.html"
-                    >Next<i class="far fa-arrow-right ms-2"></i
-                  ></a>
-                </li>
-              </ul>
-            </div> -->
           </div>
           <div class="col-xxl-4 col-lg-5">
-            <aside class="sidebar-area">
-              <!-- <div class="widget widget_search">
-                <form class="search-form">
-                  <input type="text" placeholder="Search..." />
-                  <button type="submit"><i class="far fa-search"></i></button>
-                </form>
-              </div> -->
-              <!-- <div class="widget widget_categories">
-                <h3 class="widget_title">Post Categories</h3>
-                <ul>
-                  <li>
-                    <a href="blog.html">Apartment <span>(8)</span></a>
-                  </li>
-                  <li>
-                    <a href="blog.html">Real Estate <span>(10)</span></a>
-                  </li>
-                  <li>
-                    <a href="blog.html">Property <span>(12)</span></a>
-                  </li>
-                  <li>
-                    <a href="blog.html">News & Tips <span>(6)</span></a>
-                  </li>
-                  <li>
-                    <a href="blog.html">Modern Houses <span>(8)</span></a>
-                  </li>
-                  <li>
-                    <a href="blog.html">Banglow <span>(11)</span></a>
-                  </li>
-                </ul>
-              </div> -->
-              <!-- <div class="widget">
-                <h3 class="widget_title">Recent Posts</h3>
-                <div class="recent-post-wrap">
-                  <div class="recent-post">
-                    <div class="media-img">
-                      <a href="blog-details.html"
-                        ><img
-                          src="assets/img/blog/recent-post-1-1.jpg"
-                          alt="Blog Image"
-                      /></a>
-                    </div>
-                    <div class="media-body">
-                      <h4 class="post-title">
-                        <a class="text-inherit" href="blog-details.html"
-                          >Exploring The Green Spaces Of Realar Residence</a
-                        >
-                      </h4>
-                      <div class="recent-post-meta">
-                        <a href="blog.html"
-                          ><i class="far fa-calendar"></i>22/6/2025</a
-                        >
-                      </div>
-                    </div>
-                  </div>
-                  <div class="recent-post">
-                    <div class="media-img">
-                      <a href="blog-details.html"
-                        ><img
-                          src="assets/img/blog/recent-post-1-2.jpg"
-                          alt="Blog Image"
-                      /></a>
-                    </div>
-                    <div class="media-body">
-                      <h4 class="post-title">
-                        <a class="text-inherit" href="blog-details.html"
-                          >Harmony With Nature Of Realar Residence</a
-                        >
-                      </h4>
-                      <div class="recent-post-meta">
-                        <a href="blog.html"
-                          ><i class="far fa-calendar"></i>25/6/2025</a
-                        >
-                      </div>
-                    </div>
-                  </div>
-                  <div class="recent-post">
-                    <div class="media-img">
-                      <a href="blog-details.html"
-                        ><img
-                          src="assets/img/blog/recent-post-1-3.jpg"
-                          alt="Blog Image"
-                      /></a>
-                    </div>
-                    <div class="media-body">
-                      <h4 class="post-title">
-                        <a class="text-inherit" href="blog-details.html"
-                          >Exploring The Green Spaces Of Realar Residence</a
-                        >
-                      </h4>
-                      <div class="recent-post-meta">
-                        <a href="blog.html"
-                          ><i class="far fa-calendar"></i>27/6/2025</a
-                        >
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div> -->
-              <!-- <div class="widget widget_tag_cloud">
-                <h3 class="widget_title">Popular Tags</h3>
-                <div class="tagcloud">
-                  <a href="blog.html">Business</a>
-                  <a href="blog.html">Buyer</a>
-                  <a href="blog.html">Rent</a>
-                  <a href="blog.html">Innovate</a>
-                  <a href="blog.html">Real estate</a>
-                  <a href="blog.html">Modern</a>
-                  <a href="blog.html">Luxury</a>
-                  <a href="blog.html">Sale</a>
-                </div>
-              </div> -->
-              <!-- <div
-                class="widget widget_banner"
-                data-bg-src="assets/img/widget/widget-banner.png"
-              >
-                <div class="widget-banner text-center">
-                  <h3 class="title">Need Help? We Are Here To Help You</h3>
-                  <div class="logo">
-                    <img src="assets/img/VVIP full gold-01.png" alt="img" />
-                  </div>
-                  <h4 class="subtitle">You Get Online support</h4>
-                  <h5 class="link">
-                    <a href="tel:256214203215">+256 214 203 215</a>
-                  </h5>
-                  <a
-                    href="blog-details.html"
-                    class="th-btn style-border th-btn-icon"
-                    >Read More</a
-                  >
-                </div>
-              </div> -->
-            </aside>
+            <aside class="sidebar-area"></aside>
           </div>
         </div>
       </div>
@@ -2324,6 +1964,23 @@ Contact Area
         // Start the auto-slide on page load
         startAutoSlide();
       });
+    </script>
+    <script>
+      // Function to hide the loader
+      function hideLoader() {
+        const loader = document.getElementById("loader");
+        loader.classList.add("hidden");
+      }
+
+      // Simulate loading (replace this with your actual loading logic)
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          hideLoader();
+        }, 3000); // Simulate 3 seconds of loading
+      });
+
+      // Example: Hide loader when a specific component is loaded
+      // You can call hideLoader() when your component or data is ready
     </script>
   </body>
 </html>
