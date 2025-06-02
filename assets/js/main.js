@@ -577,7 +577,7 @@
               .find(".form-messages")
               .removeClass("success")
               .addClass("error")
-              .html(response.errors);
+              .html(response.errors.message);
           }
         })
         .fail(function (xhr, status, error) {
