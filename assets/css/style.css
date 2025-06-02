@@ -20737,9 +20737,14 @@ span.select2-selection.select2-selection--single:focus {
 /*------------------- 4.00. Project -------------------*/
 /* Portfolio Area -------------------------------*/
 .project-area-1 {
-  background-attachment: fixed;
+  background-attachment: scroll;
 }
 
+@media (min-width: 1024px) {
+  .project-area-1 {
+    background-attachment: fixed;
+  }
+}
 .project-wrap1 .project-number-pagination {
   position: absolute;
   z-index: 9;
