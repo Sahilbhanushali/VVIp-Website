@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
-    <title>Commercial Real Estate Insights | VVIP Properties Blog</title>
+    <title>Commercial Real Estate Insights | VVIP Properties</title>
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
@@ -101,27 +101,17 @@
       media="print"
       onload="this.media='all'"
     />
-    <link
-      rel="stylesheet"
-      href="assets/css/magnific-popup.min.css"
-      media="print"
-      onload="this.media='all'"
-    />
+
     <link
       rel="stylesheet"
       href="assets/css/swiper-bundle.min.css"
       media="print"
       onload="this.media='all'"
     />
+
     <link
       rel="stylesheet"
-      href="assets/css/jquery.datetimepicker.min.css"
-      media="print"
-      onload="this.media='all'"
-    />
-    <link
-      rel="stylesheet"
-      href="assets/css/style.css?v=1.1"
+      href="assets/css/style.css?v=1.2"
       media="print"
       onload="this.media='all'"
     />
@@ -216,6 +206,11 @@
           height: 8px;
         }
       }
+      @media (max-width: 374px) {
+        .about-contact-details {
+          margin-top: -15px;
+        }
+      }
     </style>
     <style>
       /* Center the loader and make it responsive */
@@ -243,41 +238,24 @@
       .loader-key {
         width: 250px;
         height: auto;
-        max-width: 150px;
-        mask-image: linear-gradient(to right, black 50%, transparent 50%);
-        -webkit-mask-image: linear-gradient(
-          to right,
-          black 50%,
-          transparent 50%
-        );
-        animation: reveal 1s infinite ease-in-out;
+        opacity: 0.8;
+
+        animation: reveal 2s infinite ease-in-out;
       }
 
       /* Reveal animation */
       @keyframes reveal {
         0% {
-          mask-image: linear-gradient(to right, black 0%, transparent 0%);
-          -webkit-mask-image: linear-gradient(
-            to right,
-            black 0%,
-            transparent 0%
-          );
+          opacity: 0.3;
+          transform: scale(0.95);
         }
         50% {
-          mask-image: linear-gradient(to right, black 50%, transparent 50%);
-          -webkit-mask-image: linear-gradient(
-            to right,
-            black 50%,
-            transparent 50%
-          );
+          opacity: 1;
+          transform: scale(1.05);
         }
         100% {
-          mask-image: linear-gradient(to right, black 100%, transparent 100%);
-          -webkit-mask-image: linear-gradient(
-            to right,
-            black 100%,
-            transparent 100%
-          );
+          opacity: 0.3;
+          transform: scale(0.95);
         }
       }
 
@@ -302,13 +280,17 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "CommercialBuilding",
-        "name": "VVIP Commercial Properties",
-        "description": "Premium commercial properties in Vapi offering luxury office spaces and business amenities",
-        "image": "https://vapisvip.com/assets/img/VVIP logo-01.png",
+        "@type": "CommercialProperty",
+        "name": "VVIP Commercial Properties | NeoVista Business Towers",
+        "description": "Premium luxury office spaces, retail showrooms & healthcare facilities in Vapi, Gujarat. VVIP offers state-of-the-art commercial properties with valet parking, art gallery foyers & VIP amenities.",
+        "image": [
+          "https://vapisvip.com/assets/img/VVIP-logo-01.png",
+          "https://vapisvip.com/assets/img/hero/Banner-01.webp",
+          "https://vapisvip.com/assets/img/hero/About-image-01.webp"
+        ],
         "address": {
           "@type": "PostalAddress",
-          "streetAddress": "NeoVista, Nr, Forest Ply & Hardware, 4 Rasta, Silvassa - Vapi Rd",
+          "streetAddress": "NeoVista, Nr. Forest Ply & Hardware,Silvassa Vapi Rd,char rasta, Vapi, Gujarat 396191",
           "addressLocality": "Vapi",
           "addressRegion": "Gujarat",
           "postalCode": "396191",
@@ -319,10 +301,54 @@
           "latitude": "20.3687889",
           "longitude": "72.9167278"
         },
-        "telephone": "+91991370584",
+        "telephone": "+919687664422",
         "url": "https://vapisvip.com/",
-        "openingHours": "Mo-Fr 09:00-18:00",
-        "priceRange": "$$$"
+        "openingHoursSpecification": {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+          "opens": "09:00",
+          "closes": "18:00"
+        },
+        "priceRange": "$$$",
+        "amenityFeature": [
+          {
+            "@type": "LocationFeatureSpecification",
+            "name": "Valet Parking",
+            "value": true
+          },
+          {
+            "@type": "LocationFeatureSpecification",
+            "name": "Art Gallery Foyer",
+            "value": true
+          },
+          {
+            "@type": "LocationFeatureSpecification",
+            "name": "Double-Height Ceilings",
+            "value": true
+          },
+          {
+            "@type": "LocationFeatureSpecification",
+            "name": "24/7 Security",
+            "value": true
+          }
+        ],
+        "hasMap": "https://goo.gl/maps/examplemapurl",
+        "sameAs": [
+          "https://www.facebook.com/profile.php?id=61576362355214",
+          "https://www.instagram.com/odhavdevelopers/",
+          "https://www.linkedin.com/in/vapis-vip-b45792365?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app"
+        ],
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.8",
+          "reviewCount": "47",
+          "bestRating": "5"
+        },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://vapisvip.com/search?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
       }
     </script>
 
@@ -371,7 +397,7 @@
                     class="form-control"
                     name="phone"
                     id="modal-phone"
-                    placeholder="Your Phone Number*"
+                    placeholder="Your Number*"
                     required
                   />
                   <i class="fal fa-phone"></i>
@@ -951,7 +977,7 @@ Property Area
               <span class="shadow-title">Listing</span>
               <h2 class="sec-title text-white">Featured Property</h2>
               <p class="sec-text text-white">
-                We are a real estate firm with over 20 years of expertise, and
+                We are a real estate firm with over 26 years of expertise, and
                 our main goal is to provide amazing locations to our partners
                 and clients.
               </p>
@@ -1476,10 +1502,10 @@ Contact Area
 ==============================-->
       <div class="space">
         <div class="container">
-          <div class="title-area text-center">
+          <!-- <div class="title-area text-center">
             <span class="sub-title">Get In Touch</span>
             <h2 class="sec-title text-theme">Our Contact Information</h2>
-          </div>
+          </div> -->
           <div class="row gy-4 justify-content-center">
             <div class="col-xl-4 col-lg-6">
               <div class="about-contact-grid style2">
@@ -1490,7 +1516,7 @@ Contact Area
                   <!-- <h6 class="about-contact-details-title">Our Address</h6> -->
 
                   <p class="about-contact-details-text">
-                    Silvassa Vapi Rd,char rasta, Daman, Vapi, Gujarat 396191
+                    Silvassa Vapi Rd,char rasta, Vapi, Gujarat 396191
                   </p>
                 </div>
               </div>
@@ -1590,7 +1616,7 @@ Contact Area
                         class="form-control"
                         name="phone"
                         id="modal-phone"
-                        placeholder="Your Phone Number*"
+                        placeholder="Your Number*"
                         required
                       />
                       <i class="fal fa-phone"></i>
@@ -1837,27 +1863,12 @@ Contact Area
     <script src="assets/js/swiper-bundle.min.js" defer></script>
     <!-- Bootstrap -->
     <script src="assets/js/bootstrap.min.js" defer></script>
-    <!-- Magnific Popup -->
-    <script src="assets/js/jquery.magnific-popup.min.js" defer></script>
+
     <!-- Counter Up -->
     <script src="assets/js/jquery.counterup.min.js" defer></script>
-    <!-- Range Slider -->
-    <script src="assets/js/jquery-ui.min.js" defer></script>
-    <!-- Isotope Filter -->
-    <script src="assets/js/imagesloaded.pkgd.min.js" defer></script>
-    <script src="assets/js/isotope.pkgd.min.js" defer></script>
-    <!-- Gsap -->
-    <script src="assets/js/gsap.min.js" defer></script>
-    <!-- DateTime JS -->
-    <script src="assets/js/jquery.datetimepicker.min.js" defer></script>
-    <!-- 360 degree Js -->
-    <script src="assets/js/threesixty.min.js" defer></script>
-    <script src="assets/js/panolens.min.js" defer></script>
 
-    <!-- Main Js File with Modal Logic -->
-    <script src="assets/js/main.js?v=1.1" defer></script>
+    <script src="assets/js/main.js?v=1.2" defer></script>
 
-    <!-- Modal Script with SEO considerations -->
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         /** ---------------- MODAL FUNCTIONALITY ---------------- */
@@ -1993,7 +2004,7 @@ Contact Area
           if (loader) {
             setTimeout(() => {
               loader.classList.add("hidden");
-            }, 3000); // 3 seconds
+            }, 1000);
           }
         });
       });
