@@ -21,6 +21,8 @@ try {
     // Get and sanitize form data with more rigorous filtering
     $name = trim(filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW));
     $email = trim(filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL));
+    $phone = trim(filter_input(INPUT_POST, 'phone', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW));
+
     $subject = trim(filter_input(INPUT_POST, 'subject', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW)) ?: 'Contact Form Submission';
     $message = trim(filter_input(INPUT_POST, 'message', FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_LOW));
 
@@ -28,6 +30,7 @@ try {
     $response['debug']['received_data'] = [
         'name' => $name,
         'email' => $email,
+        'phone' => $phone,
         'subject' => $subject,
         'message' => $message
     ];
@@ -45,6 +48,12 @@ try {
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors['email'] = 'Please enter a valid email address';
     }
+    if (empty($phone)) {
+        $errors['phone'] = 'Please enter your phone number';
+    } elseif (!preg_match('/^\+?[0-9\s\-]{7,15}$/', $phone)) {
+        $errors['phone'] = 'Please enter a valid phone number';
+    }
+    
 
     if (empty($message)) {
         $errors['message'] = 'Please enter your message';

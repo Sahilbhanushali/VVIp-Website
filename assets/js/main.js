@@ -573,11 +573,20 @@
             // Clear the form on success
             $(formElement).trigger("reset");
           } else {
+            let errorMessages = "";
+
+            if (response.errors) {
+              for (const key in response.errors) {
+                if (response.errors.hasOwnProperty(key)) {
+                  errorMessages += `<p style="color:red" >${response.errors[key]}</p>`;
+                }
+              }
+            }
             $(formElement)
               .find(".form-messages")
               .removeClass("success")
               .addClass("error")
-              .html(response.errors.message);
+              .html(errorMessages || response.message);
           }
         })
         .fail(function (xhr, status, error) {
