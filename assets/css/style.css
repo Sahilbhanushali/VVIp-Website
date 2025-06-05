@@ -109,8 +109,8 @@ Version: 1.0.0
   --error-color: #EB5757;
   --th-border-color: #CDCDCD;
   --th-border-color2: #E6E6E6;
-  --title-font: "Outfit", sans-serif;
-  --body-font: "Inter", sans-serif;
+  --title-font: 'Montserrat', sans-serif;
+  --body-font: 'Open Sans', sans-serif;
   --icon-font: "Font Awesome 6 Pro";
   --main-container: 1296px;
   --container-gutters: 24px;
