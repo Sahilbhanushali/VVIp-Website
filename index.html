@@ -1932,12 +1932,12 @@ Contact Area
 
         function resetModalTimer() {
           clearTimeout(modalTimer);
-          modalTimer = setTimeout(showModal, 30000); // 30 seconds
+          modalTimer = setTimeout(showModal, 30000);
         }
 
         function startInitialTimer() {
           initialTimerStarted = true;
-          setTimeout(showModal, 4000); // 4 seconds
+          setTimeout(showModal, 4000);
         }
 
         if (!formSubmitted) {
@@ -2000,7 +2000,7 @@ Contact Area
           autoSlideInterval = setInterval(() => {
             currentIndex = (currentIndex + 1) % dots.length;
             updateCarousel(currentIndex);
-          }, 3000); // 3 seconds
+          }, 3000);
         }
 
         function resetAutoSlide() {
