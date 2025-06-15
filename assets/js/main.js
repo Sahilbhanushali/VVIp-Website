@@ -263,7 +263,7 @@
       loop: settings.loop !== false,
       speed: settings.speed || 1000,
       autoplay: settings.autoplay || {
-        delay: 6000,
+        delay: 3000,
         disableOnInteraction: false,
       },
       navigation: {
