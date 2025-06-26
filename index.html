@@ -320,12 +320,6 @@
           "https://www.instagram.com/vapis_vip",
           "https://www.linkedin.com/company/vapis-vip"
         ],
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": 4.8,
-          "reviewCount": 47,
-          "bestRating": 5
-        },
         "potentialAction": {
           "@type": "SearchAction",
           "target": {
@@ -334,6 +328,22 @@
           },
           "query-input": "required name=search_term_string"
         }
+      }
+    </script>
+
+    <!-- Separate AggregateRating markup -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "AggregateRating",
+        "itemReviewed": {
+          "@type": "LocalBusiness",
+          "name": "VVIP Commercial Properties | NeoVista Business Towers",
+          "sameAs": "https://vapisvip.com"
+        },
+        "ratingValue": 4.8,
+        "reviewCount": 47,
+        "bestRating": 5
       }
     </script>
 
