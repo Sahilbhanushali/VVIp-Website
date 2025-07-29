@@ -123,6 +123,7 @@ try {
             <h2>New Contact Form Submission</h2>
             <p><strong>Name:</strong> " . htmlspecialchars($name) . "</p>
             <p><strong>Email:</strong> <a href=\"mailto:" . htmlspecialchars($email) . "\">" . htmlspecialchars($email) . "</a></p>
+            <p><strong>Phone:</strong> " . htmlspecialchars($phone) . "</p>
             <p><strong>Subject:</strong> " . htmlspecialchars($subject) . "</p>
             <p><strong>Message:</strong></p>
             <p>" . nl2br(htmlspecialchars($message)) . "</p>
@@ -140,6 +141,7 @@ try {
     $mail->AltBody = "NEW CONTACT FORM SUBMISSION\n\n" .
         "Name: " . $name . "\n" .
         "Email: " . $email . "\n" .
+         "Phone: " . $phone . "\n" .
         "Subject: " . $subject . "\n\n" .
         "Message:\n" . str_repeat("-", 50) . "\n" .
         $message . "\n\n" .
