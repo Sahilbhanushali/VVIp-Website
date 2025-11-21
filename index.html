@@ -175,6 +175,31 @@
         opacity: 0.8;
         animation: reveal 2s infinite ease-in-out;
       }
+      .loader-skip {
+        position: absolute;
+        bottom: 32px;
+        right: 32px;
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        color: #fff;
+        padding: 10px 18px;
+        border-radius: 999px;
+        font-size: 0.875rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+      }
+      .loader-skip:hover,
+      .loader-skip:focus-visible {
+        outline: none;
+        background: rgba(255, 255, 255, 0.9);
+        color: #090909;
+      }
+      .loader-container.hidden .loader-skip {
+        opacity: 0;
+        pointer-events: none;
+      }
       @keyframes reveal {
         0% {
           opacity: 0.3;
@@ -202,6 +227,11 @@
           width: 80px;
           max-width: 120px;
         }
+        .loader-skip {
+          bottom: 16px;
+          right: 16px;
+          padding: 8px 14px;
+        }
       }
       @media (max-width: 480px) {
         .carousel img {
@@ -216,10 +246,21 @@
           width: 8px;
           height: 8px;
         }
+        .loader-skip {
+          font-size: 0.75rem;
+        }
       }
       @media (max-width: 374px) {
         .about-contact-details {
           margin-top: -15px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .carousel {
+          transition: none;
+        }
+        .loader-key {
+          animation: none;
         }
       }
       .content {
@@ -417,15 +458,18 @@
     </script>
 
     <!-- loader section -->
-    <div class="loader-container" id="loader">
+    <div class="loader-container" id="loader" aria-live="polite">
       <img
         src="assets/img/Key.png"
-        alt="Loading Key"
+        alt="Loading key, please wait"
         class="loader-key"
         width="250"
         height="120"
         decoding="async"
+        loading="eager"
+        fetchpriority="low"
       />
+      <button class="loader-skip" type="button">Skip intro</button>
     </div>
     <!-- Contact Modal -->
     <div id="contactModal" class="modal-overlay">
@@ -2138,14 +2182,40 @@ Contact Area
         }
 
         /** ---------------- LOADER FUNCTIONALITY ---------------- */
-        window.addEventListener("load", () => {
+        (function initLoader() {
           const loader = document.getElementById("loader");
-          if (loader) {
+          if (!loader) return;
+
+          const skipBtn = loader.querySelector(".loader-skip");
+          let loaderHidden = false;
+          const hideLoader = () => {
+            if (loaderHidden) return;
+            loaderHidden = true;
+            loader.classList.add("hidden");
             setTimeout(() => {
-              loader.classList.add("hidden");
-            }, 1000);
+              loader.remove();
+            }, 600);
+          };
+
+          const fallbackTimeout = setTimeout(hideLoader, 2000);
+
+          setTimeout(hideLoader, 350);
+
+          window.addEventListener("load", () => {
+            clearTimeout(fallbackTimeout);
+            hideLoader();
+          });
+
+          if (skipBtn) {
+            skipBtn.addEventListener("click", hideLoader);
           }
-        });
+
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+              hideLoader();
+            }
+          });
+        })();
       });
     </script>
   </body>
