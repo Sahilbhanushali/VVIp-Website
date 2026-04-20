@@ -18,6 +18,182 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  overflow-y: auto;
+  scroll-behavior: smooth !important;
+  overscroll-behavior: auto;
+}
+
+body {
+  min-height: 100%;
+}
+
+/* -----------------------------
+   Responsive layout + spacing
+------------------------------ */
+:root {
+  --header-offset: 100px;
+}
+
+@media (max-width: 991px) {
+  :root {
+    --header-offset: 88px;
+  }
+}
+
+@media (max-width: 575px) {
+  :root {
+    --header-offset: 80px;
+  }
+}
+
+/* Better default section rhythm (without fighting template classes) */
+section,
+.space,
+.space-top,
+.space-bottom,
+.space-extra-bottom {
+  scroll-margin-top: calc(var(--header-offset) + 16px);
+}
+
+/* Fix hero carousel using a variable instead of hard-coded margin */
+.carousel img {
+  margin-top: var(--header-offset) !important;
+}
+
+/* Prevent accidental horizontal overflow from full-width elements */
+body {
+  overflow-x: hidden;
+}
+
+/* -----------------------------
+   Micro-interactions (subtle)
+------------------------------ */
+.th-btn,
+.service-card,
+.property-card-wrap,
+.th-blog,
+.aminities-card {
+  transition: transform 180ms ease, box-shadow 220ms ease, filter 220ms ease;
+}
+
+.th-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.02);
+}
+
+.th-btn:active {
+  transform: translateY(0);
+}
+
+.service-card:hover,
+.property-card-wrap:hover,
+.th-blog:hover,
+.aminities-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.14);
+}
+
+.th-btn:focus-visible,
+.modal-close:focus-visible,
+.loader-skip:focus-visible {
+  outline: 2px solid rgba(252, 0, 18, 0.55);
+  outline-offset: 3px;
+}
+
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 500ms ease, transform 600ms ease;
+  will-change: opacity, transform;
+}
+
+.reveal-on-scroll.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  body {
+    scroll-behavior: auto !important;
+  }
+
+  .th-btn,
+  .service-card,
+  .property-card-wrap,
+  .th-blog,
+  .aminities-card {
+    transition: none;
+  }
+
+  .reveal-on-scroll {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+.bg-theme#contact-sec1 .about-contact-grid.style2,
+#contact-sec1 .about-contact-grid.style2 {
+  padding: 22px 22px;
+  gap: 18px;
+  align-items: center;
+}
+
+#contact-sec1 .about-contact-grid.style2 .about-contact-icon {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  line-height: 56px;
+  font-size: 24px;
+  border-radius: 12px;
+}
+
+#contact-sec1 .about-contact-grid.style2 .about-contact-details-title {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+#contact-sec1 .about-contact-grid.style2 .about-contact-details-text {
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.5;
+}
+
+#contact-sec1 .about-contact-grid.style2 .about-contact-details-text a {
+  display: block;
+  font-size: 16px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.92);
+  word-break: break-word;
+}
+
+#contact-sec1 .about-contact-grid.style2 .about-contact-details-text a + br {
+  display: none;
+}
+
+@media (max-width: 575px) {
+  #contact-sec1 .about-contact-grid.style2 {
+    padding: 18px 16px;
+    gap: 14px;
+  }
+
+  #contact-sec1 .about-contact-grid.style2 .about-contact-icon {
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+    font-size: 18px;
+    border-radius: 10px;
+  }
+
+  #contact-sec1 .about-contact-grid.style2 .about-contact-details-text a {
+    font-size: 15px;
+  }
+}
+
 .modal-overlay.active {
   display: flex;
   opacity: 1;
