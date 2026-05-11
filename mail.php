@@ -71,15 +71,19 @@ try {
     // Create PHPMailer instance
     $mail = new PHPMailer(true);
 
-    // SMTP Configuration
+    // SMTP Configuration - IMPORTANT: Update these credentials with your actual SMTP2Go account details
     $mail->isSMTP();
     $mail->Host = 'mail.smtp2go.com';
     $mail->SMTPAuth = true;
-    $mail->Username = 'vapisvip'; // Your SMTP2Go username
-    $mail->Password = 'Givemeredp0wer@123'; // Your SMTP2Go password
+    $mail->Username = 'vapisvip'; // Your SMTP2Go username - VERIFY THIS IS CORRECT
+    $mail->Password = 'Givemeredp0wer@123'; // Your SMTP2Go password - UPDATE THIS WITH YOUR ACTUAL PASSWORD
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port = 587;
-    $mail->Timeout = 15;
+    $mail->Timeout = 30;
+
+    // Additional SMTP settings for better deliverability
+    $mail->SMTPKeepAlive = true;
+    $mail->SMTPDebug = 0; // Set to 2 for debugging if needed
     $mail->SMTPDebug = 0;
     
     // Important anti-spam settings
@@ -89,7 +93,7 @@ try {
     $mail->XMailer = ' '; // Remove X-Mailer header
 
     // Sender and recipient configuration
-    $mail->setFrom('mail@vapisvip.com', 'Vapisvip Website');
+    $mail->setFrom('noreply@vapisvip.com', 'Vapisvip Website'); // Changed from mail@ to noreply@
     $mail->addAddress('mail@vapisvip.com', 'Vapisvip Support');
     $mail->addReplyTo($email, $name);
     
@@ -150,11 +154,49 @@ try {
         "Privacy Policy: https://vapisvip.com/privacy\n" .
         "Unsubscribe: https://vapisvip.com/unsubscribe";
 
-    if ($mail->send()) {
+    // Try SMTP first, fallback to PHP mail() if it fails
+    $smtpSuccess = false;
+    try {
+        if ($mail->send()) {
+            $smtpSuccess = true;
+        }
+    } catch (Exception $e) {
+        // SMTP failed, try PHP mail() as fallback
+        $response['debug']['smtp_error'] = $e->getMessage();
+
+        // Fallback to PHP mail function
+        $to = 'mail@vapisvip.com';
+        $subject = "New Contact: " . htmlspecialchars($subject) . " - " . htmlspecialchars($name);
+        $headers = "From: " . htmlspecialchars($email) . "\r\n";
+        $headers .= "Reply-To: " . htmlspecialchars($email) . "\r\n";
+        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+
+        $message = "
+        <html>
+        <body>
+            <h2>New Contact Form Submission</h2>
+            <p><strong>Name:</strong> " . htmlspecialchars($name) . "</p>
+            <p><strong>Email:</strong> <a href=\"mailto:" . htmlspecialchars($email) . "\">" . htmlspecialchars($email) . "</a></p>
+            <p><strong>Phone:</strong> " . htmlspecialchars($phone) . "</p>
+            <p><strong>Subject:</strong> " . htmlspecialchars($subject) . "</p>
+            <p><strong>Message:</strong></p>
+            <p>" . nl2br(htmlspecialchars($message)) . "</p>
+            <hr>
+            <p><small>Sent from website contact form on " . date('F j, Y \a\t g:i a') . "</small></p>
+        </body>
+        </html>";
+
+        if (mail($to, $subject, $message, $headers)) {
+            $smtpSuccess = true;
+            $response['debug']['method'] = 'PHP mail() fallback';
+        }
+    }
+
+    if ($smtpSuccess) {
         $response['success'] = true;
         $response['message'] = 'Thank you! Your message has been sent successfully.';
     } else {
-        throw new Exception('Mailer Error: ' . $mail->ErrorInfo);
+        throw new Exception('Both SMTP and PHP mail() failed to send the message.');
     }
 
 } catch (Exception $e) {

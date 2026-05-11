@@ -445,7 +445,7 @@
   var invalidCls = "is-invalid";
   var $email = '[name="email"]';
   var $validation =
-    '[name="name"],[name="email"],[name="subject"],[name="message"]'; // Removed number field
+    '[name="name"],[name="email"],[name="phone"],[name="message"]'; // Required fields only
   var formMessages = $(".form-messages");
 
   function sendContact(formElement) {

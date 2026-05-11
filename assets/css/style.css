@@ -19335,17 +19335,15 @@ span.select2-selection.select2-selection--single:focus {
 }
 
 .blog-card:hover .blog-img img {
-  -webkit-transform: scale(1.08);
-      -ms-transform: scale(1.08);
-          transform: scale(1.08);
+  /* Removed hover scale effect */
 }
 
 .blog-card:hover .blog-img .icon-btn {
-  opacity: 1;
+  /* Removed hover opacity effect */
 }
 
 .blog-card:hover .blog-img:after {
-  opacity: 0.8;
+  /* Removed hover overlay effect */
 }
 
 /* Medium Large devices */
