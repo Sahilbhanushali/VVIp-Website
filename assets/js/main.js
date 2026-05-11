@@ -307,8 +307,8 @@
           var totalSlides = this.slides.length;
           paginationEl2.html(
             '<span class="current-slide">01</span> <span class="divider">/</span>  <span class="total-slides">' +
-              (totalSlides < 10 ? "0" + totalSlides : totalSlides) +
-              "</span>"
+            (totalSlides < 10 ? "0" + totalSlides : totalSlides) +
+            "</span>"
           );
 
           // Set initial vertical progress bar height
@@ -321,10 +321,10 @@
           var totalSlides = this.slides.length;
           paginationEl2.html(
             '<span class="current-slide">' +
-              (activeIndex < 10 ? "0" + activeIndex : activeIndex) +
-              '</span> <span class="divider">/</span> <span class="total-slides">' +
-              (totalSlides < 10 ? "0" + totalSlides : totalSlides) +
-              "</span>"
+            (activeIndex < 10 ? "0" + activeIndex : activeIndex) +
+            '</span> <span class="divider">/</span> <span class="total-slides">' +
+            (totalSlides < 10 ? "0" + totalSlides : totalSlides) +
+            "</span>"
           );
 
           // Update vertical progress bar height
