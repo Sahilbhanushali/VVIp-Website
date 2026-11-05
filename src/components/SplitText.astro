@@ -1,0 +1,36 @@
+---
+/**
+ * Renders a heading whose words rise into view one after another.
+ * Words wrapped in *asterisks* are emphasised with the bronze gradient.
+ * Without JS (or with reduced motion) it is a plain, fully visible heading.
+ */
+interface Props {
+  text: string;
+  as?: 'h1' | 'h2' | 'h3' | 'p';
+  class?: string;
+  delay?: number;
+  id?: string;
+}
+const { text, as: Tag = 'h2', class: className = '', delay = 0, id } = Astro.props;
+
+type Token = { word: string; em: boolean };
+const tokens: Token[] = [];
+let em = false;
+for (const raw of text.split(/\s+/)) {
+  let word = raw;
+  const opens = word.startsWith('*');
+  if (opens) { em = true; word = word.slice(1); }
+  const closes = word.endsWith('*');
+  if (closes) word = word.slice(0, -1);
+  tokens.push({ word, em });
+  if (closes) em = false;
+}
+---
+
+<Tag class:list={['split', className]} data-split style={`--d:${delay}`} id={id}>
+  {tokens.map((t, i) => (
+    <>
+      <span class="w"><span style={`--i:${i}`}>{t.em ? <em>{t.word}</em> : t.word}</span></span>{i < tokens.length - 1 ? ' ' : ''}
+    </>
+  ))}
+</Tag>

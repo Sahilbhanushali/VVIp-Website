@@ -1,0 +1,400 @@
+---
+import Logo from './Logo.astro';
+import Icon from './Icon.astro';
+import { nav, site } from '../data/site';
+import { getPosts, formatDate } from '../utils/blog';
+
+interface Props {
+  isHome?: boolean;
+}
+const { isHome = false } = Astro.props;
+// On the home page use pure fragments so navigation stays in-page.
+const href = (h: string) => (isHome && h.startsWith('/#') ? h.slice(1) : h);
+const posts = await getPosts();
+---
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header" data-header>
+  <div class="container site-header__inner">
+    <a href={isHome ? '#hero' : '/'} class="site-header__brand" aria-label="VVIP Properties — home">
+      <Logo height={40} eager />
+    </a>
+
+    <nav class="site-header__nav" aria-label="Primary">
+      <ul role="list">
+        {nav.map((item) =>
+          item.label === 'Blogs' ? (
+            <li class="has-drop">
+              <a href={href(item.href)} data-nav-link aria-haspopup="true">
+                {item.label}
+                <svg class="drop-caret" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4" /></svg>
+              </a>
+              <div class="drop">
+                <p class="drop__label">Latest articles</p>
+                <ul role="list">
+                  {posts.map((p) => (
+                    <li>
+                      <a href={`/${p.id}.html`} class="drop__link">
+                        <span class="drop__date">{formatDate(p.data.pubDate)}</span>
+                        <span class="drop__title">{p.data.cardTitle}</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+                <a href={href('/#blog-sec')} class="drop__all">All articles →</a>
+              </div>
+            </li>
+          ) : (
+            <li><a href={href(item.href)} data-nav-link>{item.label}</a></li>
+          ),
+        )}
+      </ul>
+    </nav>
+
+    <div class="site-header__actions">
+      <a class="site-header__phone" href={site.phones[0].href}>
+        <Icon name="phone" size={16} />
+        <span>{site.phones[0].label}</span>
+      </a>
+      <a href={href('/#contact-sec')} class="btn btn--sm site-header__cta" data-open-visit>Schedule a visit</a>
+      <button class="menu-toggle" type="button" aria-controls="site-menu" aria-expanded="false" data-menu-open aria-label="Open menu">
+        <span class="menu-toggle__lines" aria-hidden="true"><span></span><span></span></span>
+        <span class="menu-toggle__label" aria-hidden="true">Menu</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<dialog id="site-menu" class="menu" aria-label="Site menu">
+  <div class="menu__panel">
+    <div class="menu__top container">
+      <Logo height={40} />
+      <button class="menu__close" type="button" data-menu-close>
+        <span>Close</span>
+        <Icon name="close" size={22} />
+      </button>
+    </div>
+    <div class="menu__body container">
+      <nav aria-label="Menu">
+        <ol class="menu__links" role="list">
+          {nav.map((item, i) => (
+            <li style={`--i:${i}`}>
+              <a href={href(item.href)} data-menu-link>
+                <span class="menu__num">0{i + 1}</span>
+                <span class="menu__label">{item.label}</span>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+      <aside class="menu__aside">
+        <p class="eyebrow">{site.tagline}</p>
+        <p class="menu__about">
+          This isn’t just an address, it’s an experience for those who lead, inspire, and redefine success. From the grand
+          arrival to every flawless detail, VVIP is more than a title, it’s a feeling. Here, ambition meets prestige.
+          You’ve earned this. Welcome to VVIP: where the extraordinary do business.
+        </p>
+        <dl class="menu__contact">
+          <div>
+            <dt>Visit</dt>
+            <dd>{site.address}</dd>
+          </div>
+          <div>
+            <dt>Call</dt>
+            <dd>{site.phones.map((p) => <a href={p.href}>{p.label}</a>)}</dd>
+          </div>
+          <div>
+            <dt>Write</dt>
+            <dd>{site.emails.map((e) => <a href={e.href}>{e.label}</a>)}</dd>
+          </div>
+        </dl>
+        <ul class="menu__social" role="list">
+          {site.socials.map((s) => (
+            <li>
+              <a href={s.href} target="_blank" rel="noopener noreferrer" aria-label={`${s.name} (opens in a new tab)`}>
+                <Icon name={s.icon} size={18} />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </aside>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  .site-header {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 50;
+    height: var(--header-h);
+    color: var(--white);
+    transition:
+      transform 600ms var(--ease-out),
+      background-color 500ms ease,
+      box-shadow 500ms ease;
+  }
+  .site-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(13, 13, 12, 0.55), transparent);
+    pointer-events: none;
+    transition: opacity 500ms ease;
+  }
+  .site-header.is-solid {
+    background: rgba(13, 13, 12, 0.86);
+    backdrop-filter: saturate(1.4) blur(14px);
+    -webkit-backdrop-filter: saturate(1.4) blur(14px);
+    box-shadow: 0 1px 0 var(--line-dark);
+  }
+  .site-header.is-solid::before { opacity: 0; }
+  .site-header.is-hidden { transform: translateY(-100%); }
+
+  .site-header__inner {
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+  .site-header__brand img { width: auto; height: 34px; }
+  @media (min-width: 768px) { .site-header__brand img { height: 40px; } }
+
+  .site-header__nav { display: none; }
+  @media (min-width: 1100px) { .site-header__nav { display: block; } }
+  .site-header__nav ul { display: flex; gap: clamp(1.25rem, 2.2vw, 2.5rem); }
+  .site-header__nav a {
+    position: relative;
+    font-family: var(--ff-title);
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.8);
+    padding-block: 0.5rem;
+    transition: color 300ms ease;
+  }
+  .site-header__nav a::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 1px;
+    background: var(--bronze);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 500ms var(--ease-out);
+  }
+  .site-header__nav a:hover, .site-header__nav a[aria-current='true'] { color: var(--white); }
+  .site-header__nav a:hover::after, .site-header__nav a[aria-current='true']::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  .has-drop { position: relative; }
+  .has-drop > a { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .drop-caret { transition: transform 400ms var(--ease-out); }
+  .has-drop:hover .drop-caret, .has-drop:focus-within .drop-caret { transform: rotate(180deg); }
+  .drop {
+    position: absolute;
+    top: calc(100% + 1rem);
+    left: 50%;
+    width: 22rem;
+    padding: 1.25rem;
+    border-radius: var(--radius-lg);
+    background: rgba(13, 13, 12, 0.94);
+    border: 1px solid var(--line-dark);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, 10px);
+    transition: opacity 350ms ease, transform 500ms var(--ease-out), visibility 350ms;
+  }
+  .drop::before { content: ''; position: absolute; left: 0; right: 0; top: -1rem; height: 1rem; }
+  .has-drop:hover .drop, .has-drop:focus-within .drop { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+  .site-header__nav .drop a::after { display: none; }
+  .drop__label { font-family: var(--ff-title); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; color: var(--bronze); margin-bottom: 0.5rem; }
+  .site-header__nav .drop__link {
+    display: grid;
+    gap: 0.2rem;
+    padding: 0.75rem 0.85rem;
+    margin-inline: -0.85rem;
+    border-radius: var(--radius);
+    text-transform: none;
+    letter-spacing: 0;
+    transition: background-color 300ms ease;
+  }
+  .site-header__nav .drop__link:hover { background: rgba(255, 255, 255, 0.06); }
+  .drop__date { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255, 255, 255, 0.5); }
+  .drop__title { font-size: 0.92rem; font-weight: 500; line-height: 1.35; color: var(--white); }
+  .site-header__nav .drop__all { display: inline-block; margin-top: 0.75rem; color: var(--bronze-light); font-size: 0.72rem; }
+  .site-header__actions { display: flex; align-items: center; gap: 1rem; }
+  .site-header__phone {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+    transition: color 300ms ease;
+  }
+  .site-header__phone:hover { color: var(--bronze-light); }
+  @media (min-width: 1400px) { .site-header__phone { display: inline-flex; } }
+  .site-header__cta { display: none; }
+  @media (min-width: 640px) { .site-header__cta { display: inline-flex; } }
+
+  .menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 44px;
+    padding-inline: 0.25rem;
+    font-family: var(--ff-title);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+  .menu-toggle__lines { display: grid; gap: 6px; width: 26px; }
+  .menu-toggle__lines span {
+    height: 1.5px;
+    background: currentColor;
+    transition: transform 450ms var(--ease-out), width 450ms var(--ease-out);
+    justify-self: end;
+    width: 100%;
+  }
+  .menu-toggle__lines span:last-child { width: 65%; }
+  .menu-toggle:hover .menu-toggle__lines span:last-child { width: 100%; }
+  @media (max-width: 479px) { .menu-toggle__label { display: none; } }
+
+  /* ---------- Full-screen menu ---------- */
+  .menu {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--on-dark-muted);
+    overflow: hidden;
+  }
+  .menu::backdrop { background: transparent; }
+  .menu__panel {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--ink);
+    overflow-y: auto;
+    clip-path: inset(0 0 100% 0);
+    transition: clip-path 800ms var(--ease-in-out);
+  }
+  .menu.is-open .menu__panel { clip-path: inset(0 0 0 0); }
+  .menu__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: var(--header-h);
+    flex: none;
+  }
+  .menu__top img { height: 34px; width: auto; }
+  .menu__close {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 44px;
+    font-family: var(--ff-title);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+  .menu__close svg { transition: transform 500ms var(--ease-out); }
+  .menu__close:hover svg { transform: rotate(90deg); }
+
+  .menu__body {
+    flex: 1;
+    display: grid;
+    gap: 3rem;
+    align-content: center;
+    padding-block: 2rem 3rem;
+  }
+  @media (min-width: 992px) {
+    .menu__body { grid-template-columns: 1.3fr 0.7fr; gap: 6rem; align-items: center; }
+  }
+  .menu__links { display: grid; gap: 0.25rem; }
+  .menu__links a {
+    display: flex;
+    align-items: baseline;
+    gap: 1.25rem;
+    padding-block: 0.4rem;
+    color: var(--white);
+  }
+  .menu__num {
+    font-family: var(--ff-title);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--bronze);
+    letter-spacing: 0.1em;
+  }
+  .menu__label {
+    font-family: var(--ff-title);
+    font-size: clamp(2.1rem, 1.4rem + 3.6vw, 4.5rem);
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    transition: color 400ms ease, transform 600ms var(--ease-out);
+  }
+  .menu__links a:hover .menu__label,
+  .menu__links a:focus-visible .menu__label { color: var(--bronze-light); transform: translateX(0.75rem); }
+
+  .menu__links li, .menu__aside {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 600ms var(--ease-out), transform 800ms var(--ease-out);
+  }
+  .menu.is-open .menu__links li, .menu.is-open .menu__aside {
+    opacity: 1;
+    transform: none;
+    transition-delay: calc(300ms + var(--i, 5) * 70ms);
+  }
+
+  .menu__aside { display: grid; gap: 1.75rem; align-content: start; }
+  .menu__about { font-size: 0.95rem; line-height: 1.8; max-width: 46ch; }
+  .menu__contact { display: grid; gap: 1.25rem; }
+  .menu__contact dt {
+    font-family: var(--ff-title);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+    margin-bottom: 0.3rem;
+  }
+  .menu__contact dd { color: var(--on-dark); display: grid; gap: 0.15rem; }
+  .menu__contact a:hover { color: var(--bronze-light); }
+  .menu__social { display: flex; gap: 0.75rem; }
+  .menu__social a {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--line-dark);
+    border-radius: 50%;
+    color: var(--white);
+    transition: background-color 400ms ease, border-color 400ms ease, color 400ms ease;
+  }
+  .menu__social a:hover { background: var(--bronze); border-color: var(--bronze); color: var(--ink); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-header, .menu__panel, .menu__links li, .menu__aside { transition: none; }
+  }
+</style>

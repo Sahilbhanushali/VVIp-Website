@@ -1,0 +1,152 @@
+---
+import { Font } from 'astro:assets';
+import '../styles/global.css';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import VisitDialog from '../components/VisitDialog.astro';
+import IntroLoader from '../components/IntroLoader.astro';
+import Icon from '../components/Icon.astro';
+import { site } from '../data/site';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Public path of this page, e.g. `/` or `/blog-details.html`. */
+  path: string;
+  keywords?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  ogType?: 'website' | 'article';
+  isHome?: boolean;
+  jsonLd?: Record<string, unknown>[];
+  /** Absolute URL of an image to preload with high priority (LCP). */
+  preloadImage?: { srcset: string; sizes: string; type?: string };
+}
+
+const {
+  title,
+  description,
+  path,
+  keywords,
+  ogTitle = title,
+  ogDescription = description,
+  ogImage = '/og-image.jpg',
+  ogType = 'website',
+  isHome = false,
+  jsonLd = [],
+  preloadImage,
+} = Astro.props;
+
+const canonical = new URL(path, site.url).href;
+const ogImageUrl = new URL(ogImage, site.url).href;
+---
+
+<!doctype html>
+<html lang="en-IN" id="top">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {keywords && <meta name="keywords" content={keywords} />}
+    <meta name="author" content={site.name} />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" href={canonical} hreflang="en-in" />
+
+    <meta property="og:title" content={ogTitle} />
+    <meta property="og:description" content={ogDescription} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_IN" />
+    <meta property="og:site_name" content={site.name} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={ogTitle} />
+    <meta name="twitter:description" content={ogDescription} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    <link rel="icon" href="/assets/img/favicons/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicons/favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/favicons/apple-touch-icon.png" />
+    <link rel="manifest" href="/assets/img/favicons/site.webmanifest" />
+    <meta name="theme-color" content="#0d0d0c" />
+
+    {preloadImage && (
+      <link rel="preload" as="image" imagesrcset={preloadImage.srcset} imagesizes={preloadImage.sizes} type={preloadImage.type} fetchpriority="high" />
+    )}
+    <Font cssVariable="--font-title" preload />
+    <Font cssVariable="--font-body" preload={[{ style: 'normal' }]} />
+
+    <script is:inline define:vars={{ isHome }}>
+      (function () {
+        var d = document.documentElement;
+        d.classList.add('js');
+        try {
+          if (isHome && !sessionStorage.getItem('vvip-intro') && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            d.classList.add('has-intro');
+            sessionStorage.setItem('vvip-intro', '1');
+          }
+        } catch (e) {}
+      })();
+    </script>
+
+    {jsonLd.map((data) => <script type="application/ld+json" set:html={JSON.stringify(data)} />)}
+  </head>
+  <body>
+    {isHome && <IntroLoader />}
+    <SiteHeader isHome={isHome} />
+    <main id="main">
+      <slot />
+    </main>
+    <SiteFooter isHome={isHome} />
+    <VisitDialog />
+
+    <button class="scroll-top" type="button" aria-label="Back to top" data-scroll-top>
+      <svg class="scroll-top__ring" viewBox="0 0 48 48" aria-hidden="true">
+        <circle cx="24" cy="24" r="22" pathLength="100" />
+        <circle cx="24" cy="24" r="22" pathLength="100" data-progress />
+      </svg>
+      <Icon name="arrow-up" size={18} />
+    </button>
+
+    <script>
+      import '../scripts/main';
+    </script>
+  </body>
+</html>
+
+<style>
+  .scroll-top {
+    position: fixed;
+    right: clamp(1rem, 2.5vw, 2rem);
+    bottom: clamp(1rem, 2.5vw, 2rem);
+    z-index: 40;
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(13, 13, 12, 0.78);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--white);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px);
+    transition: opacity 400ms ease, transform 500ms var(--ease-out), visibility 400ms, background-color 300ms ease;
+  }
+  .scroll-top.is-visible { opacity: 1; visibility: visible; transform: none; }
+  .scroll-top:hover { background: var(--bronze); color: var(--ink); }
+  .scroll-top__ring { position: absolute; inset: 0; transform: rotate(-90deg); }
+  .scroll-top__ring circle { fill: none; stroke-width: 1.5; }
+  .scroll-top__ring circle:first-child { stroke: rgba(255, 255, 255, 0.15); }
+  .scroll-top__ring circle:last-child {
+    stroke: var(--bronze);
+    stroke-dasharray: 100;
+    stroke-dashoffset: calc(100 - var(--progress, 0) * 100);
+  }
+</style>

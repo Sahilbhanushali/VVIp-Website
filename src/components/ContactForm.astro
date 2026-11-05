@@ -1,0 +1,154 @@
+---
+/**
+ * Enquiry form. Posts to the existing `mail.php` endpoint (PHPMailer/SMTP2Go)
+ * exactly like the original jQuery `.ajax-contact` handler did:
+ * url-encoded POST of name / email / phone / subject / message, JSON reply
+ * `{ success, message, errors }`. Without JS it falls back to a normal POST.
+ */
+import Icon from './Icon.astro';
+import { enquiryTypes } from '../data/site';
+
+interface Props {
+  idPrefix: string;
+  tone?: 'light' | 'dark';
+  submitLabel?: string;
+}
+const { idPrefix, tone = 'light', submitLabel = 'Submit Message' } = Astro.props;
+const id = (name: string) => `${idPrefix}-${name}`;
+---
+
+<form class:list={['enquiry', `enquiry--${tone}`]} action="/mail.php" method="POST" novalidate data-enquiry>
+  <div class="enquiry__grid">
+    <div class="field">
+      <input id={id('name')} name="name" type="text" autocomplete="name" required minlength="2" placeholder=" "
+        aria-describedby={id('name-error')} />
+      <label for={id('name')}>Your name<span aria-hidden="true">*</span></label>
+      <p class="field__error" id={id('name-error')} data-error-for="name"></p>
+    </div>
+    <div class="field">
+      <input id={id('email')} name="email" type="email" autocomplete="email" required placeholder=" "
+        aria-describedby={id('email-error')} />
+      <label for={id('email')}>Your email<span aria-hidden="true">*</span></label>
+      <p class="field__error" id={id('email-error')} data-error-for="email"></p>
+    </div>
+    <div class="field">
+      <input id={id('phone')} name="phone" type="tel" autocomplete="tel" inputmode="tel" required
+        pattern="\+?[0-9\s\-]{7,15}" placeholder=" " aria-describedby={id('phone-error')} />
+      <label for={id('phone')}>Your number<span aria-hidden="true">*</span></label>
+      <p class="field__error" id={id('phone-error')} data-error-for="phone"></p>
+    </div>
+    <div class="field field--select">
+      <select id={id('subject')} name="subject" aria-describedby={id('subject-error')}>
+        <option value="" selected>Select service type</option>
+        {enquiryTypes.map((t) => <option value={t}>{t}</option>)}
+      </select>
+      <label for={id('subject')}>Interested in</label>
+      <p class="field__error" id={id('subject-error')} data-error-for="subject"></p>
+    </div>
+    <div class="field field--full">
+      <textarea id={id('message')} name="message" rows="4" required minlength="10" placeholder=" "
+        aria-describedby={id('message-error')}></textarea>
+      <label for={id('message')}>Type your message<span aria-hidden="true">*</span></label>
+      <p class="field__error" id={id('message-error')} data-error-for="message"></p>
+    </div>
+  </div>
+
+  <div class="enquiry__footer">
+    <button type="submit" class:list={['btn', tone === 'light' && 'btn--dark']}>
+      <span data-label>{submitLabel}</span>
+      <Icon name="send" size={16} />
+    </button>
+    <p class="enquiry__status" role="status" aria-live="polite" data-status></p>
+  </div>
+</form>
+
+<style>
+  .enquiry {
+    --field-line: rgba(13, 13, 12, 0.18);
+    --field-text: var(--ink);
+    --field-label: #5c5f5f;
+  }
+  .enquiry--dark {
+    --field-line: rgba(255, 255, 255, 0.2);
+    --field-text: var(--white);
+    --field-label: rgba(255, 255, 255, 0.6);
+  }
+  .enquiry__grid {
+    display: grid;
+    gap: 0.5rem 2rem;
+  }
+  @media (min-width: 640px) {
+    .enquiry__grid { grid-template-columns: 1fr 1fr; }
+    .field--full { grid-column: 1 / -1; }
+  }
+
+  .field { position: relative; padding-top: 1.1rem; }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 0.85rem 0 0.7rem;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--field-line);
+    border-radius: 0;
+    color: var(--field-text);
+    font-size: 1rem;
+    transition: border-color 300ms ease;
+    appearance: none;
+  }
+  .field textarea { resize: vertical; min-height: 7rem; }
+  .field select {
+    cursor: pointer;
+    background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+    background-position: calc(100% - 10px) 55%, calc(100% - 5px) 55%;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
+  }
+  .enquiry--dark .field select option { color: var(--ink); }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--bronze); }
+  .field label {
+    position: absolute;
+    left: 0;
+    top: 1.95rem;
+    font-size: 0.95rem;
+    color: var(--field-label);
+    pointer-events: none;
+    transform-origin: left top;
+    transition: transform 350ms var(--ease-out), color 300ms ease;
+  }
+  .field label span { color: var(--bronze); margin-left: 2px; }
+  .field input:focus + label,
+  .field input:not(:placeholder-shown) + label,
+  .field textarea:focus + label,
+  .field textarea:not(:placeholder-shown) + label,
+  .field--select label {
+    transform: translateY(-1.55rem) scale(0.78);
+    color: var(--bronze);
+    letter-spacing: 0.06em;
+  }
+  .enquiry--light .field input:focus + label,
+  .enquiry--light .field input:not(:placeholder-shown) + label,
+  .enquiry--light .field textarea:focus + label,
+  .enquiry--light .field textarea:not(:placeholder-shown) + label,
+  .enquiry--light .field--select label { color: var(--bronze-ink); }
+  .field__error {
+    min-height: 1.6rem;
+    padding-top: 0.3rem;
+    font-size: 0.78rem;
+    color: #d64545;
+  }
+  .enquiry--dark .field__error { color: #ff8a80; }
+  .field.is-invalid input, .field.is-invalid select, .field.is-invalid textarea { border-color: #d64545; }
+
+  .enquiry__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 1.5rem;
+    margin-top: 1.25rem;
+  }
+  .enquiry__status { font-size: 0.92rem; flex: 1 1 16rem; }
+  .enquiry__status.is-success { color: #1f8a4c; }
+  .enquiry--dark .enquiry__status.is-success { color: #7ddc9f; }
+  .enquiry__status.is-error { color: #d64545; }
+  .enquiry--dark .enquiry__status.is-error { color: #ff8a80; }
+</style>

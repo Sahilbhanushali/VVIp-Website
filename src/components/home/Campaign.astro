@@ -1,0 +1,221 @@
+---
+/**
+ * "VVIPs, it's time to SAY YES" campaign carousel — the original hero
+ * slider, rebuilt as an accessible cross-fading carousel with progress
+ * indicators, swipe, keyboard support and auto-pause.
+ */
+import { Image } from 'astro:assets';
+import Icon from '../Icon.astro';
+import s1 from '../../assets/images/campaign/say-yes-01.jpg';
+import s2 from '../../assets/images/campaign/say-yes-02.jpg';
+import s3 from '../../assets/images/campaign/say-yes-03.jpg';
+
+const slides = [
+  { src: s1, alt: 'NeoVista Vapi luxury commercial property — VVIPs, it’s time to Say Yes' },
+  { src: s2, alt: 'NeoVista Vapi business towers — VVIPs, it’s time to Say Yes' },
+  { src: s3, alt: 'NeoVista Vapi luxury offices — VVIPs, it’s time to Say Yes' },
+];
+---
+
+<section id="campaign" class="campaign" aria-roledescription="carousel" aria-label="Say Yes campaign" data-carousel>
+  <div class="campaign__viewport" aria-live="off" data-carousel-viewport>
+    {slides.map((slide, i) => (
+      <figure
+        class:list={['campaign__slide', i === 0 && 'is-active']}
+        role="group"
+        aria-roledescription="slide"
+        aria-label={`${i + 1} of ${slides.length}`}
+        aria-hidden={i === 0 ? 'false' : 'true'}
+        data-slide
+      >
+        <Image
+          src={slide.src}
+          format="webp"
+          widths={[640, 960, 1280, 1920, 2560]}
+          sizes="100vw"
+          quality={72}
+          alt={slide.alt}
+          loading="lazy"
+          decoding="async"
+        />
+      </figure>
+    ))}
+  </div>
+
+  <div class="campaign__controls container">
+    <div class="campaign__dots" role="group" aria-label="Choose slide">
+      {slides.map((_, i) => (
+        <button type="button" class="campaign__dot" aria-label={`Show slide ${i + 1}`} aria-current={i === 0 ? 'true' : 'false'} data-dot={i}>
+          <span class="campaign__num">0{i + 1}</span>
+          <span class="campaign__bar"><span></span></span>
+        </button>
+      ))}
+    </div>
+    <div class="campaign__arrows">
+      <button type="button" class="campaign__btn" aria-label="Pause slideshow" data-toggle>
+        <svg class="i-pause" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
+        <svg class="i-play" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M7 5l12 7-12 7z" fill="currentColor" /></svg>
+      </button>
+      <button type="button" class="campaign__btn" aria-label="Previous slide" data-prev><Icon name="arrow-left" size={18} /></button>
+      <button type="button" class="campaign__btn" aria-label="Next slide" data-next><Icon name="arrow-right" size={18} /></button>
+    </div>
+  </div>
+</section>
+
+<style>
+  .campaign {
+    --interval: 5200ms;
+    position: relative;
+    background: var(--ink);
+    padding-bottom: 1.25rem;
+  }
+  .campaign__viewport {
+    position: relative;
+    aspect-ratio: 2560 / 1441;
+    overflow: hidden;
+    touch-action: pan-y;
+    background: #000;
+  }
+  .campaign__slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 1200ms var(--ease-in-out);
+  }
+  .campaign__slide.is-active { opacity: 1; }
+  .campaign__slide :global(img) { width: 100%; height: 100%; object-fit: cover; }
+  @media (prefers-reduced-motion: no-preference) {
+    .campaign__slide :global(img) { transform: scale(1.06); transition: transform 7000ms linear; }
+    .campaign__slide.is-active :global(img) { transform: scale(1); }
+  }
+
+  .campaign__controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding-top: 1.25rem;
+  }
+  .campaign__dots { display: flex; gap: clamp(0.75rem, 2vw, 1.75rem); flex: 1; max-width: 560px; }
+  .campaign__dot {
+    flex: 1;
+    display: grid;
+    gap: 0.6rem;
+    min-height: 44px;
+    align-content: center;
+    text-align: left;
+    color: rgba(255, 255, 255, 0.5);
+    transition: color 400ms ease;
+  }
+  .campaign__dot[aria-current='true'] { color: var(--white); }
+  .campaign__num { font-family: var(--ff-title); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.16em; }
+  .campaign__bar { display: block; height: 1px; background: rgba(255, 255, 255, 0.18); overflow: hidden; }
+  .campaign__bar span {
+    display: block;
+    height: 100%;
+    background: var(--bronze-gradient);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  .campaign__dot[aria-current='true'] .campaign__bar span { transform: scaleX(1); }
+  .campaign.is-playing .campaign__dot[aria-current='true'] .campaign__bar span {
+    animation: campaign-progress var(--interval) linear both;
+  }
+  .campaign.is-paused .campaign__dot[aria-current='true'] .campaign__bar span { animation-play-state: paused; }
+  @keyframes campaign-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+  .campaign__arrows { display: flex; gap: 0.5rem; }
+  .campaign__btn {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--white);
+    transition: background-color 300ms ease, border-color 300ms ease, color 300ms ease;
+  }
+  .campaign__btn:hover { background: var(--bronze); border-color: var(--bronze); color: var(--ink); }
+  .campaign__btn .i-play { display: none; }
+  .campaign.is-stopped .campaign__btn .i-play { display: block; }
+  .campaign.is-stopped .campaign__btn .i-pause { display: none; }
+  @media (max-width: 479px) { .campaign__btn[data-toggle] { display: none; } }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-carousel]');
+  if (root) {
+    const slides = Array.from(root.querySelectorAll<HTMLElement>('[data-slide]'));
+    const dots = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-dot]'));
+    const toggle = root.querySelector<HTMLButtonElement>('[data-toggle]');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let index = 0;
+    let stopped = reduced; // stopped by the user (or reduced motion)
+    let hovering = false;
+    let inView = false;
+
+    // The active progress bar's CSS animation is the timer: when it ends we
+    // advance. Pausing the animation therefore pauses the slideshow in sync.
+    const sync = () => {
+      const paused = hovering || !inView || document.hidden;
+      root.classList.toggle('is-playing', !stopped);
+      root.classList.toggle('is-paused', paused);
+      root.classList.toggle('is-stopped', stopped);
+    };
+
+    const go = (next: number) => {
+      index = (next + slides.length) % slides.length;
+      slides.forEach((s, i) => {
+        s.classList.toggle('is-active', i === index);
+        s.setAttribute('aria-hidden', String(i !== index));
+      });
+      dots.forEach((d, i) => d.setAttribute('aria-current', String(i === index)));
+      const bar = dots[index]?.querySelector<HTMLElement>('.campaign__bar span');
+      if (bar) {
+        bar.style.animation = 'none';
+        void bar.offsetWidth; // restart the animation
+        bar.style.animation = '';
+      }
+      sync();
+    };
+
+    root.addEventListener('animationend', (e) => {
+      if (e.animationName === 'campaign-progress') go(index + 1);
+    });
+    root.querySelector('[data-prev]')?.addEventListener('click', () => go(index - 1));
+    root.querySelector('[data-next]')?.addEventListener('click', () => go(index + 1));
+    dots.forEach((d, i) => d.addEventListener('click', () => go(i)));
+    toggle?.addEventListener('click', () => {
+      stopped = !stopped;
+      toggle.setAttribute('aria-label', stopped ? 'Play slideshow' : 'Pause slideshow');
+      sync();
+    });
+
+    root.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') { hovering = true; sync(); } });
+    root.addEventListener('pointerleave', () => { hovering = false; sync(); });
+    root.addEventListener('focusin', () => { hovering = true; sync(); });
+    root.addEventListener('focusout', () => { hovering = false; sync(); });
+    document.addEventListener('visibilitychange', sync);
+    root.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') go(index + 1);
+      if (e.key === 'ArrowLeft') go(index - 1);
+    });
+
+    // Swipe
+    const viewport = root.querySelector<HTMLElement>('[data-carousel-viewport]');
+    let startX = 0;
+    let startY = 0;
+    viewport?.addEventListener('pointerdown', (e) => { startX = e.clientX; startY = e.clientY; });
+    viewport?.addEventListener('pointerup', (e) => {
+      const dx = e.clientX - startX;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(e.clientY - startY)) go(index + (dx < 0 ? 1 : -1));
+    });
+
+    new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
+      sync();
+    }, { threshold: 0.35 }).observe(root);
+
+    sync();
+  }
+</script>

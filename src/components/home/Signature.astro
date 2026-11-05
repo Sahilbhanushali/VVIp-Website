@@ -1,0 +1,420 @@
+---
+/**
+ * Featured property (#property-sec): an editorial NeoVista showcase card
+ * followed by an interactive selector for the four signature arrival
+ * experiences (image stage + expanding list, auto-advancing while visible).
+ */
+import { Image } from 'astro:assets';
+import SplitText from '../SplitText.astro';
+import Icon from '../Icon.astro';
+import facade from '../../assets/images/neovista-facade.jpg';
+import { signatureFeatures, property, site } from '../../data/site';
+---
+
+<section id="property-sec" class="section section--paper signature" aria-labelledby="signature-title">
+  <div class="container">
+    <header class="section-head section-head--split">
+      <div class="section-head__title">
+        <p class="eyebrow" data-reveal>Listing</p>
+        <SplitText id="signature-title" class="h-section" text="Featured *Property*" />
+      </div>
+      <p class="lead" data-reveal style="--d:2">
+        We are a real estate firm with over 26+ years of legacy, and our main goal is to provide amazing locations to
+        our partners and clients.
+      </p>
+    </header>
+
+    <!-- Featured listing -->
+    <article class="listing" aria-labelledby="listing-title">
+      <a href="/neovista.html" class="listing__media" data-reveal="clip" tabindex="-1" aria-hidden="true">
+        <Image
+          src={facade}
+          alt=""
+          widths={[640, 960, 1280, 1600]}
+          sizes="(min-width: 1100px) 820px, calc(100vw - 2.25rem)"
+          quality={70}
+          format="webp"
+          loading="lazy"
+          decoding="async"
+        />
+        <span class="listing__badge">Featured</span>
+        <span class="listing__view" aria-hidden="true">View property <Icon name="arrow-right" size={16} /></span>
+      </a>
+      <div class="listing__body" data-reveal style="--d:1">
+        <p class="listing__loc"><Icon name="pin" size={16} /> {property.location}</p>
+        <h3 id="listing-title" class="listing__title"><a href="/neovista.html">{property.name}</a></h3>
+        <p class="listing__cat">{property.category}</p>
+        <p class="listing__text">
+          A visionary twin tower marvel by {property.developer} — designer offices, retail showrooms and a dedicated
+          healthcare &amp; hospitality tower under one iconic address.
+        </p>
+        <ul class="listing__spaces" role="list">
+          {property.spaces.map((s) => <li>{s}</li>)}
+        </ul>
+        <dl class="listing__meta">
+          <div><dt>Developer</dt><dd>{property.developer}</dd></div>
+          <div><dt>Towers</dt><dd>A &amp; B</dd></div>
+          <div><dt>Pricing</dt><dd>{property.price}</dd></div>
+        </dl>
+        <div class="listing__actions">
+          <a href="/neovista.html" class="btn btn--dark">Property details <Icon name="arrow-right" /></a>
+          <a href={site.phones[0].href} class="link-arrow"><Icon name="phone" size={16} /> Call sales</a>
+        </div>
+      </div>
+    </article>
+
+    <!-- Signature experiences -->
+    <div class="exp" data-exp>
+      <div class="exp__stage" aria-hidden="true">
+        {signatureFeatures.map((f, i) => (
+          <div class:list={['exp__shot', i === 0 && 'is-active']} data-shot={i}>
+            <Image
+              src={f.image}
+              alt=""
+              widths={[640, 960, 1280, 1600]}
+              sizes="(min-width: 992px) 56vw, calc(100vw - 2.25rem)"
+              quality={70}
+              format="webp"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        ))}
+        <p class="exp__count"><span data-current>01</span> / 0{signatureFeatures.length}</p>
+      </div>
+
+      <div class="exp__list">
+        <p class="eyebrow" data-reveal>Signature experiences</p>
+        <ol role="list">
+          {signatureFeatures.map((f, i) => (
+            <li class:list={['exp__item', i === 0 && 'is-active']} data-item={i}>
+              <button
+                type="button"
+                class="exp__trigger"
+                aria-expanded={i === 0 ? 'true' : 'false'}
+                aria-controls={`exp-body-${i}`}
+                data-trigger={i}
+              >
+                <span class="exp__no">{f.no}</span>
+                <span class="exp__head">
+                  <span class="exp__sub">{f.subtitle}</span>
+                  <span class="exp__title">{f.title}</span>
+                </span>
+                <span class="exp__plus" aria-hidden="true"></span>
+              </button>
+              <div class="exp__body" id={`exp-body-${i}`} role="region" aria-label={f.subtitle}>
+                <div class="exp__body-inner">
+                  <p>{f.text}</p>
+                  <span class="exp__progress" aria-hidden="true"><span></span></span>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* ---------- Featured listing ---------- */
+  .listing {
+    position: relative;
+    display: grid;
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: 0 40px 80px -50px rgba(13, 13, 12, 0.45);
+  }
+  @media (min-width: 1100px) {
+    .listing { grid-template-columns: 1.35fr 1fr; }
+  }
+  .listing__media {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: var(--charcoal);
+  }
+  @media (min-width: 1100px) { .listing__media { aspect-ratio: auto; min-height: 100%; } }
+  .listing__media :global(img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 60% 50%;
+    transition: transform 1600ms var(--ease-out);
+  }
+  .listing:hover .listing__media :global(img) { transform: scale(1.05); }
+  .listing__badge {
+    position: absolute;
+    top: 1.25rem;
+    left: 1.25rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    background: var(--bronze);
+    color: var(--ink);
+    font-family: var(--ff-title);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .listing__view {
+    position: absolute;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.1rem;
+    border-radius: 999px;
+    background: rgba(13, 13, 12, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--white);
+    font-size: 0.8rem;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 500ms ease, transform 600ms var(--ease-out);
+  }
+  .listing:hover .listing__view { opacity: 1; transform: none; }
+  .listing__body {
+    display: grid;
+    gap: 1.1rem;
+    align-content: center;
+    padding: clamp(1.5rem, 1rem + 2.5vw, 3.25rem);
+  }
+  .listing__loc {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--bronze-ink);
+    font-weight: 600;
+  }
+  .listing__title {
+    font-size: clamp(2.2rem, 1.6rem + 2.6vw, 3.75rem);
+    font-weight: 300;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  .listing__title a { transition: color 300ms ease; }
+  .listing__title a:hover { color: var(--bronze-ink); }
+  .listing__cat {
+    font-family: var(--ff-title);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--body-color);
+  }
+  .listing__text { color: #4f5252; }
+  .listing__spaces { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .listing__spaces li {
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    background: var(--paper);
+    font-size: 0.8rem;
+    color: var(--ink);
+  }
+  .listing__meta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    padding-block: 1.1rem;
+    border-block: 1px solid var(--line);
+  }
+  .listing__meta dt {
+    font-family: var(--ff-title);
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--body-color);
+    margin-bottom: 0.25rem;
+  }
+  .listing__meta dd { color: var(--ink); font-size: 0.9rem; font-weight: 600; line-height: 1.35; }
+  .listing__actions { position: relative; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.75rem; }
+
+  /* ---------- Experiences ---------- */
+  .exp {
+    display: grid;
+    gap: var(--grid-gap);
+    margin-top: var(--section);
+  }
+  @media (min-width: 992px) {
+    .exp { grid-template-columns: 1.15fr 0.85fr; gap: clamp(2.5rem, 5vw, 5rem); align-items: center; }
+  }
+  .exp__stage {
+    position: relative;
+    display: grid;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--charcoal);
+  }
+  .exp__shot {
+    grid-area: 1 / 1;
+    position: relative;
+    clip-path: inset(100% 0 0 0);
+    transition: clip-path 1000ms var(--ease-in-out);
+  }
+  .exp__shot.is-active { clip-path: inset(0 0 0 0); z-index: 1; }
+  .exp__shot.was-active { clip-path: inset(0 0 0 0); }
+  .exp__shot :global(img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.1);
+    transition: transform 1800ms var(--ease-out);
+  }
+  .exp__shot.is-active :global(img) { transform: scale(1); }
+  .exp__count {
+    position: absolute;
+    left: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 2;
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(13, 13, 12, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    font-family: var(--ff-title);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: rgba(255, 255, 255, 0.65);
+  }
+  .exp__count span { color: var(--white); }
+
+  .exp__list { display: grid; gap: 1.25rem; }
+  .exp__list ol { border-top: 1px solid rgba(13, 13, 12, 0.12); }
+  .exp__item { border-bottom: 1px solid rgba(13, 13, 12, 0.12); }
+  .exp__trigger {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 1.25rem;
+    width: 100%;
+    padding-block: 1.25rem;
+    text-align: left;
+  }
+  .exp__no {
+    font-family: var(--ff-title);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--bronze-ink);
+  }
+  .exp__head { display: grid; gap: 0.25rem; }
+  .exp__sub {
+    font-family: var(--ff-title);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--body-color);
+  }
+  .exp__title {
+    font-family: var(--ff-title);
+    font-size: clamp(1.15rem, 1rem + 0.8vw, 1.6rem);
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: rgba(13, 13, 12, 0.7);
+    transition: color 400ms ease;
+  }
+  .exp__item.is-active .exp__title, .exp__trigger:hover .exp__title { color: var(--ink); }
+  .exp__plus { position: relative; width: 14px; height: 14px; }
+  .exp__plus::before, .exp__plus::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; top: 50%;
+    height: 1px;
+    background: var(--ink);
+    transition: transform 500ms var(--ease-out);
+  }
+  .exp__plus::after { transform: rotate(90deg); }
+  .exp__item.is-active .exp__plus::after { transform: rotate(0); }
+
+  .exp__body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 600ms var(--ease-out);
+  }
+  .exp__item.is-active .exp__body { grid-template-rows: 1fr; }
+  .exp__body-inner { overflow: hidden; }
+  .exp__body p { padding: 0 2rem 1.25rem 2.6rem; color: #4f5252; }
+  .exp__progress { display: block; height: 1px; margin: 0 0 -1px; overflow: hidden; }
+  .exp__progress span {
+    display: block;
+    height: 100%;
+    background: var(--bronze-gradient);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  .exp.is-playing .exp__item.is-active .exp__progress span { animation: exp-progress 6500ms linear both; }
+  .exp.is-paused .exp__item.is-active .exp__progress span { animation-play-state: paused; }
+  @keyframes exp-progress { to { transform: scaleX(1); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .exp__shot, .exp__shot :global(img), .exp__body { transition: none; }
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-exp]');
+  if (root) {
+    const shots = Array.from(root.querySelectorAll<HTMLElement>('[data-shot]'));
+    const items = Array.from(root.querySelectorAll<HTMLElement>('[data-item]'));
+    const triggers = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-trigger]'));
+    const counter = root.querySelector<HTMLElement>('[data-current]');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let active = 0;
+    let autoplay = !reduced;
+    let inView = false;
+    let hovering = false;
+
+    const sync = () => {
+      root.classList.toggle('is-playing', autoplay);
+      root.classList.toggle('is-paused', !inView || hovering || document.hidden);
+    };
+
+    const select = (i: number) => {
+      if (i !== active) {
+        shots.forEach((s, n) => {
+          s.classList.toggle('was-active', n === active);
+          s.classList.toggle('is-active', n === i);
+        });
+      }
+      items.forEach((it, n) => it.classList.toggle('is-active', n === i));
+      triggers.forEach((t, n) => t.setAttribute('aria-expanded', String(n === i)));
+      if (counter) counter.textContent = String(i + 1).padStart(2, '0');
+      active = i;
+      // restart progress animation
+      const bar = items[i].querySelector<HTMLElement>('.exp__progress span');
+      if (bar) { bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = ''; }
+      sync();
+    };
+
+    triggers.forEach((t, i) =>
+      t.addEventListener('click', () => {
+        autoplay = false; // the visitor took control
+        select(i);
+      }),
+    );
+    root.addEventListener('animationend', (e) => {
+      if (e.animationName === 'exp-progress' && autoplay) select((active + 1) % items.length);
+    });
+    root.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') { hovering = true; sync(); } });
+    root.addEventListener('pointerleave', () => { hovering = false; sync(); });
+    document.addEventListener('visibilitychange', sync);
+    new IntersectionObserver(([e]) => { inView = e.isIntersecting; sync(); }, { threshold: 0.4 }).observe(root);
+    sync();
+  }
+</script>

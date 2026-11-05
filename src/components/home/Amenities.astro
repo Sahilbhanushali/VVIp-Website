@@ -1,0 +1,216 @@
+---
+/**
+ * Amenities gallery — replaces the Swiper slider with a native scroll-snap
+ * strip (swipe/trackpad/keyboard friendly) plus arrow buttons and a
+ * progress indicator.
+ */
+import { Image } from 'astro:assets';
+import SplitText from '../SplitText.astro';
+import Icon from '../Icon.astro';
+import { amenities } from '../../data/site';
+---
+
+<section class="section section--ink amenities" aria-labelledby="amenities-title" data-amenities>
+  <div class="container">
+    <header class="section-head section-head--split">
+      <div class="amenities__head">
+        <p class="eyebrow" data-reveal>Facilities</p>
+        <SplitText id="amenities-title" class="h-section" text="Real *Amenities*" />
+      </div>
+      <div class="amenities__intro">
+        <p class="lead" data-reveal style="--d:2">
+          We are a real estate firm with over 26+ years of expertise, and our main goal is to provide amazing locations
+          to our partners and clients.
+        </p>
+        <div class="amenities__nav" data-reveal style="--d:3">
+          <button type="button" class="amenities__btn" aria-label="Scroll amenities left" data-dir="-1">
+            <Icon name="arrow-left" size={18} />
+          </button>
+          <button type="button" class="amenities__btn" aria-label="Scroll amenities right" data-dir="1">
+            <Icon name="arrow-right" size={18} />
+          </button>
+        </div>
+      </div>
+    </header>
+  </div>
+
+  <ul class="amenities__track" role="list" tabindex="0" aria-label="Amenities, scrollable" data-track>
+    {amenities.map((a, i) => (
+      <li class="amenity" data-reveal style={`--d:${Math.min(i, 5)}`}>
+        <Image
+          src={a.image}
+          alt=""
+          widths={[320, 480, 640]}
+          sizes="(min-width: 768px) 300px, 72vw"
+          quality={72}
+          format="webp"
+          loading="lazy"
+          decoding="async"
+          class="amenity__img"
+        />
+        <div class="amenity__content">
+          <img class="amenity__icon" src={`/icons/amenities/${a.icon}.svg`} alt="" width="44" height="44" loading="lazy" decoding="async" />
+          <h3 class="amenity__name">{a.name}</h3>
+        </div>
+        <span class="amenity__index" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+      </li>
+    ))}
+  </ul>
+
+  <div class="container">
+    <div class="amenities__progress" aria-hidden="true"><span data-progress></span></div>
+  </div>
+</section>
+
+<style>
+  .amenities { overflow: hidden; }
+  .amenities__head { display: grid; gap: 1.5rem; }
+  .amenities__intro { display: grid; gap: 2rem; }
+  .amenities__nav { display: flex; gap: 0.5rem; }
+  .amenities__btn {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--white);
+    transition: background-color 300ms ease, border-color 300ms ease, color 300ms ease, opacity 300ms ease;
+  }
+  .amenities__btn:hover:not(:disabled) { background: var(--bronze); border-color: var(--bronze); color: var(--ink); }
+  .amenities__btn:disabled { opacity: 0.3; cursor: default; }
+
+  .amenities__track {
+    --edge: max(var(--gutter), calc((100vw - var(--container)) / 2));
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: min(72vw, 300px);
+    gap: clamp(0.75rem, 1.5vw, 1.25rem);
+    padding-inline: var(--edge);
+    scroll-padding-inline: var(--edge);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    padding-bottom: 0.5rem;
+  }
+  .amenities__track::-webkit-scrollbar { display: none; }
+  .amenities__track:focus-visible { outline-offset: -2px; }
+
+  .amenity {
+    position: relative;
+    aspect-ratio: 409 / 640;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    scroll-snap-align: start;
+    background: var(--charcoal);
+    isolation: isolate;
+  }
+  .amenity__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 1200ms var(--ease-out), filter 800ms ease;
+    filter: saturate(0.9);
+  }
+  .amenity::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(13, 13, 12, 0) 35%, rgba(13, 13, 12, 0.92) 100%);
+    transition: opacity 600ms ease;
+  }
+  .amenity:hover .amenity__img { transform: scale(1.07); filter: saturate(1.05); }
+  .amenity__content {
+    position: absolute;
+    left: 1.5rem;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    z-index: 1;
+    display: grid;
+    gap: 1rem;
+    transition: transform 700ms var(--ease-out);
+  }
+  .amenity:hover .amenity__content { transform: translateY(-6px); }
+  .amenity__icon {
+    width: 44px;
+    height: 44px;
+    padding: 8px;
+    border-radius: 50%;
+    background: rgba(13, 13, 12, 0.55);
+    border: 1px solid rgba(252, 194, 128, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .amenity__name {
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--white);
+    letter-spacing: -0.01em;
+  }
+  .amenity__index {
+    position: absolute;
+    top: 1.1rem;
+    right: 1.25rem;
+    z-index: 1;
+    font-family: var(--ff-title);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: rgba(255, 255, 255, 0.75);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+  }
+
+  .amenities__progress {
+    position: relative;
+    height: 1px;
+    margin-top: 2.5rem;
+    background: var(--line-dark);
+    overflow: hidden;
+  }
+  .amenities__progress span {
+    position: absolute;
+    inset: 0;
+    background: var(--bronze-gradient);
+    transform-origin: left;
+    transform: scaleX(var(--progress, 0.2));
+    transition: transform 200ms linear;
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-amenities]');
+  if (root) {
+    const track = root.querySelector<HTMLElement>('[data-track]')!;
+    const bar = root.querySelector<HTMLElement>('[data-progress]');
+    const buttons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-dir]'));
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const update = () => {
+      const max = track.scrollWidth - track.clientWidth;
+      const ratio = max > 0 ? track.scrollLeft / max : 1;
+      const visible = track.clientWidth / track.scrollWidth;
+      bar?.style.setProperty('--progress', String(Math.min(1, visible + (1 - visible) * ratio)));
+      buttons[0].disabled = track.scrollLeft <= 4;
+      buttons[1].disabled = track.scrollLeft >= max - 4;
+    };
+
+    buttons.forEach((btn) =>
+      btn.addEventListener('click', () => {
+        const card = track.querySelector<HTMLElement>('li');
+        const step = (card?.offsetWidth ?? 300) + 16;
+        const pageSize = Math.max(1, Math.floor(track.clientWidth / step) - 1);
+        track.scrollBy({ left: Number(btn.dataset.dir) * step * pageSize, behavior: reduced ? 'auto' : 'smooth' });
+      }),
+    );
+
+    let raf = 0;
+    track.addEventListener('scroll', () => {
+      if (!raf) raf = requestAnimationFrame(() => { raf = 0; update(); });
+    }, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+    update();
+  }
+</script>

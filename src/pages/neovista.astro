@@ -1,0 +1,283 @@
+---
+/**
+ * NeoVista property detail page (/neovista.html).
+ * Brings every existing piece of NeoVista information into one immersive,
+ * logically ordered page: overview → towers → experiences → gallery →
+ * amenities → location → FAQ → enquiry.
+ */
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SplitText from '../components/SplitText.astro';
+import Icon from '../components/Icon.astro';
+import Towers from '../components/home/Towers.astro';
+import Amenities from '../components/home/Amenities.astro';
+import Gallery from '../components/Gallery.astro';
+import Location from '../components/Location.astro';
+import Faq from '../components/Faq.astro';
+import Contact from '../components/home/Contact.astro';
+import facade from '../assets/images/neovista-facade.jpg';
+import foyer from '../assets/images/features/foyer.jpg';
+import valet from '../assets/images/features/valet.jpg';
+import { property, site, stats, signatureFeatures } from '../data/site';
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Place',
+    name: 'NeoVista Business Towers',
+    description:
+      'NeoVista is a RERA-registered, all-commercial twin-tower landmark at Char Rasta, Vapi by Odhav Developers — offices, retail showrooms, healthcare and hospitality spaces.',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: 'NeoVista, Char Rasta, Near DCB Bank',
+      addressLocality: 'Vapi',
+      addressRegion: 'Gujarat',
+      postalCode: '396195',
+      addressCountry: 'IN',
+    },
+    geo: { '@type': 'GeoCoordinates', latitude: 20.3687889, longitude: 72.9167278 },
+    url: `${site.url}/neovista.html`,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${site.url}/` },
+      { '@type': 'ListItem', position: 2, name: 'NeoVista', item: `${site.url}/neovista.html` },
+    ],
+  },
+];
+---
+
+<BaseLayout
+  title="NeoVista Property Details | Offices, Showrooms & Healthcare Spaces in Vapi"
+  description="Explore NeoVista at Char Rasta, Vapi — a RERA-registered, all-commercial twin-tower landmark by Odhav Developers with designer offices, retail showrooms, healthcare and hospitality spaces."
+  keywords="NeoVista property details, NeoVista Vapi, commercial property Vapi, office space Char Rasta, retail showroom Vapi, healthcare space Vapi, Odhav Developers"
+  path="/neovista.html"
+  jsonLd={jsonLd}
+>
+  <!-- Hero -->
+  <section class="phero" aria-labelledby="phero-title">
+    <div class="phero__media" data-reveal="zoom">
+      <Image
+        src={facade}
+        alt="NeoVista twin towers façade at Char Rasta, Vapi"
+        widths={[640, 960, 1280, 1600, 1920, 2560]}
+        sizes="100vw"
+        quality={64}
+        format="webp"
+        loading="eager"
+        fetchpriority="high"
+      />
+    </div>
+    <div class="phero__shade" aria-hidden="true"></div>
+    <div class="container phero__content">
+      <nav aria-label="Breadcrumb" class="phero__crumbs" data-reveal>
+        <ol role="list">
+          <li><a href="/">Home</a></li>
+          <li aria-current="page">Properties</li>
+        </ol>
+      </nav>
+      <p class="eyebrow" data-reveal style="--d:1">{property.category}</p>
+      <SplitText as="h1" id="phero-title" class="h-display phero__title" text="NeoVista" delay={1} />
+      <p class="phero__loc" data-reveal style="--d:4"><Icon name="pin" size={18} /> {site.address}</p>
+      <div class="phero__actions" data-reveal style="--d:5">
+        <a href="#contact-sec" class="btn" data-open-visit>Schedule a visit <Icon name="arrow-right" /></a>
+        <a href="#gallery" class="btn btn--ghost">View gallery</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Key facts -->
+  <section class="facts" aria-label="Key facts">
+    <div class="container">
+      <dl class="facts__grid">
+        {property.facts.map((f, i) => (
+          <div class="facts__item" data-reveal style={`--d:${i}`}>
+            <dt>{f.label}</dt>
+            <dd>{f.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  </section>
+
+  <!-- Overview -->
+  <section id="overview" class="section section--light overview" aria-labelledby="overview-title">
+    <div class="container overview__grid">
+      <div class="overview__text">
+        <p class="eyebrow" data-reveal>Overview</p>
+        <SplitText id="overview-title" class="h-section" text="A symbol of success, a *benchmark of prestige.*" />
+        <p class="lead" data-reveal style="--d:2">
+          A visionary twin tower marvel, it redefines the city’s business landscape with an unmistakable aura of luxury.
+          Strategically located in the heart of Vapi, it rises with purpose, offering a seamless blend of architectural
+          excellence, thoughtful planning, and elite amenities.
+        </p>
+        <p data-reveal style="--d:3">
+          NeoVista is a RERA‑registered, all‑commercial project conceived as a twin‑tower landmark offering offices,
+          showrooms, hospitality and healthcare‑ready spaces under one address. For businesses, it offers a curated mix
+          of unit sizes and typologies — from compact offices for professionals to high‑frontage retail floors and
+          specialised spaces that can house clinics or wellness centres.
+        </p>
+        <dl class="overview__stats">
+          {stats.map((s) => (
+            <div data-reveal>
+              <dd><span data-count={s.value} data-decimals={s.decimals}>{s.value}</span>{s.suffix}</dd>
+              <dt>{s.label}</dt>
+            </div>
+          ))}
+        </dl>
+      </div>
+      <div class="overview__media">
+        <div class="overview__img overview__img--a" data-reveal="clip" data-parallax style="--parallax:4">
+          <Image src={foyer} alt="Double-height reception foyer at NeoVista" widths={[480, 720, 960, 1280]} sizes="(min-width: 992px) 40vw, 80vw" quality={70} format="webp" loading="lazy" />
+        </div>
+        <div class="overview__img overview__img--b" data-reveal="clip" style="--d:2">
+          <Image src={valet} alt="Valet arrival at NeoVista" widths={[320, 480, 720]} sizes="(min-width: 992px) 22vw, 45vw" quality={70} format="webp" loading="lazy" />
+        </div>
+        <p class="overview__quote" data-reveal style="--d:3">“Two Towers. One Vision. Infinite Impact.”</p>
+      </div>
+    </div>
+  </section>
+
+  <Towers id="towers" linkToDetails={false} />
+
+  <!-- Arrival experiences -->
+  <section class="section section--paper arrivals" aria-labelledby="arrivals-title">
+    <div class="container">
+      <header class="section-head section-head--split">
+        <div class="section-head__title">
+          <p class="eyebrow" data-reveal>Arrival</p>
+          <SplitText id="arrivals-title" class="h-section" text="Signature *experiences*" />
+        </div>
+        <p class="lead" data-reveal style="--d:2">From the grand arrival to every flawless detail, VVIP is more than a title, it’s a feeling.</p>
+      </header>
+      <ol class="arrivals__grid" role="list">
+        {signatureFeatures.map((f, i) => (
+          <li class="arrival" data-reveal style={`--d:${i}`}>
+            <div class="arrival__media">
+              <Image src={f.image} alt={f.alt} widths={[400, 640, 900]} sizes="(min-width: 1100px) 320px, (min-width: 640px) 45vw, 100vw" quality={68} format="webp" loading="lazy" />
+              <span class="arrival__no">{f.no}</span>
+            </div>
+            <p class="arrival__sub">{f.subtitle}</p>
+            <h3 class="arrival__title">{f.title}</h3>
+            <p class="arrival__text">{f.text}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <Gallery id="gallery" tone="light" />
+  <Amenities />
+  <Location />
+  <Faq id="faq" />
+  <Contact showMap={false} />
+</BaseLayout>
+
+<style>
+  /* Hero */
+  .phero {
+    position: relative;
+    min-height: min(92svh, 920px);
+    display: grid;
+    align-items: end;
+    overflow: hidden;
+    isolation: isolate;
+    color: var(--white);
+    background: var(--ink);
+  }
+  .phero__media, .phero__shade { position: absolute; inset: 0; z-index: -1; }
+  .phero__media :global(img) { width: 100%; height: 100%; object-fit: cover; object-position: 60% 50%; }
+  .phero__shade {
+    background:
+      linear-gradient(180deg, rgba(13, 13, 12, 0.55) 0%, transparent 30%, rgba(13, 13, 12, 0.15) 55%, rgba(13, 13, 12, 0.92) 100%),
+      linear-gradient(90deg, rgba(13, 13, 12, 0.55), transparent 65%);
+  }
+  .phero__content { display: grid; gap: var(--stack); padding-top: calc(var(--header-h) + 3rem); padding-bottom: clamp(2.5rem, 2rem + 3vw, 4.5rem); }
+  .phero__content :global(.phero__title) { color: var(--white); font-size: clamp(3.5rem, 2rem + 8vw, 9.5rem); }
+  .phero__crumbs ol { display: flex; gap: 0.5rem; }
+  .phero__crumbs li { font-family: var(--ff-title); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255, 255, 255, 0.65); }
+  .phero__crumbs li + li::before { content: '/'; margin-right: 0.5rem; color: var(--bronze); }
+  .phero__crumbs [aria-current] { color: var(--bronze-light); }
+  .phero__crumbs a:hover { color: var(--white); }
+  .phero__loc { display: flex; align-items: flex-start; gap: 0.6rem; max-width: 36ch; color: rgba(255, 255, 255, 0.85); }
+  .phero__loc :global(svg) { flex: none; margin-top: 0.3rem; color: var(--bronze-light); }
+  .phero__actions { display: flex; flex-wrap: wrap; gap: 0.85rem; margin-top: 0.5rem; }
+
+  /* Facts */
+  .facts { background: var(--ink); color: var(--on-dark-muted); border-top: 1px solid var(--line-dark); }
+  .facts__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 768px) { .facts__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (min-width: 1200px) { .facts__grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+  .facts__item { padding: 1.4rem 1rem 1.4rem 0; border-bottom: 1px solid var(--line-dark); }
+  @media (min-width: 1200px) {
+    .facts__item { border-bottom: 0; }
+    .facts__item + .facts__item { padding-left: 1.5rem; border-left: 1px solid var(--line-dark); }
+  }
+  .facts__item dt { font-family: var(--ff-title); font-size: 0.64rem; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--bronze); margin-bottom: 0.35rem; }
+  .facts__item dd { color: var(--white); font-family: var(--ff-title); font-size: 0.98rem; font-weight: 500; }
+
+  /* Overview */
+  .overview__grid { display: grid; gap: var(--section-head-gap); align-items: center; }
+  @media (min-width: 992px) { .overview__grid { grid-template-columns: 1fr 1fr; gap: clamp(3rem, 6vw, 6rem); } }
+  .overview__text { display: grid; gap: var(--stack); color: #4f5252; }
+  .overview__stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+    margin-top: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+  }
+  @media (min-width: 640px) { .overview__stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .overview__stats div { display: grid; gap: 0.3rem; }
+  .overview__stats dd { font-family: var(--ff-title); font-size: clamp(1.6rem, 1.3rem + 1.2vw, 2.4rem); font-weight: 300; color: var(--ink); line-height: 1; letter-spacing: -0.03em; }
+  .overview__stats dt { font-family: var(--ff-title); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--bronze-ink); }
+  .overview__media { position: relative; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: end; }
+  .overview__img { border-radius: var(--radius-lg); overflow: hidden; background: var(--charcoal); }
+  .overview__img :global(img) { width: 100%; height: 100%; object-fit: cover; }
+  .overview__img--a { grid-column: 1 / 11; grid-row: 1; aspect-ratio: 4 / 5; }
+  .overview__img--b {
+    grid-column: 7 / 13;
+    grid-row: 1;
+    aspect-ratio: 3 / 4;
+    margin-bottom: -2.5rem;
+    border: 6px solid var(--white);
+    box-shadow: 0 30px 60px -30px rgba(13, 13, 12, 0.5);
+  }
+  .overview__quote {
+    grid-column: 1 / 7;
+    grid-row: 2;
+    margin-top: 1.25rem;
+    font-family: var(--ff-title);
+    font-size: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
+    font-weight: 300;
+    color: var(--ink);
+  }
+
+  /* Arrivals */
+  .arrivals__grid { display: grid; gap: var(--grid-gap); grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+  .arrival { display: grid; gap: 0.6rem; align-content: start; }
+  .arrival__media { position: relative; aspect-ratio: 4 / 5; border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 0.75rem; background: var(--charcoal); }
+  .arrival__media :global(img) { width: 100%; height: 100%; object-fit: cover; transition: transform 1400ms var(--ease-out); }
+  .arrival:hover .arrival__media :global(img) { transform: scale(1.06); }
+  .arrival__no {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(13, 13, 12, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--white);
+    font-family: var(--ff-title);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+  }
+  .arrival__sub { font-family: var(--ff-title); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--bronze-ink); }
+  .arrival__title { font-size: 1.3rem; font-weight: 400; letter-spacing: -0.015em; }
+  .arrival__text { font-size: 0.95rem; color: #4f5252; }
+</style>

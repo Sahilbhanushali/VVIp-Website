@@ -1,0 +1,73 @@
+---
+/** Location & connectivity — facts taken from the existing blog articles. */
+import SplitText from './SplitText.astro';
+import Icon from './Icon.astro';
+import { connectivity, site } from '../data/site';
+---
+
+<section id="location" class="section section--dark location" aria-labelledby="location-title">
+  <div class="container">
+    <header class="section-head section-head--split">
+      <div class="section-head__title">
+        <p class="eyebrow" data-reveal>Location</p>
+        <SplitText id="location-title" class="h-section" text="The heart of *Vapi*" />
+      </div>
+      <div class="location__addr" data-reveal style="--d:2">
+        <p class="lead">{site.address}</p>
+        <a class="link-arrow" href={site.mapsUrl} target="_blank" rel="noopener noreferrer">Get directions <Icon name="external" size={14} /></a>
+      </div>
+    </header>
+
+    <div class="location__grid">
+      <ol class="location__list" role="list">
+        {connectivity.map((c, i) => (
+          <li data-reveal style={`--d:${i}`}>
+            <span class="location__no">0{i + 1}</span>
+            <div>
+              <h3>{c.title}</h3>
+              <p>{c.text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <div class="location__map" data-reveal>
+        <iframe
+          title="Map showing NeoVista, Char Rasta, Vapi"
+          src={site.mapEmbed}
+          width="800"
+          height="600"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          allowfullscreen></iframe>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .location__addr { display: grid; gap: 1rem; justify-items: start; }
+  .location__addr .lead { color: var(--on-dark); }
+  .location__grid { display: grid; gap: var(--grid-gap); }
+  @media (min-width: 992px) { .location__grid { grid-template-columns: 1fr 1fr; gap: clamp(2rem, 4vw, 4rem); } }
+  .location__list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 0 2rem; align-content: start; }
+  .location__list li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1rem;
+    padding-block: 1.25rem;
+    border-top: 1px solid var(--line-dark);
+  }
+  .location__no { font-family: var(--ff-title); font-size: 0.75rem; font-weight: 600; color: var(--bronze); letter-spacing: 0.1em; padding-top: 0.2rem; }
+  .location__list h3 { font-size: 1.05rem; font-weight: 500; margin-bottom: 0.35rem; }
+  .location__list p { font-size: 0.9rem; line-height: 1.65; }
+  .location__map { min-height: 340px; border-radius: var(--radius-lg); overflow: hidden; background: var(--charcoal-2); }
+  .location__map iframe {
+    width: 100%;
+    height: 100%;
+    min-height: 340px;
+    border: 0;
+    filter: grayscale(0.85) contrast(1.05) brightness(0.92);
+    transition: filter 800ms ease;
+  }
+  .location__map iframe:hover, .location__map iframe:focus { filter: none; }
+</style>

@@ -1,0 +1,194 @@
+---
+import Logo from './Logo.astro';
+import Icon from './Icon.astro';
+import { nav, site } from '../data/site';
+
+interface Props {
+  isHome?: boolean;
+}
+const { isHome = false } = Astro.props;
+const href = (h: string) => (isHome && h.startsWith('/#') ? h.slice(1) : h);
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__cta">
+      <p class="footer__statement" data-reveal>
+        Step into NeoVista, the definitive address for Vapi’s most visionary entrepreneurs, thriving enterprises,
+        and{' '}<em>future forward leaders.</em>
+      </p>
+      <a href={href('/#contact-sec')} class="btn" data-open-visit data-reveal style="--d:2">
+        Schedule a visit <Icon name="arrow-right" />
+      </a>
+    </div>
+
+    <div class="footer__grid">
+      <div class="footer__brand">
+        <a href={isHome ? '#hero' : '/'} aria-label="VVIP Properties — home"><Logo height={48} /></a>
+        <p>
+          As a Vapi’s VIP, you’re not just securing a space, you’re unlocking a world of distinction, strategic
+          advantage, and premium amenities designed for high performing businesses.
+        </p>
+        <ul class="footer__social" role="list">
+          {site.socials.map((s) => (
+            <li>
+              <a href={s.href} target="_blank" rel="noopener noreferrer" aria-label={`${s.name} (opens in a new tab)`}>
+                <Icon name={s.icon} size={18} />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <nav class="footer__col" aria-label="Footer">
+        <h2 class="footer__title">Explore</h2>
+        <ul role="list">
+          {nav.slice(1).map((item) => (
+            <li><a href={href(item.href)}>{item.label}</a></li>
+          ))}
+        </ul>
+      </nav>
+
+      <div class="footer__col">
+        <h2 class="footer__title">Get in touch</h2>
+        <ul role="list" class="footer__contact">
+          <li><Icon name="pin" size={18} /><span>{site.address}</span></li>
+          <li>
+            <Icon name="phone" size={18} />
+            <span>{site.phones.map((p) => <a href={p.href}>{p.label}</a>)}</span>
+          </li>
+          <li>
+            <Icon name="mail" size={18} />
+            <span>{site.emails.map((e) => <a href={e.href}>{e.label}</a>)}</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="footer__col">
+        <h2 class="footer__title">Office hours</h2>
+        <ul role="list" class="footer__hours">
+          {site.hours.map((h) => (
+            <li><span>{h.days}</span><span>{h.time}</span></li>
+          ))}
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer__bottom">
+      <p>
+        Copyright © {year} <a href={isHome ? '#hero' : '/'}>VapisVIP</a>, All rights reserved By {site.credit}
+      </p>
+      <a href="#top" class="footer__top" data-scroll-top>
+        Back to top <Icon name="arrow-up" size={16} />
+      </a>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    position: relative;
+    background: var(--ink);
+    color: var(--on-dark-muted);
+    padding-top: clamp(4.5rem, 3rem + 6vw, 8rem);
+    overflow: hidden;
+  }
+  .footer::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: min(1200px, 120%);
+    aspect-ratio: 2;
+    transform: translate(-50%, -55%);
+    background: radial-gradient(closest-side, rgba(191, 120, 64, 0.16), transparent);
+    pointer-events: none;
+  }
+  .footer__cta {
+    position: relative;
+    display: grid;
+    gap: 2.5rem;
+    align-items: end;
+    padding-bottom: clamp(3.5rem, 2.5rem + 4vw, 6rem);
+    border-bottom: 1px solid var(--line-dark);
+  }
+  @media (min-width: 992px) { .footer__cta { grid-template-columns: 1fr auto; gap: 5rem; } }
+  .footer__statement {
+    font-family: var(--ff-title);
+    font-size: clamp(1.6rem, 1.1rem + 2.2vw, 3.1rem);
+    font-weight: 300;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    color: var(--white);
+    max-width: 24ch;
+  }
+  .footer__statement em {
+    font-style: normal;
+    font-weight: 500;
+    background: var(--bronze-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .footer__grid {
+    display: grid;
+    gap: 3rem 2.5rem;
+    padding-block: clamp(3.5rem, 2.5rem + 3vw, 5rem);
+  }
+  @media (min-width: 640px) { .footer__grid { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 1100px) { .footer__grid { grid-template-columns: 1.5fr 0.7fr 1.2fr 0.9fr; gap: 4rem; } }
+  .footer__brand { display: grid; gap: 1.5rem; align-content: start; }
+  .footer__brand img { height: 48px; width: auto; }
+  .footer__brand p { max-width: 40ch; font-size: 0.95rem; }
+  .footer__social { display: flex; gap: 0.75rem; }
+  .footer__social a {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--line-dark);
+    color: var(--white);
+    transition: background-color 400ms ease, border-color 400ms ease, color 400ms ease, transform 400ms var(--ease-out);
+  }
+  .footer__social a:hover { background: var(--bronze); border-color: var(--bronze); color: var(--ink); transform: translateY(-3px); }
+  .footer__title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 1.5rem;
+  }
+  .footer__col ul { display: grid; gap: 0.85rem; font-size: 0.95rem; }
+  .footer__col a { transition: color 300ms ease; }
+  .footer__col a:hover { color: var(--bronze-light); }
+  .footer__contact li { display: grid; grid-template-columns: 18px 1fr; gap: 0.9rem; align-items: start; }
+  .footer__contact svg { color: var(--bronze); margin-top: 0.3rem; }
+  .footer__contact span { display: grid; gap: 0.2rem; overflow-wrap: anywhere; }
+  .footer__hours li { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--line-dark); padding-bottom: 0.85rem; }
+  .footer__hours li span:last-child { color: var(--white); }
+  .footer__bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding-block: 1.75rem 2rem;
+    border-top: 1px solid var(--line-dark);
+    font-size: 0.85rem;
+  }
+  .footer__bottom a:hover { color: var(--bronze-light); }
+  .footer__top {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--ff-title);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+</style>

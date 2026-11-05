@@ -1,0 +1,110 @@
+---
+/**
+ * Brand intro (the original golden-key loader), rebuilt as a short
+ * cinematic curtain. Shown once per browser session, never for users who
+ * prefer reduced motion, and always skippable (button or Esc). It does not
+ * wait for the network, so it can never hold the page hostage.
+ */
+import { Image } from 'astro:assets';
+import key from '../assets/images/brand/key.png';
+---
+
+<div class="intro" id="intro" aria-hidden="true">
+  <div class="intro__inner">
+    <Image src={key} alt="" width={132} height={132} densities={[1, 2]} format="webp" loading="eager" class="intro__key" />
+    <p class="intro__line">The Key To Vapi’s VIP Era.</p>
+    <span class="intro__bar"><span></span></span>
+  </div>
+  <button class="intro__skip" type="button" data-intro-skip tabindex="-1">Skip intro</button>
+</div>
+
+<style>
+  .intro { display: none; }
+  :global(.has-intro) .intro {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: grid;
+    place-items: center;
+    background: var(--ink);
+    color: var(--white);
+    transition: transform 1000ms var(--ease-in-out);
+  }
+  :global(.has-intro) .intro.is-leaving { transform: translateY(-100%); }
+  .intro__inner { display: grid; justify-items: center; gap: 1.5rem; transition: opacity 400ms ease, transform 1000ms var(--ease-in-out); }
+  .intro.is-leaving .intro__inner { opacity: 0; transform: translateY(-40px); }
+  .intro__key {
+    width: 132px;
+    height: auto;
+    animation: key-in 900ms var(--ease-out) both;
+    filter: drop-shadow(0 12px 30px rgba(191, 120, 64, 0.35));
+  }
+  .intro__line {
+    font-family: var(--ff-title);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: var(--bronze-light);
+    animation: line-in 900ms 300ms var(--ease-out) both;
+  }
+  .intro__bar { width: 140px; height: 1px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+  .intro__bar span {
+    display: block;
+    height: 100%;
+    background: var(--bronze-gradient);
+    transform-origin: left;
+    animation: bar 950ms 100ms var(--ease-in-out) both;
+  }
+  .intro__skip {
+    position: absolute;
+    right: clamp(1rem, 3vw, 2rem);
+    bottom: clamp(1rem, 3vw, 2rem);
+    min-height: 44px;
+    padding: 0.6rem 1.1rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 999px;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--white);
+    transition: background-color 300ms ease, color 300ms ease;
+  }
+  .intro__skip:hover { background: var(--white); color: var(--ink); }
+  @keyframes key-in {
+    from { opacity: 0; transform: rotate(-35deg) scale(0.7); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes line-in { from { opacity: 0; letter-spacing: 0.6em; } }
+  @keyframes bar { from { transform: scaleX(0); } }
+</style>
+
+<script>
+  const root = document.documentElement;
+  const intro = document.getElementById('intro');
+  if (intro && root.classList.contains('has-intro')) {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      intro.classList.add('is-leaving');
+      // Hero entrance starts while the curtain lifts.
+      window.setTimeout(() => window.dispatchEvent(new Event('intro:done')), 250);
+      window.setTimeout(() => {
+        root.classList.remove('has-intro');
+        intro.remove();
+      }, 1050);
+    };
+    const timer = window.setTimeout(finish, 1100);
+    intro.querySelector('[data-intro-skip]')?.addEventListener('click', () => {
+      window.clearTimeout(timer);
+      finish();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        window.clearTimeout(timer);
+        finish();
+      }
+    }, { once: true });
+  }
+</script>

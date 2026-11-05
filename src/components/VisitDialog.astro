@@ -1,0 +1,80 @@
+---
+/**
+ * "Schedule a visit" modal (the original #contactModal). Uses the native
+ * <dialog> element for focus trapping, Esc-to-close and an inert page.
+ * Opened by any element with [data-open-visit]; those are links to the
+ * contact section, so they still work without JavaScript.
+ */
+import ContactForm from './ContactForm.astro';
+import Icon from './Icon.astro';
+import { site } from '../data/site';
+---
+
+<dialog id="visit-dialog" class="visit" aria-labelledby="visit-title">
+  <div class="visit__card">
+    <button class="visit__close" type="button" data-visit-close aria-label="Close">
+      <Icon name="close" size={22} />
+    </button>
+    <div class="visit__intro">
+      <p class="eyebrow">Private viewing</p>
+      <h2 id="visit-title" class="visit__title">Schedule a visit</h2>
+      <p>Tell us a little about what you are looking for and our team will arrange a personal walkthrough of NeoVista.</p>
+      <a class="visit__phone" href={site.phones[0].href}><Icon name="phone" size={16} /> {site.phones[0].label}</a>
+    </div>
+    <ContactForm idPrefix="modal" tone="light" submitLabel="Request a visit" />
+  </div>
+</dialog>
+
+<style>
+  .visit {
+    width: min(100% - 2rem, 760px);
+    max-height: calc(100dvh - 2rem);
+    margin: auto;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-lg);
+    background: var(--white);
+    color: var(--body-color);
+    box-shadow: 0 40px 120px -20px rgba(0, 0, 0, 0.6);
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  .visit::backdrop {
+    background: rgba(13, 13, 12, 0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .visit__card { position: relative; padding: clamp(1.5rem, 1rem + 3vw, 3rem); }
+  .visit__close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    color: var(--ink);
+    transition: background-color 300ms ease, transform 500ms var(--ease-out);
+  }
+  .visit__close:hover { background: var(--paper); transform: rotate(90deg); }
+  .visit__intro { display: grid; gap: 0.75rem; margin-bottom: 1.5rem; max-width: 52ch; }
+  .visit__intro .eyebrow { color: var(--bronze-ink); }
+  .visit__title { font-size: clamp(1.75rem, 1.4rem + 1.5vw, 2.5rem); font-weight: 300; }
+  .visit__phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: fit-content;
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .visit__phone:hover { color: var(--bronze-ink); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .visit[open] { animation: visit-in 600ms var(--ease-out); }
+    .visit[open]::backdrop { animation: backdrop-in 500ms ease; }
+  }
+  @keyframes visit-in { from { opacity: 0; transform: translateY(24px) scale(0.98); } }
+  @keyframes backdrop-in { from { opacity: 0; } }
+</style>

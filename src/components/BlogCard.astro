@@ -1,0 +1,113 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import Icon from './Icon.astro';
+import { readingTime, formatDate } from '../utils/blog';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+  variant?: 'feature' | 'default' | 'compact';
+  delay?: number;
+}
+const { post, variant = 'default', delay = 0 } = Astro.props;
+const href = `/${post.id}.html`;
+const sizes =
+  variant === 'feature'
+    ? '(min-width: 992px) 60vw, calc(100vw - 2rem)'
+    : variant === 'compact'
+      ? '(min-width: 992px) 160px, 33vw'
+      : '(min-width: 992px) 40vw, calc(100vw - 2rem)';
+---
+
+<article class:list={['card', `card--${variant}`]} data-reveal style={`--d:${delay}`}>
+  <a href={href} class="card__media frame" tabindex="-1" aria-hidden="true">
+    <Image
+      src={post.data.cover}
+      alt=""
+      widths={variant === 'compact' ? [240, 480] : [480, 800, 1200, 1600]}
+      sizes={sizes}
+      quality={72}
+      format="webp"
+      loading="lazy"
+      decoding="async"
+    />
+  </a>
+  <div class="card__body">
+    <p class="card__meta">
+      <time datetime={post.data.pubDate.toISOString().slice(0, 10)}>{formatDate(post.data.pubDate)}</time>
+      <span aria-hidden="true">·</span>
+      <span>{readingTime(post.body ?? '')} min read</span>
+    </p>
+    <h3 class="card__title"><a href={href}>{post.data.cardTitle}</a></h3>
+    {variant !== 'compact' && <p class="card__excerpt">{post.data.excerpt}</p>}
+    {variant !== 'compact' && (
+      <span class="link-arrow card__more" aria-hidden="true">Read More <Icon name="arrow-right" /></span>
+    )}
+  </div>
+</article>
+
+<style>
+  .card {
+    position: relative;
+    display: grid;
+    gap: 1.5rem;
+    align-content: start;
+  }
+  .card__media {
+    aspect-ratio: 16 / 10;
+    border-radius: var(--radius-lg);
+  }
+  .card__media :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 1400ms var(--ease-out);
+  }
+  .card:hover .card__media :global(img) { transform: scale(1.06); }
+  .card__body { display: grid; gap: 0.9rem; }
+  .card__meta {
+    display: flex;
+    gap: 0.6rem;
+    font-family: var(--ff-title);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--body-color);
+  }
+  .card__title {
+    overflow-wrap: break-word;
+    hyphens: auto;
+    font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.6rem);
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+  }
+  .card__title a {
+    background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+    transition: background-size 600ms var(--ease-out);
+  }
+  /* The whole card is clickable via the title link */
+  .card__title a::after { content: ''; position: absolute; inset: 0; z-index: 1; }
+  .card:hover .card__title a { background-size: 100% 1px; }
+  .card__excerpt {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: #4f5252;
+  }
+  .card__more { width: fit-content; color: var(--bronze-ink); }
+  .card:hover .card__more { background-size: 100% 1px; }
+
+  .card--feature .card__title { font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.4rem); font-weight: 300; }
+  @media (min-width: 992px) {
+    .card--feature { grid-template-columns: 1.35fr 1fr; gap: 3.5rem; align-items: center; }
+    .card--feature .card__media { aspect-ratio: 4 / 3; }
+  }
+
+  .card--compact { grid-template-columns: 96px minmax(0, 1fr); gap: 1.1rem; align-items: center; }
+  .card--compact .card__media { aspect-ratio: 1; border-radius: var(--radius); }
+  .card--compact .card__title { font-size: 1rem; font-weight: 500; }
+  .card--compact .card__body { gap: 0.4rem; }
+</style>
