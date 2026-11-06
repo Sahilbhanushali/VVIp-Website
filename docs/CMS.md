@@ -99,9 +99,9 @@ Public: `POST /api/inquiry` (same contract as the old `mail.php`: `{ success, me
 
 Server-specific runbook (paths, port, Nginx, PM2, cron): **[deploy/DEPLOY.md](../deploy/DEPLOY.md)**.
 
-* App: `/var/www/projects/vvip` · PM2 process `vvip` · Node on `127.0.0.1:4380`
+* App: `/var/www/projects/vvip/VVIp-Website` · PM2 process `vvip` · Node on `127.0.0.1:4380`
 * Nginx: `/etc/nginx/sites-available/vapisvip.com.conf` (source: `deploy/nginx/vapisvip.com.conf`)
-* Uploads: `/var/www/projects/vvip/storage/uploads` (git-ignored, survives deploys)
+* Uploads: `/var/www/projects/vvip/VVIp-Website/storage/uploads` (git-ignored, survives deploys)
 
 ## 6. Backups & restore
 
@@ -111,7 +111,7 @@ server (e.g. `rclone`/S3) for disaster recovery.
 
 ```bash
 gunzip -c db-YYYYMMDD-HHMM.sql.gz | mariadb -u root vvip_cms
-tar -xzf media-YYYYMMDD-HHMM.tar.gz -C /var/www/projects/vvip/storage
+tar -xzf media-YYYYMMDD-HHMM.tar.gz -C /var/www/projects/vvip/VVIp-Website/storage
 pm2 reload vvip
 ```
 

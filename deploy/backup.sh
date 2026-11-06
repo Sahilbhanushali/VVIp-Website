@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Nightly backup of the database and uploaded media. Keeps 14 days.
-#   crontab -e →  15 2 * * *  /var/www/projects/vvip/deploy/backup.sh >> /var/www/projects/vvip/logs/backup.log 2>&1
+#   crontab -e →  15 2 * * *  /var/www/projects/vvip/VVIp-Website/deploy/backup.sh >> /var/www/projects/vvip/VVIp-Website/logs/backup.log 2>&1
 #
 # Restore:
 #   gunzip -c db-YYYYMMDD-HHMM.sql.gz | mariadb -u root vvip_cms
-#   tar -xzf media-YYYYMMDD-HHMM.tar.gz -C /var/www/projects/vvip/storage
+#   tar -xzf media-YYYYMMDD-HHMM.tar.gz -C /var/www/projects/vvip/VVIp-Website/storage
 set -euo pipefail
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 set -a; . "$APP_DIR/.env"; set +a

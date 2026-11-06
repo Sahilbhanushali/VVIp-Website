@@ -1,7 +1,7 @@
 /**
- * PM2 process file for /var/www/projects/vvip
+ * PM2 process file for /var/www/projects/vvip/VVIp-Website
  *
- *   cd /var/www/projects/vvip
+ *   cd /var/www/projects/vvip/VVIp-Website
  *   pm2 start deploy/ecosystem.config.cjs && pm2 save
  *
  * Port 4380 is reserved for this site (the other projects on the server use their own ports).
