@@ -101,7 +101,7 @@ Server-specific runbook (paths, port, Nginx, PM2, cron): **[deploy/DEPLOY.md](..
 
 * App: `/var/www/projects/vvip/VVIp-Website` · PM2 process `vvip` · Node on `127.0.0.1:4380`
 * Nginx: `/etc/nginx/sites-available/vapisvip.com.conf` (source: `deploy/nginx/vapisvip.com.conf`)
-* Uploads: `/var/www/projects/vvip/VVIp-Website/storage/uploads` (git-ignored, survives deploys)
+* Uploads: `/var/www/projects/vvip/VVIp-Website/storage/uploads` (committed to git so images deploy with the repo; the VPS database must be a copy of the one that created them — see DEPLOY.md)
 
 ## 6. Backups & restore
 

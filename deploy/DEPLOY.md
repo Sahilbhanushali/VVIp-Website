@@ -5,7 +5,7 @@
 | App folder | `/var/www/projects/vvip/VVIp-Website` |
 | Node process (PM2) | `vvip` → `127.0.0.1:4380` |
 | Nginx site | `/etc/nginx/sites-available/vapisvip.com.conf` (copy of `deploy/nginx/vapisvip.com.conf`) |
-| Uploaded media | `/var/www/projects/vvip/VVIp-Website/storage/uploads` (git-ignored) |
+| Uploaded media | `/var/www/projects/vvip/VVIp-Website/storage/uploads` (committed to git — images come with the repo) |
 | App logs | `/var/www/projects/vvip/VVIp-Website/logs/` · Nginx: `/var/log/nginx/vapisvip.com.*.log` |
 | Backups | `~/backups/vvip/` |
 
@@ -35,11 +35,14 @@ cp .env.example .env
 nano .env        # DATABASE_PASSWORD, APP_SECRET (openssl rand -hex 32), SMTP_* — keep PORT=4380
 mkdir -p storage/uploads logs
 
-# Build, create tables, import the website content, create your admin
+# Build and create the tables
 npm ci
 npm run build
 npm run db:migrate
-npm run db:seed
+
+# Content: import your LOCAL database so it matches the images in storage/uploads (see “Database + images” below)
+gunzip -c ~/vvip_cms.sql.gz | mariadb -u vvip_cms -p vvip_cms
+npm run db:migrate          # no-op if the dump is current; applies anything newer
 npm run admin:create
 
 # Nginx (www-data must be able to read dist/ and storage/)
@@ -56,6 +59,24 @@ pm2 save
 # HTTPS (DNS for vapisvip.com and www must point to this server first)
 sudo certbot --nginx -d vapisvip.com -d www.vapisvip.com
 ```
+
+### Database + images
+
+Images live in `storage/uploads/<random-folder>/…` and each folder name is stored in the `media`
+table. **The database on the VPS must therefore be a copy of the database that created those
+folders** — otherwise the files are there but no page uses them.
+
+On your local machine (where the images were uploaded), export the database and copy it up:
+
+```bash
+mysqldump --single-transaction --default-character-set=utf8mb4 -h 127.0.0.1 -u vvip_cms -p vvip_cms | gzip > vvip_cms.sql.gz
+scp vvip_cms.sql.gz sahil@srv1376710:~/
+```
+
+Commit and push `storage/uploads` from the same machine, then `git pull` on the VPS, then import the
+dump as shown above. (Alternative for a completely fresh start: skip the import and run
+`npm run db:seed` instead — it rebuilds the content from `db/seed-assets` and creates its own new
+image folders; the committed ones are then unused.)
 
 Optional: after certbot, uncomment the `www → vapisvip.com` redirect line in
 `/etc/nginx/sites-available/vapisvip.com.conf`, then `sudo nginx -t && sudo systemctl reload nginx`.
@@ -84,7 +105,11 @@ chmod -R o+rX dist
 pm2 reload vvip
 ```
 
-`storage/uploads`, `.env` and `logs/` are untouched by updates.
+`.env` and `logs/` are untouched by updates. `storage/uploads` is tracked by git:
+images committed locally arrive with `git pull`, and images uploaded through the admin on the VPS
+stay in place as untracked files. **Never run `git clean -fd` or `git checkout -- storage`** in this
+folder — that would delete images uploaded on the server. Those server-side uploads are covered by
+the nightly backup (`deploy/backup.sh`).
 
 ## 4. Scheduled jobs (`crontab -e` as the deploy user)
 
