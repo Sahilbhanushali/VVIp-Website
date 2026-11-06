@@ -1,0 +1,123 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AIcon from '../../../components/admin/AIcon.astro';
+import { listPagesAdmin } from '../../../server/admin-pages.ts';
+import { can } from '../../../server/permissions.ts';
+import { formatDate } from '../../../server/format.ts';
+
+export const prerender = false;
+const user = Astro.locals.user!;
+if (!can(user.permissions, 'pages', 'read')) return Astro.redirect('/admin');
+const sp = Astro.url.searchParams;
+const f = { q: sp.get('q') ?? '', template: sp.get('template') ?? '', status: sp.get('status') ?? '' };
+const rows = await listPagesAdmin(f);
+const TEMPLATE: Record<string, string> = { home: 'Homepage', standard: 'Page', property: 'Property page', article: 'Article', legal: 'Legal' };
+const canCreate = can(user.permissions, 'pages', 'create');
+---
+
+<AdminLayout title="Pages & articles" crumbs={[{ label: 'Pages & articles' }]}>
+  <div class="a-head">
+    <div><h1>Pages & articles</h1><p>Every public URL on the website. Edits are saved as drafts; the live site changes only when you publish.</p></div>
+    <div class="a-head__actions">{canCreate && <button class="btn btn--accent" type="button" data-new><AIcon name="plus" /> New page or article</button>}</div>
+  </div>
+
+  <div class="card">
+    <form class="toolbar" method="get">
+      <input class="input grow" type="search" name="q" value={f.q} placeholder="Search title or URL" />
+      <select class="select" name="template" onchange="this.form.submit()">
+        <option value="">All types</option>
+        {Object.entries(TEMPLATE).map(([k, v]) => <option value={k} selected={f.template === k}>{v}</option>)}
+      </select>
+      <select class="select" name="status" onchange="this.form.submit()">
+        <option value="">Any status</option>
+        <option value="published" selected={f.status === 'published'}>Published</option>
+        <option value="draft" selected={f.status === 'draft'}>Draft</option>
+        <option value="changed" selected={f.status === 'changed'}>Has unpublished changes</option>
+      </select>
+      <button class="btn">Filter</button>
+    </form>
+    {rows.length ? (
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Title</th><th>Type</th><th>Status</th><th>Sections</th><th>Last edited</th><th></th></tr></thead>
+          <tbody>
+            {rows.map((p: any) => (
+              <tr>
+                <td>
+                  <div class="title-cell">
+                    <div><a href={`/admin/pages/${p.id}`}><strong>{p.title}</strong></a><small class="mono">{p.path}</small></div>
+                  </div>
+                </td>
+                <td>{TEMPLATE[p.template]}{p.visibility === 'hidden' && <span class="badge badge--plain" style="margin-left:.4rem">Hidden</span>}</td>
+                <td>
+                  {p.status === 'published' ? <span class="badge badge--ok">Published</span> : <span class="badge">Draft</span>}
+                  {!!p.has_changes && <span class="badge badge--warn" style="margin-left:.3rem">Changes</span>}
+                </td>
+                <td class="num">{['home', 'standard', 'property'].includes(p.template) ? p.section_count : '—'}</td>
+                <td class="muted">{formatDate(p.updated_at, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}{p.updated_by_name && <><br /><small>{p.updated_by_name}</small></>}</td>
+                <td>
+                  <div class="row-actions">
+                    {p.status === 'published' && <a class="btn btn--ghost btn--icon" href={p.path} target="_blank" title="View live" aria-label="View live"><AIcon name="external" size={16} /></a>}
+                    <a class="btn btn--ghost btn--icon" href={`${p.path}?preview=1`} target="_blank" title="Preview draft" aria-label="Preview draft"><AIcon name="eye" size={16} /></a>
+                    <a class="btn btn--sm" href={`/admin/pages/${p.id}`}>Edit</a>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : <div class="empty"><AIcon name="pages" size={40} /><strong>No pages match</strong><span>Clear the filters or create a new page.</span></div>}
+  </div>
+
+  {canCreate && (
+    <dialog class="a-dialog" data-new-dialog>
+      <form class="stack" data-new-form>
+        <div class="a-dialog__head"><h2>New page or article</h2></div>
+        <div class="a-dialog__body">
+          <div class="field"><label for="n-type">Type</label>
+            <select class="select" id="n-type" name="template">
+              <option value="article">Article (blog post)</option>
+              <option value="standard">Page (built from sections)</option>
+              <option value="legal">Legal document</option>
+            </select>
+          </div>
+          <div class="field"><label for="n-title">Title</label><input class="input" id="n-title" name="title" required maxlength="200" /></div>
+          <div class="field" data-path="path"><label for="n-path">URL path</label><input class="input mono" id="n-path" name="path" required placeholder="/my-new-page.html" /><small>Lower-case, hyphens. Articles traditionally end in .html.</small><p class="field__error" data-error></p></div>
+        </div>
+        <div class="a-dialog__foot"><button class="btn" type="button" data-cancel>Cancel</button><button class="btn btn--primary" type="submit">Create draft</button></div>
+      </form>
+    </dialog>
+  )}
+
+  <script>
+    import { api, toast } from '../../../scripts/admin/shell';
+    const d = document.querySelector<HTMLDialogElement>('[data-new-dialog]');
+    const form = document.querySelector<HTMLFormElement>('[data-new-form]');
+    const title = form?.querySelector<HTMLInputElement>('[name=title]');
+    const path = form?.querySelector<HTMLInputElement>('[name=path]');
+    let touched = false;
+    path?.addEventListener('input', () => (touched = true));
+    title?.addEventListener('input', () => {
+      if (touched || !path) return;
+      const slug = title.value.toLowerCase().normalize('NFKD').replace(/[^\w\s-]/g, '').trim().replace(/[\s_]+/g, '-').slice(0, 80);
+      const t = form!.querySelector<HTMLSelectElement>('[name=template]')!.value;
+      path.value = slug ? `/${slug}${t === 'article' ? '.html' : ''}` : '';
+    });
+    document.querySelector('[data-new]')?.addEventListener('click', () => d?.showModal());
+    d?.querySelector('[data-cancel]')?.addEventListener('click', () => d.close());
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const r = await api<{ id: number }>('/api/admin/pages', { method: 'POST', json: Object.fromEntries(new FormData(form)) });
+        location.href = `/admin/pages/${r.id}`;
+      } catch (er) {
+        const f = (er as { fields?: Record<string, string> }).fields;
+        const err = form.querySelector<HTMLElement>('[data-error]');
+        if (err) err.textContent = f?.path ?? (er as Error).message;
+        toast((er as Error).message, 'err');
+      }
+    });
+    if (new URLSearchParams(location.search).get('new')) d?.showModal();
+  </script>
+</AdminLayout>

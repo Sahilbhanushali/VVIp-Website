@@ -1,0 +1,155 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import Kpi from '../../components/admin/Kpi.astro';
+import LineChart from '../../components/admin/LineChart.astro';
+import BarList from '../../components/admin/BarList.astro';
+import RangePicker from '../../components/admin/RangePicker.astro';
+import AIcon from '../../components/admin/AIcon.astro';
+import { can } from '../../server/permissions.ts';
+import { all, one } from '../../server/db.ts';
+import * as A from '../../server/analytics.ts';
+import { STATUS_LABEL, type InquiryStatus } from '../../server/inquiries.ts';
+import { formatDate } from '../../server/format.ts';
+
+export const prerender = false;
+const user = Astro.locals.user!;
+if (!can(user.permissions, 'dashboard', 'read')) return Astro.redirect('/admin/account');
+
+const P = user.permissions;
+const range = A.parseRange(Astro.url.searchParams);
+const prev = A.previousRange(range);
+const seeAnalytics = can(P, 'analytics', 'read');
+const seeInquiries = can(P, 'inquiries', 'read');
+const seeProperties = can(P, 'properties', 'read');
+
+const [quick, cur, before, series, pages, sources, devices, browsers, regions] = seeAnalytics
+  ? await Promise.all([A.quickCounts(), A.trafficTotals(range), A.trafficTotals(prev), A.dailySeries(range), A.topPages(range, 8), A.sources(range), A.devices(range), A.browsers(range), A.regions(range)])
+  : [null, null, null, [], [], [], [], [], []];
+
+const props = seeProperties
+  ? await one<any>(`SELECT COUNT(*) total, SUM(status='published') published, SUM(status='draft') drafts, SUM(is_featured=1) featured, SUM(availability IN ('available','on_request')) available FROM properties`)
+  : null;
+const inq = seeInquiries
+  ? await one<any>(`SELECT COUNT(*) total, SUM(status='new') new_, SUM(status='contacted') contacted, SUM(status='qualified') qualified, SUM(status='converted') converted,
+      SUM(created_at BETWEEN ? AND ?) in_range, SUM(created_at BETWEEN ? AND ?) in_prev FROM inquiries WHERE status <> 'spam'`, [range.from, range.to, prev.from, prev.to])
+  : null;
+const recentInq = seeInquiries
+  ? await all('SELECT i.id, i.name, i.subject, i.status, i.created_at, p.title AS property FROM inquiries i LEFT JOIN properties p ON p.id = i.property_id WHERE i.status <> "spam" ORDER BY i.id DESC LIMIT 6')
+  : [];
+const activity = await A.recentActivity(8);
+const statusBadge: Record<string, string> = { new: 'info', contacted: 'warn', qualified: 'accent', follow_up: 'warn', converted: 'ok', closed: '', spam: 'err' };
+const n = (v: unknown) => Number(v ?? 0);
+const greet = (() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; })();
+---
+
+<AdminLayout title="Dashboard">
+  <div class="a-head">
+    <div>
+      <h1>{greet}, {user.name.split(' ')[0]}</h1>
+      <p>{range.label} · compared with the previous period</p>
+    </div>
+    <div class="a-head__actions">
+      <RangePicker current={Astro.url.searchParams.get('range') ?? '30d'} from={Astro.url.searchParams.get('from') ?? ''} to={Astro.url.searchParams.get('to') ?? ''} />
+    </div>
+  </div>
+
+  <div class="a-head__actions">
+    {can(P, 'properties', 'create') && <a class="btn btn--accent" href="/admin/properties?new=1"><AIcon name="plus" /> New property</a>}
+    {can(P, 'pages', 'create') && <a class="btn" href="/admin/pages?new=1"><AIcon name="pages" /> New page or article</a>}
+    {can(P, 'pages', 'update') && <a class="btn" href="/admin/pages/home"><AIcon name="home" /> Edit homepage</a>}
+    {can(P, 'media', 'create') && <a class="btn" href="/admin/media"><AIcon name="upload" /> Upload media</a>}
+    {seeInquiries && <a class="btn" href="/admin/inquiries?status=new"><AIcon name="inbox" /> New inquiries ({n(inq?.new_)})</a>}
+  </div>
+
+  {seeAnalytics && cur && before && quick && (
+    <>
+      <div class="kpis">
+        <Kpi label="Visitors" value={cur.visitors} current={cur.visitors} prev={before.visitors} />
+        <Kpi label="Page views" value={cur.pageviews} current={cur.pageviews} prev={before.pageviews} />
+        <Kpi label="Sessions" value={cur.sessions} current={cur.sessions} prev={before.sessions} />
+        <Kpi label="Returning visitors" value={cur.returning_visitors} current={cur.returning_visitors} prev={before.returning_visitors} />
+        <Kpi label="Avg. engagement" value={cur.avg_engaged} current={cur.avg_engaged} prev={before.avg_engaged} format="dur" />
+        {inq && <Kpi label="Inquiries" value={n(inq.in_range)} current={n(inq.in_range)} prev={n(inq.in_prev)} />}
+      </div>
+      <div class="kpis">
+        <Kpi label="Visitors today" value={quick.today} hint="Since midnight (IST)" />
+        <Kpi label="This week" value={quick.week} hint="Since Monday" />
+        <Kpi label="This month" value={quick.month} hint="Since the 1st" />
+        <Kpi label="All-time unique visitors" value={quick.all_time} hint="Within retention period" />
+      </div>
+      <div class="card">
+        <div class="card__head"><div><h2>Traffic</h2><p>Daily unique visitors and page views</p></div><a class="btn btn--sm" href={`/admin/analytics${Astro.url.search}`}>Full analytics</a></div>
+        <LineChart labels={series.map((s) => s.date)} series={[{ name: 'Page views', color: '#bf7840', values: series.map((s) => s.pageviews) }, { name: 'Visitors', color: '#0d0d0c', values: series.map((s) => s.visitors) }]} />
+      </div>
+    </>
+  )}
+
+  <div class="grid-3">
+    {props && (
+      <div class="card">
+        <div class="card__head"><h2>Properties</h2><a class="btn btn--sm btn--ghost" href="/admin/properties">Manage</a></div>
+        <dl class="list">
+          <div><dt>Total</dt><dd><strong>{n(props.total)}</strong></dd></div>
+          <div><dt>Published</dt><dd><span class="badge badge--ok">{n(props.published)}</span></dd></div>
+          <div><dt>Drafts</dt><dd><span class="badge">{n(props.drafts)}</span></dd></div>
+          <div><dt>Featured</dt><dd><span class="badge badge--accent">{n(props.featured)}</span></dd></div>
+          <div><dt>Available / on request</dt><dd><strong>{n(props.available)}</strong></dd></div>
+        </dl>
+      </div>
+    )}
+    {inq && (
+      <div class="card">
+        <div class="card__head"><h2>Inquiries</h2><a class="btn btn--sm btn--ghost" href="/admin/inquiries">Open</a></div>
+        <dl class="list">
+          <div><dt>Total (excl. spam)</dt><dd><strong>{n(inq.total)}</strong></dd></div>
+          <div><dt>New</dt><dd><a href="/admin/inquiries?status=new" class="badge badge--info">{n(inq.new_)}</a></dd></div>
+          <div><dt>Contacted</dt><dd><a href="/admin/inquiries?status=contacted" class="badge badge--warn">{n(inq.contacted)}</a></dd></div>
+          <div><dt>Qualified</dt><dd><a href="/admin/inquiries?status=qualified" class="badge badge--accent">{n(inq.qualified)}</a></dd></div>
+          <div><dt>Converted</dt><dd><a href="/admin/inquiries?status=converted" class="badge badge--ok">{n(inq.converted)}</a></dd></div>
+        </dl>
+      </div>
+    )}
+    <div class="card">
+      <div class="card__head"><h2>Recent activity</h2>{can(P, 'activity', 'read') && <a class="btn btn--sm btn--ghost" href="/admin/activity">All</a>}</div>
+      {activity.length ? (
+        <ul class="list">
+          {activity.map((a: any) => <li><span><strong>{a.user_name ?? 'System'}</strong> <span class="muted">{a.summary}</span></span><small>{formatDate(a.created_at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</small></li>)}
+        </ul>
+      ) : <div class="empty"><span>No activity yet.</span></div>}
+    </div>
+  </div>
+
+  {seeInquiries && (
+    <div class="card">
+      <div class="card__head"><div><h2>Recent submissions</h2><p>Latest inquiries from the website forms</p></div></div>
+      {recentInq.length ? (
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Name</th><th>Interested in</th><th>Property</th><th>Status</th><th>Received</th></tr></thead>
+            <tbody>
+              {recentInq.map((q: any) => (
+                <tr>
+                  <td><a href={`/admin/inquiries/${q.id}`}><strong>{q.name}</strong></a></td>
+                  <td>{q.subject ?? '—'}</td>
+                  <td>{q.property ?? '—'}</td>
+                  <td><span class={`badge badge--${statusBadge[q.status]}`}>{STATUS_LABEL[q.status as InquiryStatus]}</span></td>
+                  <td class="muted">{formatDate(q.created_at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : <div class="empty"><AIcon name="inbox" size={40} /><strong>No inquiries yet</strong><span>Submissions from the website forms appear here.</span></div>}
+    </div>
+  )}
+
+  {seeAnalytics && (
+    <div class="grid-2">
+      <div class="card"><div class="card__head"><h2>Most popular pages</h2></div><BarList rows={pages.map((p) => ({ k: p.path, n: p.views }))} /></div>
+      <div class="card"><div class="card__head"><h2>Traffic sources</h2></div><BarList rows={sources} label={(k) => k[0].toUpperCase() + k.slice(1)} /></div>
+      <div class="card"><div class="card__head"><h2>Devices</h2></div><BarList rows={devices} label={(k) => k[0].toUpperCase() + k.slice(1)} /></div>
+      <div class="card"><div class="card__head"><h2>Browsers</h2></div><BarList rows={browsers} /></div>
+      <div class="card"><div class="card__head"><div><h2>Visitor regions</h2><p>Aggregated from browser time zone — no IP geolocation</p></div></div><BarList rows={regions} /></div>
+    </div>
+  )}
+</AdminLayout>

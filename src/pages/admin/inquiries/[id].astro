@@ -1,0 +1,129 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AIcon from '../../../components/admin/AIcon.astro';
+import { INQUIRY_STATUSES, STATUS_LABEL } from '../../../server/inquiries.ts';
+import { all, one } from '../../../server/db.ts';
+import { can } from '../../../server/permissions.ts';
+import { formatDate } from '../../../server/format.ts';
+
+export const prerender = false;
+const user = Astro.locals.user!;
+const P = user.permissions;
+if (!can(P, 'inquiries', 'read')) return Astro.redirect('/admin');
+const id = Number(Astro.params.id) || 0;
+const q: any = await one('SELECT i.*, p.title AS property_title FROM inquiries i LEFT JOIN properties p ON p.id = i.property_id WHERE i.id = ?', [id]);
+if (!q) return new Response('Inquiry not found', { status: 404 });
+const [notes, history, props, journey, prevLeads] = await Promise.all([
+  all('SELECT n.note, n.created_at, u.name FROM inquiry_notes n LEFT JOIN admin_users u ON u.id = n.user_id WHERE n.inquiry_id = ? ORDER BY n.id DESC', [id]),
+  all('SELECT h.field, h.old_value, h.new_value, h.created_at, u.name FROM inquiry_history h LEFT JOIN admin_users u ON u.id = h.user_id WHERE h.inquiry_id = ? ORDER BY h.id DESC', [id]),
+  all<{ id: number; title: string }>('SELECT id, title FROM properties ORDER BY title'),
+  q.visitor_id ? all('SELECT path, created_at FROM analytics_pageviews WHERE visitor_id = ? AND created_at <= ? ORDER BY id DESC LIMIT 12', [q.visitor_id, q.created_at]) : Promise.resolve([]),
+  all('SELECT id, created_at, status FROM inquiries WHERE email = ? AND id <> ? ORDER BY id DESC LIMIT 5', [q.email, id]),
+]);
+const dt = (d: unknown) => formatDate(d as string, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+const canEdit = can(P, 'inquiries', 'update');
+const fu = q.follow_up_at ? new Date(q.follow_up_at).toISOString().slice(0, 16) : '';
+const FIELD: Record<string, string> = { status: 'Status', follow_up_at: 'Follow-up', name: 'Name', email: 'Email', phone: 'Phone', subject: 'Interest', property_id: 'Property' };
+---
+
+<AdminLayout title={`Inquiry · ${q.name}`} crumbs={[{ label: 'Inquiries', href: '/admin/inquiries' }, { label: q.name }]}>
+  <div class="a-head">
+    <div><h1>{q.name}</h1><p>Received {dt(q.created_at)}{q.source_path && <> on <a class="mono" href={q.source_path} target="_blank">{q.source_path}</a></>}</p></div>
+    <div class="a-head__actions">
+      <a class="btn" href={`mailto:${q.email}?subject=${encodeURIComponent('Re: your enquiry')}`}><AIcon name="mail" /> Email</a>
+      <a class="btn" href={`tel:${q.phone.replace(/[^\d+]/g, '')}`}><AIcon name="phone" /> Call</a>
+      {q.phone && <a class="btn" target="_blank" rel="noopener" href={`https://wa.me/${q.phone.replace(/\D/g, '').replace(/^(\d{10})$/, '91$1')}`}>WhatsApp</a>}
+    </div>
+  </div>
+
+  <div class="split split--wide">
+    <div class="stack" style="min-width:0">
+      <div class="card"><div class="card__head"><h2>Message</h2></div><div class="card__body"><p style="white-space:pre-wrap">{q.message}</p></div></div>
+
+      <form class="card" data-edit novalidate>
+        <div class="card__head"><h2>Lead details</h2></div>
+        <div class="card__body form-grid">
+          <div class="field" data-path="status"><label for="i-st">Status</label><select class="select" id="i-st" name="status">{INQUIRY_STATUSES.map((s) => <option value={s} selected={q.status === s}>{STATUS_LABEL[s]}</option>)}</select></div>
+          <div class="field" data-path="follow_up_at"><label for="i-fu">Follow-up</label><input class="input" type="datetime-local" id="i-fu" name="follow_up_at" value={fu} /><p class="field__error" data-error></p></div>
+          <div class="field" data-path="name"><label for="i-n">Name</label><input class="input" id="i-n" name="name" value={q.name} required /><p class="field__error" data-error></p></div>
+          <div class="field" data-path="email"><label for="i-e">Email</label><input class="input" type="email" id="i-e" name="email" value={q.email} required /><p class="field__error" data-error></p></div>
+          <div class="field" data-path="phone"><label for="i-p">Phone</label><input class="input" id="i-p" name="phone" value={q.phone} required /><p class="field__error" data-error></p></div>
+          <div class="field" data-path="subject"><label for="i-s">Interested in</label><input class="input" id="i-s" name="subject" value={q.subject ?? ''} /></div>
+          <div class="field span-2" data-path="property_id"><label for="i-pr">Related property</label><select class="select" id="i-pr" name="property_id"><option value="">— None —</option>{props.map((p) => <option value={p.id} selected={q.property_id === p.id}>{p.title}</option>)}</select></div>
+        </div>
+        {canEdit && <div class="card__foot"><button class="btn btn--primary" type="submit">Save changes</button></div>}
+      </form>
+
+      <div class="card">
+        <div class="card__head"><h2>Internal notes</h2></div>
+        {canEdit && (
+          <form class="card__body stack" data-note>
+            <textarea class="textarea" name="note" placeholder="Call summary, next steps… (visible to the team only)" maxlength="5000" required></textarea>
+            <button class="btn" style="justify-self:end" type="submit">Add note</button>
+          </form>
+        )}
+        {notes.length ? <ul class="list">{notes.map((n: any) => <li style="display:grid;gap:.25rem"><p style="white-space:pre-wrap">{n.note}</p><small>{n.name ?? 'Unknown'} · {dt(n.created_at)}</small></li>)}</ul> : <div class="empty"><span>No notes yet.</span></div>}
+      </div>
+    </div>
+
+    <aside class="stack">
+      <div class="card">
+        <div class="card__head"><h2>Attribution</h2></div>
+        <div class="card__body">
+          <dl class="kv">
+            <dt>Form page</dt><dd class="mono">{q.source_path ?? '—'}</dd>
+            <dt>Landing page</dt><dd class="mono">{q.landing_path ?? '—'}</dd>
+            <dt>Referrer</dt><dd>{q.referrer_host ?? 'Direct / unknown'}</dd>
+            <dt>Campaign</dt><dd>{[q.utm_source, q.utm_medium, q.utm_campaign].filter(Boolean).join(' / ') || '—'}</dd>
+            <dt>Notification</dt><dd>{q.email_status}</dd>
+          </dl>
+        </div>
+        <div class="card__foot" style="justify-content:flex-start;flex-wrap:wrap">
+          {canEdit && <button class="btn btn--sm" type="button" data-resend>Resend notification</button>}
+          {can(P, 'inquiries', 'delete') && <button class="btn btn--sm btn--danger" type="button" data-delete>Delete</button>}
+        </div>
+      </div>
+      {journey.length > 0 && (
+        <div class="card"><div class="card__head"><div><h2>Pages viewed before enquiring</h2><p>Anonymous analytics for this browser</p></div></div>
+          <ul class="list">{journey.map((j: any) => <li><span class="mono truncate">{j.path}</span><small>{dt(j.created_at)}</small></li>)}</ul></div>
+      )}
+      {prevLeads.length > 0 && (
+        <div class="card"><div class="card__head"><h2>Other inquiries from this email</h2></div>
+          <ul class="list">{prevLeads.map((l: any) => <li><a href={`/admin/inquiries/${l.id}`}>#{l.id} · {STATUS_LABEL[l.status as keyof typeof STATUS_LABEL]}</a><small>{dt(l.created_at)}</small></li>)}</ul></div>
+      )}
+      <div class="card">
+        <div class="card__head"><h2>History</h2></div>
+        {history.length ? (
+          <ul class="timeline card__body">{history.map((h: any) => <li><span><strong>{FIELD[h.field] ?? h.field}</strong>: {h.old_value ?? '—'} → {h.new_value ?? '—'}<br /><small>{h.name ?? 'System'} · {dt(h.created_at)}</small></span></li>)}</ul>
+        ) : <div class="empty"><span>No changes yet.</span></div>}
+      </div>
+    </aside>
+  </div>
+
+  <script define:vars={{ id }}>window.__inquiryId = id;</script>
+  <script>
+    import { api, toast, confirmAction } from '../../../scripts/admin/shell';
+    import { showErrors } from '../../../scripts/admin/form-builder';
+    const id = (window as unknown as { __inquiryId: number }).__inquiryId;
+    const edit = document.querySelector<HTMLFormElement>('[data-edit]')!;
+    edit.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const b = Object.fromEntries(new FormData(edit)) as Record<string, unknown>;
+      b.property_id = b.property_id ? Number(b.property_id) : null;
+      try { await api(`/api/admin/inquiries/${id}`, { method: 'PUT', json: b }); toast('Saved'); setTimeout(() => location.reload(), 500); }
+      catch (er) { showErrors(edit, (er as { fields?: Record<string, string> }).fields); toast((er as Error).message, 'err'); }
+    });
+    document.querySelector<HTMLFormElement>('[data-note]')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const f = e.target as HTMLFormElement;
+      try { await api(`/api/admin/inquiries/${id}/notes`, { method: 'POST', json: Object.fromEntries(new FormData(f)) }); location.reload(); } catch (er) { toast((er as Error).message, 'err'); }
+    });
+    document.querySelector('[data-resend]')?.addEventListener('click', async () => {
+      try { await api(`/api/admin/inquiries/${id}/resend`, { method: 'POST' }); toast('Notification sent'); } catch (er) { toast((er as Error).message, 'err'); }
+    });
+    document.querySelector('[data-delete]')?.addEventListener('click', async () => {
+      if (!(await confirmAction('This permanently deletes the inquiry with its notes and history.', 'Delete inquiry', 'Delete'))) return;
+      try { await api(`/api/admin/inquiries/${id}`, { method: 'DELETE' }); location.href = '/admin/inquiries'; } catch (er) { toast((er as Error).message, 'err'); }
+    });
+  </script>
+</AdminLayout>

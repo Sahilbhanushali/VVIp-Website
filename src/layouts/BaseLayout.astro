@@ -5,41 +5,46 @@ import SiteHeader from '../components/SiteHeader.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import VisitDialog from '../components/VisitDialog.astro';
 import IntroLoader from '../components/IntroLoader.astro';
+import CookieConsent from '../components/CookieConsent.astro';
 import Icon from '../components/Icon.astro';
-import { site } from '../data/site';
+import type { SiteContext } from '../server/site.ts';
 
-interface Props {
+export type Seo = {
   title: string;
   description: string;
+  keywords?: string | null;
+  canonical?: string | null;
+  ogTitle?: string | null;
+  ogDescription?: string | null;
+  ogImage?: string | null;
+  ogType?: 'website' | 'article';
+  index?: boolean;
+  follow?: boolean;
+};
+
+interface Props {
+  ctx: SiteContext;
+  seo: Seo;
   /** Public path of this page, e.g. `/` or `/blog-details.html`. */
   path: string;
-  keywords?: string;
-  ogTitle?: string;
-  ogDescription?: string;
-  ogImage?: string;
-  ogType?: 'website' | 'article';
   isHome?: boolean;
   jsonLd?: Record<string, unknown>[];
-  /** Absolute URL of an image to preload with high priority (LCP). */
-  preloadImage?: { srcset: string; sizes: string; type?: string };
+  /** Admin preview: never cached, never tracked, clearly labelled. */
+  preview?: boolean;
+  /** Property the visit form should be linked to (property pages). */
+  propertyId?: number | null;
 }
 
-const {
-  title,
-  description,
-  path,
-  keywords,
-  ogTitle = title,
-  ogDescription = description,
-  ogImage = '/og-image.jpg',
-  ogType = 'website',
-  isHome = false,
-  jsonLd = [],
-  preloadImage,
-} = Astro.props;
-
-const canonical = new URL(path, site.url).href;
-const ogImageUrl = new URL(ogImage, site.url).href;
+const { ctx, seo, path, isHome = false, jsonLd = [], preview = false, propertyId = null } = Astro.props;
+const { settings } = ctx;
+const base = settings.seo.canonical_domain.replace(/\/$/, '');
+const canonical = seo.canonical || new URL(path, base).href;
+const fallbackOg = ctx.ogDefault ? `/media/${ctx.ogDefault.storage_key}/${ctx.ogDefault.variants.find((v) => v.w >= 1200)?.file ?? ctx.ogDefault.variants.at(-1)?.file}` : null;
+const ogImageUrl = new URL(seo.ogImage || fallbackOg || '/og-image.jpg', base).href;
+const index = settings.seo.allow_indexing && seo.index !== false && !preview;
+const robots = `${index ? 'index' : 'noindex'}, ${seo.follow === false ? 'nofollow' : 'follow'}${index ? ', max-image-preview:large, max-snippet:-1, max-video-preview:-1' : ''}`;
+const analytics = settings.analytics.enabled && !preview;
+const consentRequired = settings.analytics.require_consent || settings.cookie_consent.enabled;
 ---
 
 <!doctype html>
@@ -47,26 +52,24 @@ const ogImageUrl = new URL(ogImage, site.url).href;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
-    <meta name="description" content={description} />
-    {keywords && <meta name="keywords" content={keywords} />}
-    <meta name="author" content={site.name} />
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <title>{seo.title}</title>
+    <meta name="description" content={seo.description} />
+    {seo.keywords && <meta name="keywords" content={seo.keywords} />}
+    <meta name="author" content={settings.site.name} />
+    <meta name="robots" content={robots} />
     <link rel="canonical" href={canonical} />
     <link rel="alternate" href={canonical} hreflang="en-in" />
 
-    <meta property="og:title" content={ogTitle} />
-    <meta property="og:description" content={ogDescription} />
-    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={seo.ogTitle || seo.title} />
+    <meta property="og:description" content={seo.ogDescription || seo.description} />
+    <meta property="og:type" content={seo.ogType ?? 'website'} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImageUrl} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="en_IN" />
-    <meta property="og:site_name" content={site.name} />
+    <meta property="og:site_name" content={settings.site.name} />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={ogTitle} />
-    <meta name="twitter:description" content={ogDescription} />
+    <meta name="twitter:title" content={seo.ogTitle || seo.title} />
+    <meta name="twitter:description" content={seo.ogDescription || seo.description} />
     <meta name="twitter:image" content={ogImageUrl} />
 
     <link rel="icon" href="/assets/img/favicons/favicon.ico" sizes="any" />
@@ -75,13 +78,10 @@ const ogImageUrl = new URL(ogImage, site.url).href;
     <link rel="manifest" href="/assets/img/favicons/site.webmanifest" />
     <meta name="theme-color" content="#0d0d0c" />
 
-    {preloadImage && (
-      <link rel="preload" as="image" imagesrcset={preloadImage.srcset} imagesizes={preloadImage.sizes} type={preloadImage.type} fetchpriority="high" />
-    )}
     <Font cssVariable="--font-title" preload />
     <Font cssVariable="--font-body" preload={[{ style: 'normal' }]} />
 
-    <script is:inline define:vars={{ isHome }}>
+    <script is:inline define:vars={{ isHome, analytics, consentRequired }}>
       (function () {
         var d = document.documentElement;
         d.classList.add('js');
@@ -91,19 +91,22 @@ const ogImageUrl = new URL(ogImage, site.url).href;
             sessionStorage.setItem('vvip-intro', '1');
           }
         } catch (e) {}
+        window.__vvip = { analytics: analytics, consentRequired: consentRequired };
       })();
     </script>
 
     {jsonLd.map((data) => <script type="application/ld+json" set:html={JSON.stringify(data)} />)}
   </head>
   <body>
+    {preview && <div class="preview-bar" role="status">Preview — unpublished changes are shown. <a href="/admin">Back to dashboard</a></div>}
     {isHome && <IntroLoader />}
-    <SiteHeader isHome={isHome} />
+    <SiteHeader isHome={isHome} ctx={ctx} />
     <main id="main">
       <slot />
     </main>
-    <SiteFooter isHome={isHome} />
-    <VisitDialog />
+    <SiteFooter isHome={isHome} ctx={ctx} />
+    <VisitDialog ctx={ctx} propertyId={propertyId} />
+    {analytics && consentRequired && <CookieConsent message={settings.cookie_consent.message} />}
 
     <button class="scroll-top" type="button" aria-label="Back to top" data-scroll-top>
       <svg class="scroll-top__ring" viewBox="0 0 48 48" aria-hidden="true">
@@ -115,11 +118,27 @@ const ogImageUrl = new URL(ogImage, site.url).href;
 
     <script>
       import '../scripts/main';
+      import '../scripts/track';
     </script>
   </body>
 </html>
 
 <style>
+  .preview-bar {
+    position: fixed;
+    left: 50%;
+    bottom: 1rem;
+    z-index: 300;
+    transform: translateX(-50%);
+    padding: 0.6rem 1.1rem;
+    border-radius: 999px;
+    background: #fde68a;
+    color: #1a1a1a;
+    font-size: 0.85rem;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  }
+  .preview-bar a { text-decoration: underline; margin-left: 0.5rem; }
   .scroll-top {
     position: fixed;
     right: clamp(1rem, 2.5vw, 2rem);

@@ -1,0 +1,65 @@
+---
+/** Server-rendered SVG line/area chart; a tiny script adds the hover tooltip. */
+type Series = { name: string; color: string; values: number[] };
+interface Props { labels: string[]; series: Series[]; height?: number }
+const { labels, series, height = 220 } = Astro.props;
+const W = 800, H = height, padL = 36, padB = 24, padT = 10;
+const max = Math.max(1, ...series.flatMap((s) => s.values));
+const niceMax = (() => { const p = 10 ** Math.floor(Math.log10(max)); return Math.ceil(max / p) * p; })();
+const n = Math.max(1, labels.length - 1);
+const x = (i: number) => padL + (i / n) * (W - padL - 8);
+const y = (v: number) => padT + (1 - v / niceMax) * (H - padT - padB);
+const path = (vals: number[]) => vals.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => Math.round(niceMax * t));
+const every = Math.max(1, Math.ceil(labels.length / 8));
+const data = JSON.stringify({ labels, series: series.map((s) => ({ name: s.name, values: s.values })) });
+const fmtLabel = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+const empty = series.every((s) => s.values.every((v) => v === 0));
+---
+
+<div class="chart__legend">{series.map((s) => <span><i style={`background:${s.color}`}></i>{s.name}</span>)}</div>
+<div class="chart" data-chart={data}>
+  {empty && <p class="muted" style="position:absolute;inset:0;display:grid;place-items:center;pointer-events:none">No visits recorded in this period yet.</p>}
+  <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Chart of ${series.map((s) => s.name).join(' and ')}`} preserveAspectRatio="none" style={`aspect-ratio:${W}/${H}`}>
+    {ticks.map((t) => (
+      <g>
+        <line x1={padL} x2={W - 8} y1={y(t)} y2={y(t)} stroke="#ecebe7" />
+        <text x={padL - 6} y={y(t) + 4} text-anchor="end" font-size="10" fill="#8a8c8c">{t}</text>
+      </g>
+    ))}
+    {labels.map((l, i) => (i % every === 0 || (i === labels.length - 1 && i % every >= every / 2)) && (
+      <text x={x(i)} y={H - 6} text-anchor="middle" font-size="10" fill="#8a8c8c">{fmtLabel(l)}</text>
+    ))}
+    {series.map((s, si) => (
+      <g>
+        {si === 0 && <path d={`${path(s.values)} L${x(s.values.length - 1)},${y(0)} L${x(0)},${y(0)} Z`} fill={s.color} opacity="0.08" />}
+        <path d={path(s.values)} fill="none" stroke={s.color} stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" />
+      </g>
+    ))}
+    <line data-cursor x1="0" x2="0" y1={padT} y2={H - padB} stroke="#0d0d0c" stroke-dasharray="3 3" opacity="0" />
+  </svg>
+  <div class="chart__tip" hidden data-tip></div>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-chart]').forEach((el) => {
+    const d = JSON.parse(el.dataset.chart!) as { labels: string[]; series: { name: string; values: number[] }[] };
+    const svg = el.querySelector('svg')!;
+    const tip = el.querySelector<HTMLElement>('[data-tip]')!;
+    const cursor = svg.querySelector<SVGLineElement>('[data-cursor]')!;
+    const n = Math.max(1, d.labels.length - 1);
+    svg.addEventListener('pointermove', (e) => {
+      const r = svg.getBoundingClientRect();
+      const vx = ((e.clientX - r.left) / r.width) * 800;
+      const i = Math.max(0, Math.min(d.labels.length - 1, Math.round(((vx - 36) / (800 - 44)) * n)));
+      const px = 36 + (i / n) * (800 - 44);
+      cursor.setAttribute('x1', String(px)); cursor.setAttribute('x2', String(px)); cursor.setAttribute('opacity', '0.35');
+      const date = new Date(`${d.labels[i]}T00:00:00Z`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+      tip.innerHTML = `<strong>${date}</strong><br>${d.series.map((s) => `${s.name}: ${s.values[i]}`).join('<br>')}`;
+      tip.style.left = `${(px / 800) * r.width + 16}px`;
+      tip.style.top = `${e.clientY - r.top + 40}px`;
+      tip.hidden = false;
+    });
+    svg.addEventListener('pointerleave', () => { tip.hidden = true; cursor.setAttribute('opacity', '0'); });
+  });
+</script>

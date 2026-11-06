@@ -1,0 +1,161 @@
+---
+/**
+ * Every public page is resolved here from the CMS:
+ *   published snapshot (or the working copy for an authenticated ?preview=1)
+ *   → template (home / standard / property / article / legal)
+ *   → predefined section components.
+ * Legacy URLs (/index.html, /neovista.html, /blog-details*.html) are stored
+ * as page paths, so they keep working; /x and /x.html variants redirect.
+ */
+import BaseLayout, { type Seo } from '../layouts/BaseLayout.astro';
+import SectionRenderer from '../components/sections/SectionRenderer.astro';
+import PropertyHero from '../components/sections/PropertyHero.astro';
+import Article from '../components/templates/Article.astro';
+import Legal from '../components/templates/Legal.astro';
+import NotFound from '../components/templates/NotFound.astro';
+import { buildSnapshot, getPageIdByPath, getPublishedByPath, getProperty, listArticles, mediaForSnapshot, type PageSnapshot, type PropertyFull } from '../server/content.ts';
+import { loadSiteContext } from '../server/site.ts';
+import { mediaUrl, pickVariant, type Media } from '../server/media.ts';
+import { can } from '../server/permissions.ts';
+
+export const prerender = false;
+
+const pathname = Astro.url.pathname;
+const user = Astro.locals.user;
+const preview = Astro.url.searchParams.get('preview') === '1' && !!user && can(user.permissions, 'pages', 'read');
+
+let snap: PageSnapshot | null = null;
+if (preview) {
+  const id = await getPageIdByPath(pathname);
+  snap = id ? await buildSnapshot(id) : null;
+} else {
+  snap = await getPublishedByPath(pathname);
+}
+
+const ctx = await loadSiteContext();
+
+// Resolve properties referenced by the page or its sections.
+const propertyIds = new Set<number>();
+if (snap?.page.property_id) propertyIds.add(snap.page.property_id);
+snap?.sections.forEach((s) => s.data?.property_id && propertyIds.add(s.data.property_id));
+if (snap?.sections.some((s) => s.type === 'featured_property' && !s.data.property_id) && ctx.properties[0]) propertyIds.add(ctx.properties[0].id);
+const propertyMap = new Map<number, PropertyFull>();
+for (const id of propertyIds) {
+  const p = await getProperty(id, { publishedOnly: !preview });
+  if (p) propertyMap.set(id, p);
+}
+const pageProperty = snap?.page.property_id ? propertyMap.get(snap.page.property_id) ?? null : null;
+if (snap?.page.template === 'property' && !pageProperty) snap = null; // unpublished property → 404
+
+if (snap && !preview) {
+  // Redirect alternate spellings (/neovista → /neovista.html) to the stored path.
+  const canonicalPath = snap.page.path;
+  const isHomeAlias = canonicalPath === '/' && (pathname === '/index.html' || pathname === '/index');
+  if (pathname !== canonicalPath && !isHomeAlias) return Astro.redirect(canonicalPath + Astro.url.search, 301);
+}
+
+if (!snap) Astro.response.status = 404;
+
+const media: Map<number, Media> = snap ? await mediaForSnapshot(snap) : new Map();
+const page = snap?.page;
+const settings = ctx.settings;
+const ogFrom = (m: Media | null | undefined) => (m ? mediaUrl(m, pickVariant(m, 1200)!.file) : null);
+const cover = page?.cover_media_id ? media.get(page.cover_media_id) ?? null : null;
+const related = page?.template === 'article' ? await listArticles(2, page.path) : [];
+
+const seo: Seo = page
+  ? {
+      title: page.seo_title || (page.template === 'property' && pageProperty?.seo_title) || `${page.title} | ${settings.seo.site_title}`,
+      description: page.seo_description || (pageProperty?.seo_description ?? '') || page.excerpt || settings.seo.default_description,
+      keywords: page.seo_keywords,
+      canonical: page.canonical_url,
+      ogTitle: page.og_title && page.template !== 'article' ? page.og_title : page.og_title || null,
+      ogDescription: page.og_description,
+      ogImage: ogFrom(page.og_image_id ? media.get(page.og_image_id) : null) || ogFrom(cover) || ogFrom(pageProperty?.og_image ?? pageProperty?.main_image),
+      ogType: page.template === 'article' ? 'article' : 'website',
+      index: page.robots_index && page.visibility === 'public',
+      follow: page.robots_follow,
+    }
+  : { title: `Page not found | ${settings.seo.site_title}`, description: 'The page you were looking for could not be found.', index: false };
+
+/* ───── Structured data ───── */
+const base = settings.seo.canonical_domain.replace(/\/$/, '');
+const abs = (p: string) => new URL(p, base).href;
+const jsonLd: Record<string, unknown>[] = [];
+if (page?.template === 'home') {
+  const c = settings.contact;
+  jsonLd.push({
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: settings.seo.organization_name || settings.site.name,
+    description: settings.seo.organization_description || settings.seo.default_description,
+    url: base,
+    image: seo.ogImage ? [abs(seo.ogImage)] : undefined,
+    telephone: c.phones.map((p) => p.href.replace('tel:', '')),
+    email: c.emails.map((e) => e.label),
+    address: c.address ? { '@type': 'PostalAddress', streetAddress: c.address, addressLocality: 'Vapi', addressRegion: 'Gujarat', postalCode: c.address.match(/\b\d{6}\b/)?.[0], addressCountry: 'IN' } : undefined,
+    sameAs: settings.social.map((s) => s.href),
+    priceRange: '$$$',
+    ...(settings.seo.rating_value && settings.seo.rating_count ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: settings.seo.rating_value, reviewCount: settings.seo.rating_count, bestRating: 5 } } : {}),
+  });
+}
+if (page?.template === 'property' && pageProperty) {
+  jsonLd.push({
+    '@context': 'https://schema.org',
+    '@type': ['Place', 'Product'],
+    name: pageProperty.title,
+    description: pageProperty.summary ?? undefined,
+    url: abs(page.path),
+    image: pageProperty.images.slice(0, 6).map((i) => abs(mediaUrl(i.media, pickVariant(i.media, 1200)!.file))),
+    brand: pageProperty.developer ? { '@type': 'Organization', name: pageProperty.developer } : undefined,
+    address: pageProperty.address ? { '@type': 'PostalAddress', streetAddress: pageProperty.address, addressCountry: 'IN' } : undefined,
+    geo: pageProperty.latitude ? { '@type': 'GeoCoordinates', latitude: pageProperty.latitude, longitude: pageProperty.longitude } : undefined,
+    ...(pageProperty.price_amount ? { offers: { '@type': 'Offer', price: pageProperty.price_amount, priceCurrency: 'INR', availability: 'https://schema.org/InStock' } } : {}),
+    additionalProperty: pageProperty.specs.map((s) => ({ '@type': 'PropertyValue', name: s.label, value: s.value })),
+  });
+}
+if (page?.template === 'article') {
+  jsonLd.push({
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: page.title,
+    description: seo.description,
+    datePublished: page.display_date ?? undefined,
+    dateModified: page.updated_at.slice(0, 10),
+    image: seo.ogImage ? abs(seo.ogImage) : undefined,
+    author: { '@type': 'Organization', name: settings.site.name, url: base },
+    publisher: { '@type': 'Organization', name: settings.site.name, logo: { '@type': 'ImageObject', url: abs('/assets/img/favicons/android-chrome-512x512.png') } },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': abs(page.path) },
+  });
+}
+if (page && page.template !== 'home') {
+  jsonLd.push({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${base}/` },
+      ...(page.template === 'article' ? [{ '@type': 'ListItem', position: 2, name: 'Blogs', item: `${base}/#blog-sec` }] : []),
+      ...(page.template === 'property' ? [{ '@type': 'ListItem', position: 2, name: 'Properties', item: `${base}/properties.html` }] : []),
+      { '@type': 'ListItem', position: page.template === 'article' || page.template === 'property' ? 3 : 2, name: page.title, item: abs(page.path) },
+    ],
+  });
+}
+
+if (!preview && snap) Astro.response.headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+if (preview) Astro.response.headers.set('Cache-Control', 'private, no-store');
+---
+
+<BaseLayout ctx={ctx} seo={seo} path={page?.path ?? pathname} isHome={page?.template === 'home'} jsonLd={jsonLd} preview={preview} propertyId={pageProperty?.id ?? null}>
+  {!page && <NotFound />}
+  {page && (page.template === 'home' || page.template === 'standard') && (
+    <SectionRenderer sections={snap!.sections} media={media} settings={settings} articles={ctx.articles} properties={ctx.properties} propertyMap={propertyMap} isHome={page.template === 'home'} />
+  )}
+  {page && page.template === 'property' && pageProperty && (
+    <>
+      <PropertyHero property={pageProperty} hasGallery={snap!.sections.some((s) => s.type === 'gallery')} />
+      <SectionRenderer sections={snap!.sections} media={media} settings={settings} articles={ctx.articles} properties={ctx.properties} propertyMap={propertyMap} pageProperty={pageProperty} />
+    </>
+  )}
+  {page && page.template === 'article' && <Article page={page} cover={cover} related={related} settings={settings} />}
+  {page && page.template === 'legal' && <Legal page={page} legalNav={ctx.legal} />}
+</BaseLayout>

@@ -1,0 +1,24 @@
+---
+interface Props { page: number; pages: number; total: number; perPage: number }
+const { page, pages, total, perPage } = Astro.props;
+const href = (p: number) => { const u = new URL(Astro.url); u.searchParams.set('page', String(p)); return u.pathname + u.search; };
+const from = total ? (page - 1) * perPage + 1 : 0;
+const to = Math.min(total, page * perPage);
+const nums = [...new Set([1, page - 1, page, page + 1, pages].filter((n) => n >= 1 && n <= pages))].sort((a, b) => a - b);
+---
+
+<div class="pager">
+  <span>{from}–{to} of {new Intl.NumberFormat('en-IN').format(total)}</span>
+  {pages > 1 && (
+    <nav class="pager__links" aria-label="Pagination">
+      {page > 1 ? <a href={href(page - 1)} aria-label="Previous page">‹</a> : <span class="is-disabled">‹</span>}
+      {nums.map((n, i) => (
+        <>
+          {i > 0 && n - nums[i - 1] > 1 && <span class="is-disabled">…</span>}
+          {n === page ? <span class="is-current" aria-current="page">{n}</span> : <a href={href(n)}>{n}</a>}
+        </>
+      ))}
+      {page < pages ? <a href={href(page + 1)} aria-label="Next page">›</a> : <span class="is-disabled">›</span>}
+    </nav>
+  )}
+</div>

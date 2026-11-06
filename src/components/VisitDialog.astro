@@ -7,7 +7,11 @@
  */
 import ContactForm from './ContactForm.astro';
 import Icon from './Icon.astro';
-import { site } from '../data/site';
+import type { SiteContext } from '../server/site.ts';
+
+interface Props { ctx: SiteContext; propertyId?: number | null }
+const { ctx, propertyId = null } = Astro.props;
+const phone = ctx.settings.contact.phones[0];
 ---
 
 <dialog id="visit-dialog" class="visit" aria-labelledby="visit-title">
@@ -18,10 +22,10 @@ import { site } from '../data/site';
     <div class="visit__intro">
       <p class="eyebrow">Private viewing</p>
       <h2 id="visit-title" class="visit__title">Schedule a visit</h2>
-      <p>Tell us a little about what you are looking for and our team will arrange a personal walkthrough of NeoVista.</p>
-      <a class="visit__phone" href={site.phones[0].href}><Icon name="phone" size={16} /> {site.phones[0].label}</a>
+      <p>Tell us a little about what you are looking for and our team will arrange a personal walkthrough.</p>
+      {phone && <a class="visit__phone" href={phone.href}><Icon name="phone" size={16} /> {phone.label}</a>}
     </div>
-    <ContactForm idPrefix="modal" tone="light" submitLabel="Request a visit" />
+    <ContactForm idPrefix="modal" tone="light" submitLabel="Request a visit" types={ctx.settings.enquiry_types} propertyId={propertyId} />
   </div>
 </dialog>
 

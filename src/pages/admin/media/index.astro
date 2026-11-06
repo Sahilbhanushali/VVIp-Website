@@ -1,0 +1,165 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AIcon from '../../../components/admin/AIcon.astro';
+import Pager from '../../../components/admin/Pager.astro';
+import { listMedia, mediaFolders, formatBytes } from '../../../server/admin-media.ts';
+import { can } from '../../../server/permissions.ts';
+
+export const prerender = false;
+const user = Astro.locals.user!;
+if (!can(user.permissions, 'media', 'read')) return Astro.redirect('/admin');
+const sp = Astro.url.searchParams;
+const f = { q: sp.get('q') ?? '', folder: sp.get('folder') ?? '', kind: sp.get('kind') ?? '', sort: sp.get('sort') ?? 'newest', page: Number(sp.get('page') ?? 1) };
+const data = await listMedia({ ...f, perPage: 48 });
+const folders = await mediaFolders();
+const P = user.permissions;
+---
+
+<AdminLayout title="Media library" crumbs={[{ label: 'Media library' }]}>
+  <div class="a-head">
+    <div><h1>Media library</h1><p>Images are converted to optimised WebP in several sizes automatically. Files persist outside the build folder.</p></div>
+  </div>
+
+  {can(P, 'media', 'create') && (
+    <label class="dropzone" data-dropzone>
+      <AIcon name="upload" size={28} />
+      <strong>Drop images or videos here, or click to browse</strong>
+      <span>JPEG, PNG, WebP, AVIF, GIF up to 15 MB · MP4/WebM up to 80 MB · up to 20 files at once</span>
+      <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/avif,image/gif,video/mp4,video/webm" hidden data-upload />
+      <select class="select" name="folder" style="width:auto;margin-top:.5rem" data-upload-folder onclick="event.stopPropagation()">
+        {['uploads', ...folders.map((x) => x.folder).filter((x) => x !== 'uploads')].map((x) => <option>{x}</option>)}
+      </select>
+    </label>
+  )}
+
+  <div class="card">
+    <form class="toolbar" method="get">
+      <input class="input grow" type="search" name="q" value={f.q} placeholder="Search name, alt text, description" />
+      <select class="select" name="folder" onchange="this.form.submit()">
+        <option value="">All folders</option>
+        {folders.map((x) => <option value={x.folder} selected={x.folder === f.folder}>{x.folder} ({x.n})</option>)}
+      </select>
+      <select class="select" name="kind" onchange="this.form.submit()">
+        <option value="">All types</option>
+        <option value="image" selected={f.kind === 'image'}>Images</option>
+        <option value="video" selected={f.kind === 'video'}>Videos</option>
+        <option value="missing_alt" selected={f.kind === 'missing_alt'}>Missing alt text</option>
+      </select>
+      <select class="select" name="sort" onchange="this.form.submit()">
+        <option value="newest" selected={f.sort === 'newest'}>Newest</option>
+        <option value="oldest" selected={f.sort === 'oldest'}>Oldest</option>
+        <option value="name" selected={f.sort === 'name'}>Name</option>
+        <option value="size" selected={f.sort === 'size'}>Largest</option>
+      </select>
+      <button class="btn" type="submit">Search</button>
+    </form>
+    {data.items.length ? (
+      <div class="media-grid">
+        {data.items.map((m) => (
+          <button type="button" class="media-tile" data-media-id={m.id}>
+            {!m.alt && m.kind === 'image' && <span class="badge badge--warn">No alt</span>}
+            <span class="media-tile__img">{m.kind === 'video' ? <video src={m.thumb ?? ''} muted preload="metadata"></video> : <img src={m.thumb ?? ''} alt="" loading="lazy" />}</span>
+            <span class="media-tile__name">{m.original_name}</span>
+            <span class="media-tile__meta">{m.width ? `${m.width}×${m.height} · ` : ''}{formatBytes(m.size_bytes)} · {m.folder}</span>
+          </button>
+        ))}
+      </div>
+    ) : <div class="empty"><AIcon name="image" size={40} /><strong>No media found</strong><span>Try a different search or upload files above.</span></div>}
+    <Pager page={data.page} pages={data.pages} total={data.total} perPage={data.perPage} />
+  </div>
+
+  <dialog class="a-dialog a-dialog--wide" data-detail>
+    <form class="stack" data-detail-form>
+      <div class="a-dialog__head"><h2 data-d-title>Media details</h2><button type="button" class="btn btn--ghost btn--icon" data-close aria-label="Close">✕</button></div>
+      <div class="a-dialog__body" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))">
+        <div class="stack">
+          <div data-d-preview></div>
+          <dl class="kv" data-d-meta></dl>
+          <div><p class="label">Generated sizes</p><div class="chips" data-d-variants></div></div>
+        </div>
+        <div class="stack">
+          <div class="field"><label for="d-alt">Alt text</label><input class="input" id="d-alt" name="alt" maxlength="255" /><small>Describe the image for screen readers and search engines.</small></div>
+          <div class="field"><label for="d-desc">Description</label><textarea class="textarea" id="d-desc" name="description" maxlength="500"></textarea></div>
+          <div class="field"><label for="d-folder">Folder</label><input class="input" id="d-folder" name="folder" pattern="[\w-]{1,60}" /></div>
+          <div class="field"><label>File URL</label><div class="input-group"><input class="input mono" readonly data-d-url /><button type="button" class="btn" data-copy>Copy</button></div></div>
+          <div><p class="label">Used in</p><ul class="list" data-d-usage style="font-size:.8rem"></ul></div>
+        </div>
+      </div>
+      <div class="a-dialog__foot">
+        {can(P, 'media', 'delete') && <button type="button" class="btn btn--danger" data-delete style="margin-right:auto">Delete</button>}
+        {can(P, 'media', 'update') && <label class="btn" style="position:relative;overflow:hidden">Replace file<input type="file" accept="image/*,video/mp4,video/webm" style="position:absolute;inset:0;opacity:0" data-replace /></label>}
+        {can(P, 'media', 'update') && <button type="submit" class="btn btn--primary">Save details</button>}
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    import { api, toast, confirmAction } from '../../../scripts/admin/shell';
+    const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+    const kb = (b: number) => (b > 1048576 ? `${(b / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
+
+    // Upload (click or drag & drop)
+    const zone = document.querySelector<HTMLElement>('[data-dropzone]');
+    const input = document.querySelector<HTMLInputElement>('[data-upload]');
+    const upload = async (files: FileList | File[]) => {
+      const fd = new FormData();
+      [...files].forEach((f) => fd.append('files', f));
+      fd.append('folder', document.querySelector<HTMLSelectElement>('[data-upload-folder]')?.value ?? 'uploads');
+      zone?.classList.add('is-over');
+      try {
+        const r = await api<{ created: unknown[]; errors: { name: string; error: string }[] }>('/api/admin/media', { method: 'POST', body: fd });
+        r.errors.forEach((e) => toast(`${e.name}: ${e.error}`, 'err'));
+        if (r.created.length) { toast(`Uploaded ${r.created.length} file(s)`); setTimeout(() => location.reload(), 600); }
+      } catch (e) { toast((e as Error).message, 'err'); }
+      zone?.classList.remove('is-over');
+    };
+    input?.addEventListener('change', () => input.files?.length && upload(input.files));
+    zone?.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('is-over'); });
+    zone?.addEventListener('dragleave', () => zone.classList.remove('is-over'));
+    zone?.addEventListener('drop', (e) => { e.preventDefault(); zone.classList.remove('is-over'); if (e.dataTransfer?.files.length) upload(e.dataTransfer.files); });
+
+    // Details
+    const dlg = document.querySelector<HTMLDialogElement>('[data-detail]')!;
+    const form = document.querySelector<HTMLFormElement>('[data-detail-form]')!;
+    let current = 0;
+    const open = async (id: number) => {
+      const m = await api<any>(`/api/admin/media/${id}`);
+      current = id;
+      dlg.querySelector('[data-d-title]')!.textContent = m.original_name;
+      dlg.querySelector('[data-d-preview]')!.innerHTML = m.kind === 'video'
+        ? `<video src="${esc(m.url)}" controls style="width:100%;border-radius:8px"></video>`
+        : `<img class="thumb" style="aspect-ratio:auto;object-fit:contain;background:#f1f0ec;max-height:46vh" src="${esc(m.url)}" alt="">`;
+      dlg.querySelector('[data-d-meta]')!.innerHTML = `<dt>Type</dt><dd>${esc(m.mime)}</dd>${m.width ? `<dt>Dimensions</dt><dd>${m.width} × ${m.height}px</dd>` : ''}<dt>Size</dt><dd>${kb(m.size_bytes)} (largest variant)</dd><dt>Uploaded</dt><dd>${new Date(m.created_at).toLocaleString('en-IN')}</dd>`;
+      dlg.querySelector('[data-d-variants]')!.innerHTML = m.variants.map((v: any) => `<a class="badge badge--plain" href="${esc(v.url)}" target="_blank">${v.w ? `${v.w}w` : 'original'} · ${kb(v.bytes)}</a>`).join('');
+      (form.elements.namedItem('alt') as HTMLInputElement).value = m.alt;
+      (form.elements.namedItem('description') as HTMLTextAreaElement).value = m.description ?? '';
+      (form.elements.namedItem('folder') as HTMLInputElement).value = m.folder;
+      dlg.querySelector<HTMLInputElement>('[data-d-url]')!.value = location.origin + m.url;
+      dlg.querySelector('[data-d-usage]')!.innerHTML = m.usage.length ? m.usage.map((u: string) => `<li>${esc(u)}</li>`).join('') : '<li class="muted">Not used anywhere — safe to delete.</li>';
+      dlg.showModal();
+    };
+    document.querySelectorAll<HTMLElement>('[data-media-id]').forEach((t) => t.addEventListener('click', () => open(Number(t.dataset.mediaId)).catch((e) => toast(e.message, 'err'))));
+    dlg.querySelector('[data-close]')!.addEventListener('click', () => dlg.close());
+    dlg.querySelector('[data-copy]')!.addEventListener('click', () => { navigator.clipboard.writeText(dlg.querySelector<HTMLInputElement>('[data-d-url]')!.value); toast('URL copied'); });
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        await api(`/api/admin/media/${current}`, { method: 'PUT', json: Object.fromEntries(new FormData(form)) });
+        toast('Saved'); dlg.close(); setTimeout(() => location.reload(), 400);
+      } catch (er) { toast((er as Error).message, 'err'); }
+    });
+    dlg.querySelector('[data-delete]')?.addEventListener('click', async () => {
+      if (!(await confirmAction('This permanently deletes the file and all its generated sizes.', 'Delete this file?', 'Delete'))) return;
+      try { await api(`/api/admin/media/${current}`, { method: 'DELETE' }); toast('Deleted'); dlg.close(); setTimeout(() => location.reload(), 400); }
+      catch (er) { toast((er as Error).message, 'err'); }
+    });
+    dlg.querySelector<HTMLInputElement>('[data-replace]')?.addEventListener('change', async (e) => {
+      const f = (e.target as HTMLInputElement).files?.[0];
+      if (!f) return;
+      const fd = new FormData(); fd.append('file', f);
+      try { await api(`/api/admin/media/${current}`, { method: 'POST', body: fd }); toast('File replaced everywhere it is used'); open(current); }
+      catch (er) { toast((er as Error).message, 'err'); }
+    });
+    if (new URLSearchParams(location.search).get('open')) open(Number(new URLSearchParams(location.search).get('open')));
+  </script>
+</AdminLayout>

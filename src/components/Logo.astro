@@ -1,25 +1,32 @@
 ---
-import { Image } from 'astro:assets';
-import logo from '../assets/images/brand/say-yes-logo.png';
+import type { Media } from '../server/media.ts';
+import { mediaUrl, pickVariant } from '../server/media.ts';
 
 interface Props {
+  media: Media | null;
   height?: number;
   class?: string;
   eager?: boolean;
+  alt?: string;
 }
-const { height = 44, class: className, eager = false } = Astro.props;
-const width = Math.round((logo.width / logo.height) * height);
+const { media, height = 44, class: className, eager = false, alt = 'VVIP — Say Yes' } = Astro.props;
+const ratio = media?.width && media?.height ? media.width / media.height : 3;
+const width = Math.round(ratio * height);
+const one = media ? pickVariant(media, width) : null;
+const two = media ? pickVariant(media, width * 2) : null;
 ---
 
-<Image
-  src={logo}
-  alt="VVIP — Say Yes"
-  width={width}
-  height={height}
-  densities={[1, 2]}
-  format="webp"
-  quality={90}
-  class={className}
-  loading={eager ? 'eager' : 'lazy'}
-  decoding="async"
-/>
+{media && one ? (
+  <img
+    src={mediaUrl(media, one.file)}
+    srcset={two && two.file !== one.file ? `${mediaUrl(media, one.file)} 1x, ${mediaUrl(media, two.file)} 2x` : undefined}
+    alt={alt}
+    width={width}
+    height={height}
+    class={className}
+    loading={eager ? 'eager' : 'lazy'}
+    decoding="async"
+  />
+) : (
+  <span class={className} style="font-family:var(--ff-title);font-weight:600;letter-spacing:.2em;color:var(--bronze)">VVIP</span>
+)}

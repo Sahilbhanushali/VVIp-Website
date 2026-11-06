@@ -1,0 +1,65 @@
+---
+/** Legal document template (Privacy Policy, Terms & Conditions). */
+import type { PageFields } from '../../server/content.ts';
+import { renderMarkdown } from '../../server/markdown.ts';
+import { formatDate } from '../../server/format.ts';
+import type { NavItem } from '../../server/content.ts';
+
+interface Props { page: PageFields; legalNav: NavItem[] }
+const { page, legalNav } = Astro.props;
+const html = renderMarkdown(page.body);
+// Build a table of contents from the H2 headings.
+const toc = [...(page.body ?? '').matchAll(/^##\s+(.+)$/gm)].map((m) => m[1].trim());
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+const withIds = html.replace(/<h2>(.*?)<\/h2>/g, (_m, t) => `<h2 id="${slug(t.replace(/<[^>]+>/g, ''))}">${t}</h2>`);
+---
+
+<section class="legal">
+  <header class="legal__hero">
+    <div class="container legal__hero-inner">
+      <nav aria-label="Breadcrumb" class="legal__crumbs">
+        <ol role="list"><li><a href="/">Home</a></li><li aria-current="page">{page.title}</li></ol>
+      </nav>
+      <h1 class="legal__title">{page.title}</h1>
+      {page.display_date && <p class="legal__updated">Last updated <time datetime={page.display_date}>{formatDate(page.display_date, { day: 'numeric', month: 'long', year: 'numeric' })}</time></p>}
+    </div>
+  </header>
+  <div class="container legal__grid">
+    {toc.length > 2 && (
+      <nav class="legal__toc" aria-label="On this page">
+        <p class="legal__toc-title">On this page</p>
+        <ol role="list">{toc.map((t) => <li><a href={`#${slug(t)}`}>{t}</a></li>)}</ol>
+        {legalNav.length > 1 && (
+          <div class="legal__other">
+            {legalNav.filter((l) => l.url !== page.path).map((l) => <a href={l.url}>{l.label} →</a>)}
+          </div>
+        )}
+      </nav>
+    )}
+    <div class="prose legal__body" set:html={withIds} />
+  </div>
+</section>
+
+<style>
+  .legal { background: var(--white); }
+  .legal__hero { background: var(--ink); color: var(--white); padding: calc(var(--header-h) + clamp(3rem, 2rem + 4vw, 6rem)) 0 clamp(2.5rem, 2rem + 3vw, 4.5rem); }
+  .legal__hero-inner { display: grid; gap: 1.25rem; }
+  .legal__crumbs ol { display: flex; gap: 0.5rem; }
+  .legal__crumbs li { font-family: var(--ff-title); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255, 255, 255, 0.6); }
+  .legal__crumbs li + li::before { content: '/'; margin-right: 0.5rem; color: var(--bronze); }
+  .legal__crumbs [aria-current] { color: var(--bronze-light); }
+  .legal__title { color: var(--white); font-size: clamp(2.2rem, 1.5rem + 3vw, 4rem); font-weight: 300; letter-spacing: -0.035em; }
+  .legal__updated { color: rgba(255, 255, 255, 0.7); font-size: 0.9rem; }
+  .legal__grid { display: grid; gap: 3rem; padding-block: clamp(3rem, 2rem + 4vw, 6rem); grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 1000px) { .legal__grid { grid-template-columns: 260px minmax(0, 1fr); gap: clamp(3rem, 6vw, 6rem); } }
+  .legal__toc { align-self: start; display: grid; gap: 1rem; font-size: 0.9rem; }
+  @media (min-width: 1000px) { .legal__toc { position: sticky; top: calc(var(--header-h) + 1.5rem); } }
+  .legal__toc-title { font-family: var(--ff-title); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; color: var(--bronze-ink); }
+  .legal__toc ol { display: grid; gap: 0.55rem; border-left: 1px solid var(--line); padding-left: 1rem; }
+  .legal__toc a { color: #4f5252; }
+  .legal__toc a:hover { color: var(--ink); }
+  .legal__other { display: grid; gap: 0.4rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+  .legal__other a { color: var(--bronze-ink); font-weight: 600; }
+  .legal__body { max-width: 74ch; }
+  .legal__body :global(h2) { scroll-margin-top: calc(var(--header-h) + 1rem); }
+</style>

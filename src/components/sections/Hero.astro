@@ -1,0 +1,243 @@
+---
+import SplitText from '../SplitText.astro';
+import Icon from '../Icon.astro';
+import MediaImg from '../MediaImg.astro';
+import type { Media } from '../../server/media.ts';
+import type { SectionData } from '../../server/sections.ts';
+
+interface Props { data: SectionData<'hero'>; media: Map<number, Media>; address: string; anchor?: string; isHome?: boolean }
+const { data, media, address, anchor = 'hero', isHome = true } = Astro.props;
+const img = data.image.media_id ? media.get(data.image.media_id) : null;
+const local = (h: string) => (isHome && h.startsWith('/#') ? h.slice(1) : h);
+---
+
+<section id={anchor} class="hero" aria-labelledby={`${anchor}-title`}>
+  <div class="hero__media" data-reveal="zoom">
+    <MediaImg
+      media={img}
+      alt={data.image.alt || undefined}
+      sizes="100vw"
+      width={1600}
+      loading="eager"
+      fetchpriority="high"
+      style={data.image.position ? `object-position:${data.image.position}` : undefined}
+    />
+  </div>
+  <div class="hero__shade" aria-hidden="true"></div>
+
+  <div class="container hero__content">
+    {data.card_enabled && (
+      <aside class="hero__card" data-reveal style="--d:7" aria-label={data.card_title || 'At a glance'}>
+        {data.card_kicker && <p class="hero__card-kicker">{data.card_kicker}</p>}
+        {data.card_title && <p class="hero__card-title">{data.card_title}</p>}
+        {data.card_text && <p class="hero__card-text">{data.card_text}</p>}
+        {data.card_link.label && data.card_link.href && (
+          <a class="hero__card-link" href={local(data.card_link.href)} data-cta={data.card_link.label}>{data.card_link.label} <Icon name="arrow-right" size={16} /></a>
+        )}
+        {address && <p class="hero__card-addr"><Icon name="pin" size={14} /> {address}</p>}
+      </aside>
+    )}
+    {data.eyebrow && <p class="eyebrow" data-reveal>{data.eyebrow}</p>}
+    <SplitText as="h1" id={`${anchor}-title`} class="h-display hero__title" text={data.title} delay={1} />
+    {data.lead && <p class="hero__lead" data-reveal style="--d:5">{data.lead}</p>}
+    {(data.primary.label || data.secondary.label) && (
+      <div class="hero__actions" data-reveal style="--d:6">
+        {data.primary.label && (
+          <a href={local(data.primary.href || '/#contact-sec')} class="btn" data-open-visit={data.primary.opens_visit ? '' : undefined} data-cta={data.primary.label}>
+            {data.primary.label} <Icon name="arrow-right" />
+          </a>
+        )}
+        {data.secondary.label && (
+          <a href={local(data.secondary.href || '#')} class="btn btn--ghost" data-open-visit={data.secondary.opens_visit ? '' : undefined} data-cta={data.secondary.label}>{data.secondary.label}</a>
+        )}
+      </div>
+    )}
+  </div>
+
+  {data.stats.length > 0 && (
+    <div class="hero__bottom">
+      <div class="container">
+        <dl class="hero__stats">
+          {data.stats.map((s, i) => (
+            <div class="hero__stat" data-reveal style={`--d:${7 + i}`}>
+              <dt>{s.label}</dt>
+              <dd>
+                <span data-count={s.value} data-decimals={s.decimals}>{s.value.toFixed(s.decimals)}</span>{s.suffix}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </div>
+  )}
+
+  <a href="#campaign" class="hero__scroll" aria-label="Scroll to next section">
+    <span>Scroll</span>
+    <i aria-hidden="true"></i>
+  </a>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    color: var(--white);
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--ink);
+  }
+  .hero__media, .hero__shade { position: absolute; inset: 0; z-index: -1; }
+  .hero__media :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 38% 50%;
+  }
+  .hero__shade {
+    background:
+      linear-gradient(0deg, rgba(191, 120, 64, 0.16), rgba(191, 120, 64, 0.16)),
+      linear-gradient(180deg, rgba(13, 13, 12, 0.55) 0%, rgba(13, 13, 12, 0.08) 28%, rgba(13, 13, 12, 0.15) 50%, rgba(13, 13, 12, 0.9) 100%),
+      linear-gradient(90deg, rgba(13, 13, 12, 0.7) 0%, rgba(13, 13, 12, 0.2) 55%, transparent 80%);
+  }
+
+  .hero__content {
+    position: relative;
+    align-self: end;
+    display: grid;
+    gap: 1.6rem;
+    padding-top: calc(var(--header-h) + 3rem);
+    padding-bottom: clamp(2.5rem, 2rem + 3vw, 4.5rem);
+  }
+  .hero__content :global(.hero__title) {
+    color: var(--white);
+    max-width: 11ch;
+    text-shadow: 0 2px 40px rgba(0, 0, 0, 0.25);
+  }
+  .hero__lead {
+    max-width: 44ch;
+    font-size: var(--fs-lead);
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.82);
+  }
+  .hero__card {
+    display: none;
+    position: absolute;
+    right: var(--gutter);
+    bottom: clamp(2.5rem, 2rem + 3vw, 4.5rem);
+    width: 21rem;
+    padding: 1.5rem;
+    gap: 0.6rem;
+    border-radius: var(--radius-lg);
+    background: rgba(13, 13, 12, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(18px) saturate(1.3);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  }
+  @media (min-width: 1200px) { .hero__card { display: grid; } }
+  .hero__card-kicker { font-family: var(--ff-title); font-size: 0.64rem; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; color: var(--bronze-light); }
+  .hero__card-title { font-family: var(--ff-title); font-size: 1.35rem; font-weight: 400; letter-spacing: -0.02em; color: var(--white); line-height: 1.2; }
+  .hero__card-text { font-size: 0.85rem; color: rgba(255, 255, 255, 0.7); }
+  .hero__card-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.4rem;
+    padding: 0.8rem 1rem;
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--white);
+    font-family: var(--ff-title);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    transition: background-color 400ms ease, color 400ms ease;
+  }
+  .hero__card-link:hover { background: var(--bronze); color: var(--ink); }
+  .hero__card-link :global(svg) { transition: transform 400ms var(--ease-out); }
+  .hero__card-link:hover :global(svg) { transform: translateX(4px); }
+  .hero__card-addr { display: flex; gap: 0.5rem; align-items: flex-start; font-size: 0.75rem; color: rgba(255, 255, 255, 0.55); padding-top: 0.6rem; border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: 0.4rem; }
+  .hero__card-addr :global(svg) { flex: none; margin-top: 0.2rem; }
+  .hero__actions { display: flex; flex-wrap: wrap; gap: 0.85rem; margin-top: 0.5rem; }
+
+  .hero__bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    background: linear-gradient(to top, rgba(13, 13, 12, 0.6), rgba(13, 13, 12, 0.2));
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .hero__stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (min-width: 900px) { .hero__stats { grid-template-columns: repeat(4, 1fr); } }
+  .hero__stat {
+    contain: layout style;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.35rem;
+    padding: 1.4rem 1rem 1.5rem 0;
+  }
+  .hero__stat + .hero__stat { padding-left: clamp(1rem, 2vw, 2rem); border-left: 1px solid rgba(255, 255, 255, 0.14); }
+  @media (max-width: 899px) {
+    .hero__stat:nth-child(3) { padding-left: 0; border-left: 0; }
+    .hero__stat:nth-child(n + 3) { border-top: 1px solid rgba(255, 255, 255, 0.14); }
+  }
+  .hero__stat dd {
+    font-family: var(--ff-title);
+    font-size: clamp(1.75rem, 1.3rem + 2vw, 3rem);
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--white);
+    font-variant-numeric: tabular-nums;
+  }
+  .hero__stat dt {
+    font-family: var(--ff-title);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--bronze-light);
+  }
+
+  .hero__scroll {
+    position: absolute;
+    right: var(--gutter);
+    bottom: calc(100% - 100svh + 9rem);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9rem;
+    font-family: var(--ff-title);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    writing-mode: vertical-rl;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  @media (min-width: 1100px) and (max-width: 1199px) { .hero__scroll { display: flex; bottom: 9.5rem; } }
+  .hero__scroll i {
+    position: relative;
+    width: 1px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+  }
+  .hero__scroll i::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--bronze-light);
+    animation: scroll-cue 2.4s var(--ease-in-out) infinite;
+  }
+  @keyframes scroll-cue {
+    0% { transform: translateY(-100%); }
+    60%, 100% { transform: translateY(100%); }
+  }
+  @media (prefers-reduced-motion: reduce) { .hero__scroll i::after { animation: none; } }
+</style>

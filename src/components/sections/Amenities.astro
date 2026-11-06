@@ -1,0 +1,207 @@
+---
+/** Amenities strip — native scroll-snap with arrow buttons and progress. */
+import SplitText from '../SplitText.astro';
+import Icon from '../Icon.astro';
+import MediaImg from '../MediaImg.astro';
+import type { Media } from '../../server/media.ts';
+import type { SectionData } from '../../server/sections.ts';
+import type { PropertyFull } from '../../server/content.ts';
+
+interface Props { data: SectionData<'amenities'>; media: Map<number, Media>; property?: PropertyFull | null; anchor?: string }
+const { data, media, property = null, anchor = 'amenities' } = Astro.props;
+const items =
+  data.source === 'property' && property
+    ? property.amenities.map((a) => ({ name: a.name, icon: a.icon ?? '', m: a.media }))
+    : data.items.map((a) => ({ name: a.name, icon: a.icon, m: a.media_id ? media.get(a.media_id) ?? null : null }));
+const ICONS = new Set(['art-gallery', 'car-lift', 'cctv', 'check-in', 'drop-off', 'fire-safety', 'lifts', 'lobby', 'podium', 'security', 'valet', 'ventilated', 'wide-passage']);
+---
+
+{items.length > 0 && (
+<section id={anchor} class="section section--ink amenities" aria-labelledby={`${anchor}-title`} data-amenities>
+  <div class="container">
+    <header class="section-head section-head--split">
+      <div class="amenities__head">
+        {data.eyebrow && <p class="eyebrow" data-reveal>{data.eyebrow}</p>}
+        <SplitText id={`${anchor}-title`} class="h-section" text={data.title} />
+      </div>
+      <div class="amenities__intro">
+        {data.lead && <p class="lead" data-reveal style="--d:2">{data.lead}</p>}
+        <div class="amenities__nav" data-reveal style="--d:3">
+          <button type="button" class="amenities__btn" aria-label="Scroll amenities left" data-dir="-1"><Icon name="arrow-left" size={18} /></button>
+          <button type="button" class="amenities__btn" aria-label="Scroll amenities right" data-dir="1"><Icon name="arrow-right" size={18} /></button>
+        </div>
+      </div>
+    </header>
+  </div>
+
+  <ul class="amenities__track" role="list" tabindex="0" aria-label="Amenities, scrollable" data-track>
+    {items.map((a, i) => (
+      <li class="amenity" data-reveal style={`--d:${Math.min(i, 5)}`}>
+        {a.m && <MediaImg media={a.m} alt="" sizes="(min-width: 768px) 300px, 72vw" width={480} class="amenity__img" />}
+        <div class="amenity__content">
+          {ICONS.has(a.icon) && <img class="amenity__icon" src={`/icons/amenities/${a.icon}.svg`} alt="" width="44" height="44" loading="lazy" decoding="async" />}
+          <h3 class="amenity__name">{a.name}</h3>
+        </div>
+        <span class="amenity__index" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+      </li>
+    ))}
+  </ul>
+
+  <div class="container">
+    <div class="amenities__progress" aria-hidden="true"><span data-progress></span></div>
+  </div>
+</section>
+)}
+
+<style>
+  .amenities { overflow: hidden; }
+  .amenities__head { display: grid; gap: 1.5rem; }
+  .amenities__intro { display: grid; gap: 2rem; }
+  .amenities__nav { display: flex; gap: 0.5rem; }
+  .amenities__btn {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--white);
+    transition: background-color 300ms ease, border-color 300ms ease, color 300ms ease, opacity 300ms ease;
+  }
+  .amenities__btn:hover:not(:disabled) { background: var(--bronze); border-color: var(--bronze); color: var(--ink); }
+  .amenities__btn:disabled { opacity: 0.3; cursor: default; }
+
+  .amenities__track {
+    --edge: max(var(--gutter), calc((100vw - var(--container)) / 2));
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: min(72vw, 300px);
+    gap: clamp(0.75rem, 1.5vw, 1.25rem);
+    padding-inline: var(--edge);
+    scroll-padding-inline: var(--edge);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    padding-bottom: 0.5rem;
+  }
+  .amenities__track::-webkit-scrollbar { display: none; }
+  .amenities__track:focus-visible { outline-offset: -2px; }
+
+  .amenity {
+    position: relative;
+    aspect-ratio: 409 / 640;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    scroll-snap-align: start;
+    background: var(--charcoal);
+    isolation: isolate;
+  }
+  .amenity__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 1200ms var(--ease-out), filter 800ms ease;
+    filter: saturate(0.9);
+  }
+  .amenity::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(13, 13, 12, 0) 35%, rgba(13, 13, 12, 0.92) 100%);
+    transition: opacity 600ms ease;
+  }
+  .amenity:hover .amenity__img { transform: scale(1.07); filter: saturate(1.05); }
+  .amenity__content {
+    position: absolute;
+    left: 1.5rem;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    z-index: 1;
+    display: grid;
+    gap: 1rem;
+    transition: transform 700ms var(--ease-out);
+  }
+  .amenity:hover .amenity__content { transform: translateY(-6px); }
+  .amenity__icon {
+    width: 44px;
+    height: 44px;
+    padding: 8px;
+    border-radius: 50%;
+    background: rgba(13, 13, 12, 0.55);
+    border: 1px solid rgba(252, 194, 128, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .amenity__name {
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--white);
+    letter-spacing: -0.01em;
+  }
+  .amenity__index {
+    position: absolute;
+    top: 1.1rem;
+    right: 1.25rem;
+    z-index: 1;
+    font-family: var(--ff-title);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: rgba(255, 255, 255, 0.75);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+  }
+
+  .amenities__progress {
+    position: relative;
+    height: 1px;
+    margin-top: 2.5rem;
+    background: var(--line-dark);
+    overflow: hidden;
+  }
+  .amenities__progress span {
+    position: absolute;
+    inset: 0;
+    background: var(--bronze-gradient);
+    transform-origin: left;
+    transform: scaleX(var(--progress, 0.2));
+    transition: transform 200ms linear;
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-amenities]');
+  if (root) {
+    const track = root.querySelector<HTMLElement>('[data-track]')!;
+    const bar = root.querySelector<HTMLElement>('[data-progress]');
+    const buttons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-dir]'));
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const update = () => {
+      const max = track.scrollWidth - track.clientWidth;
+      const ratio = max > 0 ? track.scrollLeft / max : 1;
+      const visible = track.clientWidth / track.scrollWidth;
+      bar?.style.setProperty('--progress', String(Math.min(1, visible + (1 - visible) * ratio)));
+      buttons[0].disabled = track.scrollLeft <= 4;
+      buttons[1].disabled = track.scrollLeft >= max - 4;
+    };
+
+    buttons.forEach((btn) =>
+      btn.addEventListener('click', () => {
+        const card = track.querySelector<HTMLElement>('li');
+        const step = (card?.offsetWidth ?? 300) + 16;
+        const pageSize = Math.max(1, Math.floor(track.clientWidth / step) - 1);
+        track.scrollBy({ left: Number(btn.dataset.dir) * step * pageSize, behavior: reduced ? 'auto' : 'smooth' });
+      }),
+    );
+
+    let raf = 0;
+    track.addEventListener('scroll', () => {
+      if (!raf) raf = requestAnimationFrame(() => { raf = 0; update(); });
+    }, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+    update();
+  }
+</script>

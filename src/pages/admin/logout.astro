@@ -1,0 +1,19 @@
+---
+/** GET /admin/logout shows a confirmation; signing out is a CSRF-protected POST. */
+import AuthLayout from '../../layouts/AuthLayout.astro';
+export const prerender = false;
+const user = Astro.locals.user;
+---
+
+<AuthLayout title="Sign out">
+  <div>
+    <h1>Sign out</h1>
+    <p>{user ? `Signed in as ${user.email}.` : 'You are not signed in.'}</p>
+  </div>
+  {user ? (
+    <form class="stack" data-auth-form="/api/admin/auth/logout" data-redirect="/admin/login" data-csrf={user.csrf}>
+      <button class="btn btn--primary" type="submit">Sign out now</button>
+      <a href="/admin" class="muted" style="text-align:center">Back to the dashboard</a>
+    </form>
+  ) : <a href="/admin/login" class="btn btn--primary">Sign in</a>}
+</AuthLayout>

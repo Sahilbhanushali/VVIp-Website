@@ -1,0 +1,17 @@
+---
+interface Props { rows: { k: string; n: number; href?: string }[]; empty?: string; label?: (k: string) => string }
+const { rows, empty = 'No data for this period yet.', label = (k: string) => k } = Astro.props;
+const max = Math.max(1, ...rows.map((r) => Number(r.n)));
+const total = rows.reduce((s, r) => s + Number(r.n), 0);
+---
+
+{rows.length ? (
+  <div class="bars">
+    {rows.map((r) => (
+      <div class="bar" style={`--w:${((Number(r.n) / max) * 100).toFixed(1)}%`} title={`${label(r.k)}: ${r.n}`}>
+        <span>{r.href ? <a href={r.href}>{label(r.k)}</a> : label(r.k)}</span>
+        <span>{new Intl.NumberFormat('en-IN').format(Number(r.n))} <small class="muted">{total ? `${Math.round((Number(r.n) / total) * 100)}%` : ''}</small></span>
+      </div>
+    ))}
+  </div>
+) : <div class="empty"><span>{empty}</span></div>}

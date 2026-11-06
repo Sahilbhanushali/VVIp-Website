@@ -1,0 +1,63 @@
+---
+import SplitText from '../SplitText.astro';
+import MediaImg from '../MediaImg.astro';
+import type { Media } from '../../server/media.ts';
+import type { SectionData } from '../../server/sections.ts';
+
+interface Props { data: SectionData<'experiences_grid'>; media: Map<number, Media>; anchor?: string }
+const { data, media, anchor = 'experiences' } = Astro.props;
+---
+
+{data.items.length > 0 && (
+<section id={anchor} class="section section--paper arrivals" aria-labelledby={`${anchor}-title`}>
+  <div class="container">
+    <header class="section-head section-head--split">
+      <div class="section-head__title">
+        {data.eyebrow && <p class="eyebrow" data-reveal>{data.eyebrow}</p>}
+        <SplitText id={`${anchor}-title`} class="h-section" text={data.title} />
+      </div>
+      {data.lead && <p class="lead" data-reveal style="--d:2">{data.lead}</p>}
+    </header>
+    <ol class="arrivals__grid" role="list">
+      {data.items.map((f, i) => (
+        <li class="arrival" data-reveal style={`--d:${i}`}>
+          <div class="arrival__media">
+            <MediaImg media={f.media_id ? media.get(f.media_id) : null} alt={f.alt || undefined} sizes="(min-width: 1100px) 320px, (min-width: 640px) 45vw, 100vw" width={480} />
+            <span class="arrival__no">{String(i + 1).padStart(2, '0')}</span>
+          </div>
+          {f.subtitle && <p class="arrival__sub">{f.subtitle}</p>}
+          <h3 class="arrival__title">{f.title}</h3>
+          {f.text && <p class="arrival__text">{f.text}</p>}
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>
+)}
+
+<style>
+/* Arrivals */
+  .arrivals__grid { display: grid; gap: var(--grid-gap); grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+  .arrival { display: grid; gap: 0.6rem; align-content: start; }
+  .arrival__media { position: relative; aspect-ratio: 4 / 5; border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 0.75rem; background: var(--charcoal); }
+  .arrival__media :global(img) { width: 100%; height: 100%; object-fit: cover; transition: transform 1400ms var(--ease-out); }
+  .arrival:hover .arrival__media :global(img) { transform: scale(1.06); }
+  .arrival__no {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(13, 13, 12, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--white);
+    font-family: var(--ff-title);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+  }
+  .arrival__sub { font-family: var(--ff-title); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--bronze-ink); }
+  .arrival__title { font-size: 1.3rem; font-weight: 400; letter-spacing: -0.015em; }
+  .arrival__text { font-size: 0.95rem; color: #4f5252; }
+</style>

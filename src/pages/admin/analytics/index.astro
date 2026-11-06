@@ -1,0 +1,151 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import Kpi from '../../../components/admin/Kpi.astro';
+import LineChart from '../../../components/admin/LineChart.astro';
+import BarList from '../../../components/admin/BarList.astro';
+import RangePicker from '../../../components/admin/RangePicker.astro';
+import AIcon from '../../../components/admin/AIcon.astro';
+import * as A from '../../../server/analytics.ts';
+import { can } from '../../../server/permissions.ts';
+import { getSettings } from '../../../server/settings.ts';
+
+export const prerender = false;
+const user = Astro.locals.user!;
+if (!can(user.permissions, 'analytics', 'read')) return Astro.redirect('/admin');
+const sp = Astro.url.searchParams;
+const view = sp.get('view') ?? 'overview';
+const range = A.parseRange(sp);
+const prev = A.previousRange(range);
+const settings = await getSettings();
+const [cur, before] = await Promise.all([A.trafficTotals(range), A.trafficTotals(prev)]);
+
+const series = view === 'overview' ? await A.dailySeries(range) : [];
+const prevSeries = view === 'overview' ? await A.dailySeries(prev) : [];
+const devices = ['overview', 'visitors'].includes(view) ? await A.devices(range) : [];
+const [browsers, systems, screens, regions] = view === 'visitors' ? await Promise.all([A.browsers(range), A.systems(range), A.screens(range), A.regions(range)]) : [[], [], [], []];
+const [pages, landing, exits] = view === 'pages' ? await Promise.all([A.topPages(range, 30), A.landingPages(range), A.exitPages(range)]) : [[], [], []];
+const [sources, referrers, campaigns] = ['overview', 'sources'].includes(view) ? await Promise.all([A.sources(range), A.referrers(range), A.campaigns(range)]) : [[], [], []];
+const conv = view === 'conversions' || view === 'overview' ? await A.conversions(range) : null;
+const convPrev = view === 'conversions' ? await A.conversions(prev) : null;
+
+const tab = (v: string) => { const u = new URL(Astro.url); u.searchParams.set('view', v); return u.pathname + u.search; };
+const qs = (report: string) => { const u = new URLSearchParams(sp); u.set('report', report); return `/api/admin/analytics-export?${u}`; };
+const cap = (k: string) => k.charAt(0).toUpperCase() + k.slice(1).replace('_', ' ');
+const EVENT: Record<string, string> = { form_submit: 'Form submissions', phone_click: 'Phone clicks', email_click: 'Email clicks', whatsapp_click: 'WhatsApp clicks', cta_click: 'CTA clicks', visit_open: '“Schedule a visit” opened', directions_click: 'Directions clicks', gallery_open: 'Gallery images opened', property_view: 'Property views' };
+const evN = (c: typeof conv, n: string) => Number(c?.events.find((e) => e.name === n)?.n ?? 0);
+const canExport = can(user.permissions, 'analytics', 'export');
+---
+
+<AdminLayout title="Analytics" crumbs={[{ label: 'Analytics' }]}>
+  <div class="a-head">
+    <div><h1>Analytics</h1><p>First-party, cookie-less and anonymous. Bots and signed-in admins are excluded. {range.label} vs previous period.</p></div>
+    <div class="a-head__actions"><RangePicker current={sp.get('range') ?? '30d'} from={sp.get('from') ?? ''} to={sp.get('to') ?? ''} /></div>
+  </div>
+  {!settings.analytics.enabled && <div class="alert alert--warn"><span>Tracking is turned off in <a href="/admin/settings?tab=privacy" style="text-decoration:underline">Settings → Analytics & privacy</a>. No new data is being recorded.</span></div>}
+
+  <nav class="tabs" aria-label="Reports">
+    <a href={tab('overview')} aria-current={view === 'overview' ? 'page' : undefined}>Traffic overview</a>
+    <a href={tab('visitors')} aria-current={view === 'visitors' ? 'page' : undefined}>Visitor insights</a>
+    <a href={tab('pages')} aria-current={view === 'pages' ? 'page' : undefined}>Page performance</a>
+    <a href={tab('sources')} aria-current={view === 'sources' ? 'page' : undefined}>Traffic sources</a>
+    <a href={tab('conversions')} aria-current={view === 'conversions' ? 'page' : undefined}>Conversions</a>
+  </nav>
+
+  <div class="kpis">
+    <Kpi label="Visitors" value={cur.visitors} current={cur.visitors} prev={before.visitors} />
+    <Kpi label="New visitors" value={cur.new_visitors} current={cur.new_visitors} prev={before.new_visitors} />
+    <Kpi label="Returning" value={cur.returning_visitors} current={cur.returning_visitors} prev={before.returning_visitors} />
+    <Kpi label="Sessions" value={cur.sessions} current={cur.sessions} prev={before.sessions} />
+    <Kpi label="Page views" value={cur.pageviews} current={cur.pageviews} prev={before.pageviews} />
+    <Kpi label="Pages / session" value={cur.pages_per_session} current={cur.pages_per_session} prev={before.pages_per_session} format="dec" />
+    <Kpi label="Avg. engaged time" value={cur.avg_engaged} current={cur.avg_engaged} prev={before.avg_engaged} format="dur" />
+    <Kpi label="Bounce rate" value={cur.bounce_rate} current={cur.bounce_rate} prev={before.bounce_rate} format="pct" />
+  </div>
+
+  {view === 'overview' && (
+    <>
+      <div class="card">
+        <div class="card__head"><div><h2>Visitors & page views</h2><p>Dashed line: previous period visitors</p></div>{canExport && <a class="btn btn--sm" href={qs('daily')}><AIcon name="download" size={14} /> CSV</a>}</div>
+        <LineChart labels={series.map((s) => s.date)} series={[
+          { name: 'Page views', color: '#bf7840', values: series.map((s) => s.pageviews) },
+          { name: 'Visitors', color: '#0d0d0c', values: series.map((s) => s.visitors) },
+          { name: 'Visitors (previous)', color: '#b9b7b0', values: series.map((_, i) => prevSeries[i]?.visitors ?? 0) },
+        ]} />
+      </div>
+      <div class="grid-3">
+        <div class="card"><div class="card__head"><h2>Traffic sources</h2></div><BarList rows={sources} label={cap} /></div>
+        <div class="card"><div class="card__head"><h2>Devices</h2></div><BarList rows={devices} label={cap} /></div>
+        <div class="card"><div class="card__head"><h2>Conversions</h2></div>
+          <dl class="list">
+            <div><dt>Inquiries received</dt><dd><strong>{conv?.inquiries ?? 0}</strong></dd></div>
+            <div><dt>Converting sessions</dt><dd><strong>{conv?.converting_sessions ?? 0}</strong> <small>({cur.sessions ? (((conv?.converting_sessions ?? 0) / cur.sessions) * 100).toFixed(1) : '0.0'}%)</small></dd></div>
+            <div><dt>Phone clicks</dt><dd>{evN(conv, 'phone_click')}</dd></div>
+            <div><dt>WhatsApp clicks</dt><dd>{evN(conv, 'whatsapp_click')}</dd></div>
+          </dl>
+        </div>
+      </div>
+    </>
+  )}
+
+  {view === 'visitors' && (
+    <div class="grid-2">
+      <div class="card"><div class="card__head"><h2>New vs returning</h2></div>
+        <BarList rows={[{ k: 'New visitors', n: cur.new_visitors }, { k: 'Returning visitors', n: cur.returning_visitors }].filter((r) => r.n > 0)} />
+      </div>
+      <div class="card"><div class="card__head"><h2>Devices</h2></div><BarList rows={devices} label={cap} /></div>
+      <div class="card"><div class="card__head"><h2>Browsers</h2></div><BarList rows={browsers} /></div>
+      <div class="card"><div class="card__head"><h2>Operating systems</h2></div><BarList rows={systems} /></div>
+      <div class="card"><div class="card__head"><h2>Screen sizes</h2></div><BarList rows={screens} /></div>
+      <div class="card"><div class="card__head"><div><h2>Regions</h2><p>From the browser time zone — aggregated, no IP geolocation</p></div></div><BarList rows={regions} /></div>
+    </div>
+  )}
+
+  {view === 'pages' && (
+    <>
+      <div class="card">
+        <div class="card__head"><h2>Most visited pages</h2>{canExport && <a class="btn btn--sm" href={qs('pages')}><AIcon name="download" size={14} /> CSV</a>}</div>
+        {pages.length ? (
+          <div class="table-wrap"><table class="table">
+            <thead><tr><th>Page</th><th class="num">Views</th><th class="num">Unique visitors</th><th class="num">Avg. engaged</th></tr></thead>
+            <tbody>{pages.map((p) => <tr><td><a class="mono" href={p.path} target="_blank">{p.path}</a></td><td class="num">{p.views}</td><td class="num">{p.visitors}</td><td class="num">{p.avg_engaged ?? 0}s</td></tr>)}</tbody>
+          </table></div>
+        ) : <div class="empty"><span>No page views in this period yet.</span></div>}
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card__head"><h2>Landing pages</h2>{canExport && <a class="btn btn--sm" href={qs('landing')}>CSV</a>}</div>
+          {landing.length ? <div class="table-wrap"><table class="table"><thead><tr><th>Page</th><th class="num">Sessions</th><th class="num">Bounce</th></tr></thead>
+            <tbody>{landing.map((l) => <tr><td class="mono">{l.path}</td><td class="num">{l.n}</td><td class="num">{l.n ? Math.round((Number(l.bounces) / Number(l.n)) * 100) : 0}%</td></tr>)}</tbody></table></div> : <div class="empty"><span>No data yet.</span></div>}
+        </div>
+        <div class="card"><div class="card__head"><h2>Exit pages</h2></div><BarList rows={exits.map((e) => ({ k: e.path, n: e.n }))} /></div>
+      </div>
+    </>
+  )}
+
+  {view === 'sources' && (
+    <div class="grid-2">
+      <div class="card"><div class="card__head"><div><h2>Channels</h2><p>Direct · Organic search · Social · Referral · Campaign (UTM) · Email</p></div>{canExport && <a class="btn btn--sm" href={qs('sources')}>CSV</a>}</div><BarList rows={sources} label={cap} /></div>
+      <div class="card"><div class="card__head"><h2>Referring websites</h2>{canExport && <a class="btn btn--sm" href={qs('referrers')}>CSV</a>}</div><BarList rows={referrers} empty="No referral traffic in this period." /></div>
+      <div class="card" style="grid-column:1/-1"><div class="card__head"><div><h2>Campaigns</h2><p>utm_source / utm_medium / utm_campaign</p></div></div><BarList rows={campaigns} empty="No tagged campaign visits yet. Add ?utm_source=…&utm_medium=…&utm_campaign=… to links you share." /></div>
+    </div>
+  )}
+
+  {view === 'conversions' && conv && convPrev && (
+    <>
+      <div class="kpis">
+        <Kpi label="Inquiries" value={conv.inquiries} current={conv.inquiries} prev={convPrev.inquiries} />
+        <Kpi label="Form submissions" value={evN(conv, 'form_submit')} current={evN(conv, 'form_submit')} prev={evN(convPrev, 'form_submit')} />
+        <Kpi label="Phone clicks" value={evN(conv, 'phone_click')} current={evN(conv, 'phone_click')} prev={evN(convPrev, 'phone_click')} />
+        <Kpi label="Email clicks" value={evN(conv, 'email_click')} current={evN(conv, 'email_click')} prev={evN(convPrev, 'email_click')} />
+        <Kpi label="WhatsApp clicks" value={evN(conv, 'whatsapp_click')} current={evN(conv, 'whatsapp_click')} prev={evN(convPrev, 'whatsapp_click')} />
+        <Kpi label="Conversion rate" value={cur.sessions ? conv.converting_sessions / cur.sessions : 0} format="pct" hint="Sessions with a form, call, email or WhatsApp action" />
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card__head"><h2>All tracked interactions</h2></div><BarList rows={conv.events.map((e) => ({ k: EVENT[e.name] ?? e.name, n: e.n }))} empty="No interactions recorded in this period." /></div>
+        <div class="card"><div class="card__head"><h2>Top labels</h2>{canExport && <a class="btn btn--sm" href={qs('events')}>CSV</a>}</div>
+          {conv.labels.length ? <div class="table-wrap"><table class="table"><thead><tr><th>Interaction</th><th>Label</th><th class="num">Count</th></tr></thead>
+            <tbody>{conv.labels.map((l) => <tr><td>{EVENT[l.name] ?? l.name}</td><td class="truncate" style="max-width:260px">{l.label}</td><td class="num">{l.n}</td></tr>)}</tbody></table></div> : <div class="empty"><span>No data yet.</span></div>}
+        </div>
+      </div>
+    </>
+  )}
+</AdminLayout>

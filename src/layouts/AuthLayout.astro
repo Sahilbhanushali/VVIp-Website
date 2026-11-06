@@ -1,0 +1,44 @@
+---
+import { Font } from 'astro:assets';
+import '../styles/admin.css';
+import { getSettings } from '../server/settings.ts';
+import { getMedia, mediaUrl, pickVariant } from '../server/media.ts';
+import { one } from '../server/db.ts';
+
+interface Props { title: string }
+const { title } = Astro.props;
+const settings = await getSettings();
+const logo = settings.site.logo_media_id ? await getMedia(settings.site.logo_media_id) : null;
+const artRow = await one<{ id: number }>("SELECT main_image_id AS id FROM properties WHERE status='published' AND main_image_id IS NOT NULL ORDER BY is_featured DESC LIMIT 1");
+const art = artRow?.id ? await getMedia(artRow.id) : null;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <title>{title} · {settings.site.name} CMS</title>
+    <link rel="icon" href="/assets/img/favicons/favicon.ico" sizes="any" />
+    <Font cssVariable="--font-title" preload />
+    <Font cssVariable="--font-body" preload={[{ style: 'normal' }]} />
+  </head>
+  <body class="admin">
+    <div class="auth">
+      <div class="auth__art" aria-hidden="true">
+        {art && <img src={mediaUrl(art, pickVariant(art, 1600)!.file)} alt="" />}
+        <p class="auth__quote">Manage <em>{settings.site.name}</em><br />from one secure place.</p>
+      </div>
+      <div class="auth__panel">
+        <div class="auth__card">
+          {logo && <img src={mediaUrl(logo, pickVariant(logo, 240)!.file)} alt={settings.site.name} style="filter:brightness(.35)" />}
+          <slot />
+        </div>
+      </div>
+    </div>
+    <script>
+      import '../scripts/admin/auth';
+    </script>
+  </body>
+</html>

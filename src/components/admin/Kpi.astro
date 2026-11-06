@@ -1,0 +1,23 @@
+---
+interface Props { label: string; value: number | string; prev?: number; current?: number; format?: 'int' | 'pct' | 'dur' | 'dec'; hint?: string }
+const { label, value, prev, current, format = 'int', hint } = Astro.props;
+const fmt = (v: number) =>
+  format === 'pct' ? `${(v * 100).toFixed(1)}%` : format === 'dur' ? (v >= 60 ? `${Math.floor(v / 60)}m ${Math.round(v % 60)}s` : `${Math.round(v)}s`) : format === 'dec' ? v.toFixed(2) : new Intl.NumberFormat('en-IN').format(Math.round(v));
+const shown = typeof value === 'number' ? fmt(value) : value;
+let delta: { cls: string; text: string } | null = null;
+if (prev !== undefined && current !== undefined) {
+  if (prev === 0 && current === 0) delta = { cls: 'is-flat', text: '—' };
+  else if (prev === 0) delta = { cls: 'is-up', text: 'new' };
+  else {
+    const d = (current - prev) / prev;
+    delta = { cls: Math.abs(d) < 0.005 ? 'is-flat' : d > 0 ? 'is-up' : 'is-down', text: `${d > 0 ? '▲' : d < 0 ? '▼' : ''} ${Math.abs(d * 100).toFixed(1)}%` };
+  }
+}
+---
+
+<div class="kpi">
+  <span class="kpi__label">{label}</span>
+  <span class="kpi__value">{shown}</span>
+  {delta && <span class:list={['kpi__delta', delta.cls]}>{delta.text} <span>vs previous period</span></span>}
+  {hint && !delta && <span class="kpi__delta is-flat"><span>{hint}</span></span>}
+</div>

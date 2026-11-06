@@ -1,0 +1,100 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AIcon from '../../../components/admin/AIcon.astro';
+import Pager from '../../../components/admin/Pager.astro';
+import { listInquiries, INQUIRY_STATUSES, STATUS_LABEL, type InquiryStatus } from '../../../server/inquiries.ts';
+import { all } from '../../../server/db.ts';
+import { can } from '../../../server/permissions.ts';
+import { formatDate } from '../../../server/format.ts';
+
+export const prerender = false;
+const user = Astro.locals.user!;
+const P = user.permissions;
+if (!can(P, 'inquiries', 'read')) return Astro.redirect('/admin');
+const sp = Astro.url.searchParams;
+const f = { q: sp.get('q') ?? '', status: sp.get('status') ?? '', property: Number(sp.get('property')) || undefined, from: sp.get('from') ?? '', to: sp.get('to') ?? '', sort: sp.get('sort') ?? 'newest', page: Number(sp.get('page') ?? 1) };
+const data = await listInquiries(f);
+const props = await all<{ id: number; title: string }>('SELECT id, title FROM properties ORDER BY title');
+const counts = Object.fromEntries((await all<{ status: string; n: number }>('SELECT status, COUNT(*) n FROM inquiries GROUP BY status')).map((r) => [r.status, Number(r.n)]));
+const badge: Record<string, string> = { new: 'info', contacted: 'warn', qualified: 'accent', follow_up: 'warn', converted: 'ok', closed: '', spam: 'err' };
+const exportQs = new URLSearchParams(Object.entries({ ...f, property: f.property ? String(f.property) : '' }).filter(([k, v]) => v && !['page', 'sort'].includes(k)) as [string, string][]).toString();
+const statusLink = (s: string) => { const u = new URL(Astro.url); s ? u.searchParams.set('status', s) : u.searchParams.delete('status'); u.searchParams.delete('page'); return u.pathname + u.search; };
+const overdue = (d: unknown) => d && new Date(d as string) < new Date();
+---
+
+<AdminLayout title="Inquiries" crumbs={[{ label: 'Inquiries' }]}>
+  <div class="a-head">
+    <div><h1>Inquiries</h1><p>Every enquiry and “Schedule a visit” submission from the website, stored before any email is sent.</p></div>
+    <div class="a-head__actions">{can(P, 'inquiries', 'export') && <a class="btn" href={`/api/admin/inquiries/export?${exportQs}`}><AIcon name="download" /> Export CSV</a>}</div>
+  </div>
+
+  <nav class="tabs" aria-label="Lead status">
+    <a href={statusLink('')} aria-current={!f.status ? 'page' : undefined}>All open ({Object.entries(counts).filter(([k]) => k !== 'spam').reduce((s, [, n]) => s + n, 0)})</a>
+    {INQUIRY_STATUSES.map((s) => <a href={statusLink(s)} aria-current={f.status === s ? 'page' : undefined}>{STATUS_LABEL[s]} ({counts[s] ?? 0})</a>)}
+  </nav>
+
+  <div class="card">
+    <form class="toolbar" method="get">
+      {f.status && <input type="hidden" name="status" value={f.status} />}
+      <input class="input grow" type="search" name="q" value={f.q} placeholder="Search name, email, phone or message" />
+      <select class="select" name="property" onchange="this.form.submit()"><option value="">All properties</option>{props.map((p) => <option value={p.id} selected={f.property === p.id}>{p.title}</option>)}</select>
+      <label class="muted" style="display:flex;gap:.35rem;align-items:center">From <input class="input" type="date" name="from" value={f.from} /></label>
+      <label class="muted" style="display:flex;gap:.35rem;align-items:center">To <input class="input" type="date" name="to" value={f.to} /></label>
+      <select class="select" name="sort" onchange="this.form.submit()">
+        <option value="newest" selected={f.sort === 'newest'}>Newest first</option><option value="oldest" selected={f.sort === 'oldest'}>Oldest first</option>
+        <option value="follow_up" selected={f.sort === 'follow_up'}>Follow-up date</option><option value="name" selected={f.sort === 'name'}>Name</option>
+      </select>
+      <button class="btn">Filter</button>
+    </form>
+    <div class="bulkbar" hidden data-bulkbar>
+      <span data-bulk-count>0 selected</span>
+      {can(P, 'inquiries', 'update') && (
+        <select class="select" style="width:auto;min-height:30px" data-bulk-status>
+          <option value="">Set status…</option>{INQUIRY_STATUSES.map((s) => <option value={s}>{STATUS_LABEL[s]}</option>)}
+        </select>
+      )}
+      {can(P, 'inquiries', 'delete') && <button class="btn btn--sm btn--danger" data-bulk-delete>Delete</button>}
+    </div>
+    {data.rows.length ? (
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th style="width:36px"><input type="checkbox" data-all aria-label="Select all" /></th><th>Contact</th><th>Interested in</th><th>Property</th><th>Status</th><th>Follow-up</th><th>Received</th><th>Email</th></tr></thead>
+          <tbody>
+            {data.rows.map((q: any) => (
+              <tr>
+                <td><input type="checkbox" value={q.id} data-row aria-label={`Select ${q.name}`} /></td>
+                <td><a href={`/admin/inquiries/${q.id}`}><strong>{q.name}</strong></a><br /><small class="muted">{q.email} · {q.phone}</small></td>
+                <td>{q.subject ?? '—'}</td>
+                <td>{q.property_title ?? '—'}</td>
+                <td><span class={`badge badge--${badge[q.status]}`}>{STATUS_LABEL[q.status as InquiryStatus]}</span></td>
+                <td class:list={[overdue(q.follow_up_at) && q.status !== 'converted' && q.status !== 'closed' ? '' : 'muted']} style={overdue(q.follow_up_at) && !['converted', 'closed'].includes(q.status) ? 'color:var(--a-err);font-weight:600' : ''}>{q.follow_up_at ? formatDate(q.follow_up_at) : '—'}</td>
+                <td class="muted">{formatDate(q.created_at, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                <td>{q.email_status === 'sent' ? <span class="badge badge--ok">Sent</span> : q.email_status === 'failed' ? <span class="badge badge--err">Failed</span> : q.email_status === 'disabled' ? <span class="badge">Off</span> : <span class="badge">Pending</span>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : <div class="empty"><AIcon name="inbox" size={40} /><strong>No inquiries here</strong><span>New website submissions appear automatically.</span></div>}
+    <Pager page={data.page} pages={data.pages} total={data.total} perPage={data.perPage} />
+  </div>
+
+  <script>
+    import { api, toast, confirmAction } from '../../../scripts/admin/shell';
+    const rows = [...document.querySelectorAll<HTMLInputElement>('[data-row]')];
+    const bar = document.querySelector<HTMLElement>('[data-bulkbar]')!;
+    const ids = () => rows.filter((r) => r.checked).map((r) => Number(r.value));
+    const sync = () => { bar.hidden = !ids().length; bar.querySelector('[data-bulk-count]')!.textContent = `${ids().length} selected`; };
+    document.querySelector<HTMLInputElement>('[data-all]')?.addEventListener('change', (e) => { rows.forEach((r) => (r.checked = (e.target as HTMLInputElement).checked)); sync(); });
+    rows.forEach((r) => r.addEventListener('change', sync));
+    document.querySelector<HTMLSelectElement>('[data-bulk-status]')?.addEventListener('change', async (e) => {
+      const status = (e.target as HTMLSelectElement).value;
+      if (!status) return;
+      try { const r = await api<{ count: number }>('/api/admin/inquiries/bulk', { method: 'POST', json: { ids: ids(), action: 'status', status } }); toast(`${r.count} updated`); setTimeout(() => location.reload(), 500); } catch (er) { toast((er as Error).message, 'err'); }
+    });
+    document.querySelector('[data-bulk-delete]')?.addEventListener('click', async () => {
+      if (!(await confirmAction(`Permanently delete ${ids().length} inquiries, including notes and history?`, 'Delete inquiries', 'Delete'))) return;
+      try { await api('/api/admin/inquiries/bulk', { method: 'POST', json: { ids: ids(), action: 'delete' } }); location.reload(); } catch (er) { toast((er as Error).message, 'err'); }
+    });
+  </script>
+</AdminLayout>

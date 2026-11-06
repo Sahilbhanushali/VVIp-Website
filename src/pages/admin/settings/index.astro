@@ -1,0 +1,43 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getSettings } from '../../../server/settings.ts';
+import { mailConfig } from '../../../server/mailer.ts';
+import { getMediaMany, mediaUrl, pickVariant } from '../../../server/media.ts';
+import { can } from '../../../server/permissions.ts';
+
+export const prerender = false;
+const user = Astro.locals.user!;
+if (!can(user.permissions, 'settings', 'read')) return Astro.redirect('/admin');
+const tab = Astro.url.searchParams.get('tab') ?? 'general';
+const TABS: Record<string, { label: string; keys: string[] }> = {
+  general: { label: 'General', keys: ['site'] },
+  contact: { label: 'Contact & social', keys: ['contact', 'social'] },
+  layout: { label: 'Header & footer', keys: ['header', 'footer'] },
+  forms: { label: 'Forms & email', keys: ['enquiry_types', 'mail'] },
+  privacy: { label: 'Analytics & privacy', keys: ['analytics', 'cookie_consent'] },
+  maintenance: { label: 'Maintenance', keys: ['maintenance'] },
+};
+const t = TABS[tab] ?? TABS.general;
+const s = await getSettings(true);
+const cfg = await mailConfig();
+const values: Record<string, unknown> = {
+  ...s,
+  mail: { ...s.mail, smtp_password_enc: undefined, smtp_password: '', has_password: !!s.mail.smtp_password_enc, source: cfg.source === 'env' ? 'server environment (.env)' : cfg.source === 'settings' ? 'these settings' : 'not configured' },
+};
+const mm = await getMediaMany([s.site.logo_media_id ?? 0]);
+const media: Record<string, { thumb: string | null; name: string }> = {};
+for (const [k, m] of mm) media[k] = { thumb: mediaUrl(m, pickVariant(m, 240)!.file), name: m.original_name };
+const canManage = can(user.permissions, 'settings', 'manage');
+---
+
+<AdminLayout title="Settings" crumbs={[{ label: 'Settings' }]}>
+  <div class="a-head"><div><h1>Settings</h1><p>Website-wide configuration. Changes apply to the live site immediately after saving.</p></div></div>
+  <nav class="tabs" aria-label="Settings">{Object.entries(TABS).map(([k, v]) => <a href={`?tab=${k}`} aria-current={k === tab ? 'page' : undefined}>{v.label}</a>)}</nav>
+  {!canManage && <div class="alert alert--info"><span>You can view settings but your role cannot change them.</span></div>}
+  {s.maintenance.enabled && <div class="alert alert--warn"><span><strong>Maintenance mode is on.</strong> Visitors currently see the “back soon” page.</span></div>}
+  <div class="stack" data-settings></div>
+  <script type="application/json" id="settings-ctx" set:html={JSON.stringify({ keys: t.keys, values, media })} />
+  <script>
+    import '../../../scripts/admin/settings-editor';
+  </script>
+</AdminLayout>

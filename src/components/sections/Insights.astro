@@ -1,0 +1,44 @@
+---
+import SplitText from '../SplitText.astro';
+import BlogCard from '../BlogCard.astro';
+import type { SectionData } from '../../server/sections.ts';
+import type { ArticleCard } from '../../server/content.ts';
+
+interface Props { data: SectionData<'insights'>; articles: ArticleCard[]; anchor?: string }
+const { data, articles, anchor = 'blog-sec' } = Astro.props;
+const [first, ...rest] = articles.slice(0, data.count);
+---
+
+{first && (
+<section id={anchor} class="section section--light insights" aria-labelledby={`${anchor}-title`}>
+  <div class="container">
+    <header class="section-head section-head--split">
+      <div class="insights__head">
+        {data.eyebrow && <p class="eyebrow" data-reveal>{data.eyebrow}</p>}
+        <SplitText id={`${anchor}-title`} class="h-section" text={data.title} />
+      </div>
+      {data.lead && <p class="lead" data-reveal style="--d:2">{data.lead}</p>}
+    </header>
+
+    <BlogCard post={first} variant="feature" />
+    {rest.length > 0 && (
+      <div class="insights__grid">
+        {rest.map((post, i) => <BlogCard post={post} delay={i} />)}
+      </div>
+    )}
+  </div>
+</section>
+)}
+
+<style>
+  .insights__head { display: grid; gap: 1.5rem; }
+  .insights__head :global(h2) { max-width: 13ch; }
+  .insights__grid {
+    display: grid;
+    gap: 3.5rem 2.5rem;
+    margin-top: clamp(3.5rem, 2.5rem + 3vw, 5.5rem);
+    padding-top: clamp(3.5rem, 2.5rem + 3vw, 5.5rem);
+    border-top: 1px solid var(--line);
+  }
+  @media (min-width: 768px) { .insights__grid { grid-template-columns: 1fr 1fr; } }
+</style>

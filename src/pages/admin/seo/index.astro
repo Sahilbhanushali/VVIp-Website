@@ -1,0 +1,88 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import Kpi from '../../../components/admin/Kpi.astro';
+import { seoInsights } from '../../../server/seo-insights.ts';
+import { gscConfigured, gscQuery, type GscRow } from '../../../server/gsc.ts';
+import { getMediaMany, mediaUrl, pickVariant } from '../../../server/media.ts';
+import { can } from '../../../server/permissions.ts';
+
+export const prerender = false;
+const user = Astro.locals.user!;
+if (!can(user.permissions, 'seo', 'read')) return Astro.redirect('/admin');
+const data = await seoInsights();
+const errs = data.issues.filter((i) => i.level === 'err').length;
+const warns = data.issues.filter((i) => i.level === 'warn').length;
+
+let gsc: { queries: GscRow[]; pages: GscRow[]; totals: { clicks: number; impressions: number } } | null = null;
+let gscError = '';
+if (gscConfigured() && data.settings.gsc_site_url) {
+  try {
+    const end = new Date(Date.now() - 2 * 864e5).toISOString().slice(0, 10); // GSC data lags ~2 days
+    const start = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+    const [queries, pages, days] = await Promise.all([gscQuery(data.settings.gsc_site_url, start, end, 'query'), gscQuery(data.settings.gsc_site_url, start, end, 'page'), gscQuery(data.settings.gsc_site_url, start, end, 'date', 40)]);
+    gsc = { queries, pages, totals: { clicks: days.reduce((s, d) => s + d.clicks, 0), impressions: days.reduce((s, d) => s + d.impressions, 0) } };
+  } catch (e) { gscError = (e as Error).message; }
+}
+const mm = await getMediaMany([data.settings.default_og_image_id ?? 0]);
+const media: Record<string, { thumb: string | null; name: string }> = {};
+for (const [k, m] of mm) media[k] = { thumb: mediaUrl(m, pickVariant(m, 240)!.file), name: m.original_name };
+const canEdit = can(user.permissions, 'seo', 'update');
+---
+
+<AdminLayout title="SEO" crumbs={[{ label: 'SEO' }]}>
+  <div class="a-head"><div><h1>SEO</h1><p>Global defaults, live health checks and (optionally) real Google Search Console data. Per-page settings are on each page’s “SEO & sharing” tab.</p></div>
+    <div class="a-head__actions"><a class="btn" href="/sitemap.xml" target="_blank">View sitemap</a><a class="btn" href="/robots.txt" target="_blank">View robots.txt</a></div></div>
+
+  <div class="kpis">
+    <Kpi label="Published pages" value={data.livePages} />
+    <Kpi label="URLs in sitemap" value={data.settings.sitemap_enabled ? data.sitemapCount : 0} hint={data.settings.sitemap_enabled ? 'Indexable public pages' : 'Sitemap disabled'} />
+    <Kpi label="Errors" value={errs} hint="Fix first" />
+    <Kpi label="Warnings" value={warns} />
+    <Kpi label="Internal links checked" value={data.linksChecked} />
+  </div>
+
+  <div class="split split--wide">
+    <div class="card">
+      <div class="card__head"><div><h2>Health checks</h2><p>Recomputed from published content on every visit</p></div></div>
+      {data.issues.length ? (
+        <ul class="list">
+          {data.issues.map((i) => (
+            <li style="align-items:flex-start">
+              <span style="display:grid;gap:.15rem"><span><span class:list={['badge', i.level === 'err' ? 'badge--err' : i.level === 'warn' ? 'badge--warn' : 'badge--info']}>{i.level === 'err' ? 'Error' : i.level === 'warn' ? 'Warning' : 'Tip'}</span> <strong>{i.title}</strong></span><small>{i.detail}</small></span>
+              {i.href && <a class="btn btn--sm" href={i.href}>Fix</a>}
+            </li>
+          ))}
+        </ul>
+      ) : <div class="empty"><strong>No issues found</strong><span>Titles, descriptions, alt text and internal links look good.</span></div>}
+    </div>
+    <div class="card">
+      <div class="card__head"><div><h2>Google Search Console</h2><p>Last 30 days (data lags ~2 days)</p></div></div>
+      <div class="card__body stack">
+        {gsc ? (
+          <>
+            <div class="kpis"><Kpi label="Clicks" value={gsc.totals.clicks} /><Kpi label="Impressions" value={gsc.totals.impressions} /></div>
+            <table class="table"><thead><tr><th>Query</th><th class="num">Clicks</th><th class="num">Impr.</th><th class="num">CTR</th><th class="num">Pos.</th></tr></thead>
+              <tbody>{gsc.queries.slice(0, 12).map((r) => <tr><td>{r.keys[0]}</td><td class="num">{r.clicks}</td><td class="num">{r.impressions}</td><td class="num">{(r.ctr * 100).toFixed(1)}%</td><td class="num">{r.position.toFixed(1)}</td></tr>)}</tbody></table>
+          </>
+        ) : gscError ? <div class="alert alert--err"><span>{gscError}</span></div> : (
+          <div class="stack muted" style="font-size:.82rem">
+            <p><strong style="color:var(--a-ink)">Not connected.</strong> No search data is shown until it comes from Google.</p>
+            <ol style="padding-left:1.1rem;display:grid;gap:.35rem;overflow-wrap:anywhere">
+              <li>In Google Cloud, create a service account and enable the “Search Console API”. Download its JSON key.</li>
+              <li>Upload the key to the server (outside the web root) and set <code>GSC_SERVICE_ACCOUNT_FILE=/path/key.json</code> in <code>.env</code>, then restart.</li>
+              <li>In Search Console → Settings → Users, add the service-account email with “Restricted” access.</li>
+              <li>Enter the property (e.g. <code>sc-domain:vapisvip.com</code>) in Global SEO below.</li>
+            </ol>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+
+  <div class="stack" data-settings></div>
+  {!canEdit && <div class="alert alert--info"><span>Your role can view but not change SEO settings.</span></div>}
+  <script type="application/json" id="settings-ctx" set:html={JSON.stringify({ keys: ['seo'], values: { seo: data.settings }, media })} />
+  <script>
+    import '../../../scripts/admin/settings-editor';
+  </script>
+</AdminLayout>

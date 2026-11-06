@@ -1,0 +1,245 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AIcon from '../../../components/admin/AIcon.astro';
+import { getPageAdmin } from '../../../server/admin-pages.ts';
+import { can } from '../../../server/permissions.ts';
+import { one, all } from '../../../server/db.ts';
+import { getMediaMany, mediaUrl, pickVariant } from '../../../server/media.ts';
+import { collectMediaIds, SECTION_LABELS } from '../../../server/sections.ts';
+import { formatDate } from '../../../server/format.ts';
+import { getSettings } from '../../../server/settings.ts';
+
+export const prerender = false;
+const user = Astro.locals.user!;
+const P = user.permissions;
+if (!can(P, 'pages', 'read')) return Astro.redirect('/admin');
+
+const rawId = Astro.params.id ?? '';
+const id = rawId === 'home' ? (await one<{ id: number }>("SELECT id FROM pages WHERE template = 'home' LIMIT 1"))?.id ?? 0 : Number(rawId) || 0;
+const data = await getPageAdmin(id);
+if (!data) return new Response('Page not found', { status: 404 });
+const { page, sections, revisions } = data;
+const settings = await getSettings();
+
+const hasSections = ['home', 'standard', 'property'].includes(page.template);
+const hasBody = ['article', 'legal'].includes(page.template);
+const tab = Astro.url.searchParams.get('tab') ?? (hasSections ? 'sections' : 'content');
+const canEdit = can(P, 'pages', 'update');
+const canPublish = can(P, 'pages', 'publish');
+const property = page.property_id ? await one<{ id: number; title: string; status: string }>('SELECT id, title, status FROM properties WHERE id = ?', [page.property_id]) : null;
+
+const mediaIds = [...collectMediaIds(sections.map((s: any) => s.data)), page.cover_media_id, page.og_image_id].filter(Boolean) as number[];
+const mediaMap = await getMediaMany(mediaIds);
+const media: Record<string, { thumb: string | null; name: string }> = {};
+for (const [k, m] of mediaMap) media[k] = { thumb: m.kind === 'image' ? mediaUrl(m, pickVariant(m, 240)!.file) : null, name: m.original_name };
+const properties = await all<{ id: number; title: string }>('SELECT id, title FROM properties ORDER BY title');
+const allowedTypes = Object.entries(SECTION_LABELS).filter(([, v]) => v.templates.includes(page.template === 'property' ? 'property' : page.template === 'home' ? 'home' : 'standard'));
+const editorCtx = { pageId: page.id, path: page.path, media, properties, sectionLabels: Object.fromEntries(Object.entries(SECTION_LABELS).map(([k, v]) => [k, { name: v.name, hint: v.hint }])) };
+
+const TEMPLATE: Record<string, string> = { home: 'Homepage', standard: 'Page', property: 'Property page', article: 'Article', legal: 'Legal document' };
+const live = page.status === 'published';
+const changed = !!page.has_changes;
+const seoTitle = page.seo_title || `${page.title} | ${settings.seo.site_title}`;
+const seoDesc = page.seo_description || page.excerpt || settings.seo.default_description;
+const dt = (d: unknown) => formatDate(d as string, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+const v = (x: unknown) => (x == null ? '' : String(x));
+---
+
+<AdminLayout title={`Edit · ${page.title}`} crumbs={[{ label: 'Pages & articles', href: '/admin/pages' }, { label: page.title }]}>
+  <div data-page-editor>
+    <div class="a-head" style="margin-bottom:1rem">
+      <div>
+        <h1>{page.title}</h1>
+        <p><span class="badge badge--plain">{TEMPLATE[page.template]}</span> <span class="mono">{page.path}</span></p>
+      </div>
+      <div class="a-head__actions">
+        <a class="btn" href={`${page.path}?preview=1`} target="_blank"><AIcon name="eye" /> Preview draft</a>
+        {live && <a class="btn btn--ghost" href={page.path} target="_blank"><AIcon name="external" /> View live</a>}
+        {canPublish && <button class="btn btn--accent" type="button" data-action="publish"><AIcon name="globe" /> {live ? 'Publish changes' : 'Publish'}</button>}
+      </div>
+    </div>
+
+    {property && (
+      <div class="alert alert--info" style="margin-bottom:1rem">
+        <span>This page belongs to the property <strong>{property.title}</strong>. Its hero, key facts, gallery images and amenities come from the property record — <a href={`/admin/properties/${property.id}`} style="text-decoration:underline">edit the property</a>. Publishing the property publishes this page.</span>
+      </div>
+    )}
+    {page.template === 'legal' && (
+      <div class="alert alert--warn" style="margin-bottom:1rem"><span><strong>Template content.</strong> This legal text is a starting point, not verified legal advice. Review it with a qualified professional before relying on it.</span></div>
+    )}
+
+    <div class="split split--wide">
+      <div class="stack" style="min-width:0">
+        <nav class="tabs" aria-label="Editor sections">
+          {hasSections && <a href="?tab=sections" aria-current={tab === 'sections' ? 'page' : undefined}>Sections ({sections.length})</a>}
+          {(hasBody || page.template === 'article') && <a href="?tab=content" aria-current={tab === 'content' ? 'page' : undefined}>Content</a>}
+          <a href="?tab=seo" aria-current={tab === 'seo' ? 'page' : undefined}>SEO & sharing</a>
+          <a href="?tab=settings" aria-current={tab === 'settings' ? 'page' : undefined}>Page settings</a>
+        </nav>
+
+        {hasSections && tab === 'sections' && (
+          <div class="stack">
+            <p class="muted">Drag sections by the handle (or use the arrows) to reorder. Each section saves as a draft; <strong>Publish</strong> makes all changes live together.</p>
+            <div class="sections" data-sections>
+              {sections.map((s: any) => (
+                <article class:list={['sec', !s.enabled && 'is-disabled']} data-section-id={s.id} data-type={s.type} id={`section-${s.id}`}>
+                  <script type="application/json" set:html={JSON.stringify(s.data)} />
+                  <div class="sec__head">
+                    {canEdit && <span class="sec__grip" title="Drag to reorder" aria-hidden="true"><AIcon name="grip" size={16} /></span>}
+                    <button type="button" class="sec__title" data-toggle aria-expanded="false">
+                      <strong>{s.label || SECTION_LABELS[s.type as keyof typeof SECTION_LABELS]?.name || s.type}</strong>
+                      <small>{SECTION_LABELS[s.type as keyof typeof SECTION_LABELS]?.name} · {s.data.title ? String(s.data.title).replace(/\*/g, '').slice(0, 60) : SECTION_LABELS[s.type as keyof typeof SECTION_LABELS]?.hint}</small>
+                    </button>
+                    <span class="badge badge--plain" data-state hidden></span>
+                    {canEdit && (
+                      <>
+                        <label class="switch" title="Show on the page"><input type="checkbox" data-enabled checked={s.enabled} aria-label="Show this section" /></label>
+                        <button type="button" class="btn btn--ghost btn--icon" data-move="-1" aria-label="Move up" title="Move up">↑</button>
+                        <button type="button" class="btn btn--ghost btn--icon" data-move="1" aria-label="Move down" title="Move down">↓</button>
+                        <button type="button" class="btn btn--ghost btn--icon" data-dup aria-label="Duplicate" title="Duplicate"><AIcon name="copy" size={16} /></button>
+                        <button type="button" class="btn btn--ghost btn--icon" data-del aria-label="Delete" title="Delete"><AIcon name="trash" size={16} /></button>
+                      </>
+                    )}
+                  </div>
+                  <div class="sec__body" hidden>
+                    <div class="field"><label>Internal name (shown only in the CMS)</label><input class="input" data-label value={v(s.label)} maxlength="120" placeholder={SECTION_LABELS[s.type as keyof typeof SECTION_LABELS]?.name} /></div>
+                    <div data-form></div>
+                    {canEdit && <div style="display:flex;gap:.5rem;justify-content:flex-end"><button type="button" class="btn btn--primary" data-save>Save section</button></div>}
+                  </div>
+                </article>
+              ))}
+            </div>
+            {sections.length === 0 && <div class="empty card"><strong>No sections yet</strong><span>Add the first section to build this page.</span></div>}
+            {canEdit && <button type="button" class="btn" style="justify-self:start" data-add-open><AIcon name="plus" /> Add section</button>}
+          </div>
+        )}
+
+        <form class="stack" data-page-form hidden={tab === 'sections'} novalidate>
+          <div class="card" hidden={tab !== 'content'}>
+            <div class="card__head"><h2>{page.template === 'legal' ? 'Document' : 'Article'} content</h2></div>
+            <div class="card__body stack">
+              {page.template === 'article' && (
+                <>
+                  <div class="field" data-path="excerpt"><label for="excerpt">Excerpt (used on listing cards)</label><textarea class="textarea" id="excerpt" name="excerpt" data-max="800" maxlength="800">{v(page.excerpt)}</textarea><p class="field__error" data-error></p></div>
+                  <div class="form-grid">
+                    <div class="field" data-path="cover_media_id" data-media-field="Cover image"><span class="label">Cover image</span><input type="hidden" name="cover_media_id" value={v(page.cover_media_id)} /></div>
+                    <div class="field" data-path="cover_alt"><label for="cover_alt">Cover alt text</label><input class="input" id="cover_alt" name="cover_alt" value={v(page.cover_alt)} maxlength="255" /><p class="field__error" data-error></p></div>
+                  </div>
+                </>
+              )}
+              <div class="field" data-path="display_date" style="max-width:240px"><label for="display_date">{page.template === 'legal' ? 'Last updated' : 'Publication date'}</label><input class="input" type="date" id="display_date" name="display_date" value={page.display_date ? new Date(page.display_date).toISOString().slice(0, 10) : ''} /><p class="field__error" data-error></p></div>
+              {hasBody && (
+                <div class="field" data-path="body">
+                  <label for="body">Body (Markdown)</label>
+                  <textarea class="textarea textarea--code" id="body" name="body" data-markdown style="min-height:460px">{v(page.body)}</textarea>
+                  <small>## Heading · **bold** · *italic* · - list · 1. list · [link](/page.html) · ![alt](/media/…) · > quote. Raw HTML is not rendered.</small>
+                  <p class="field__error" data-error></p>
+                </div>
+              )}
+            </div>
+          </div>
+          {page.template !== 'article' && <input type="hidden" name="excerpt" value={v(page.excerpt)} />}
+          {page.template !== 'article' && <input type="hidden" name="cover_media_id" value={v(page.cover_media_id)} />}
+          {page.template !== 'article' && <input type="hidden" name="cover_alt" value={v(page.cover_alt)} />}
+          {!hasBody && <input type="hidden" name="body" value={v(page.body)} />}
+          {page.template !== 'article' && page.template !== 'legal' && <input type="hidden" name="display_date" value={page.display_date ? new Date(page.display_date).toISOString().slice(0, 10) : ''} />}
+
+          <div class="card" hidden={tab !== 'seo'}>
+            <div class="card__head"><div><h2>Search engines</h2><p>Leave empty to use sensible defaults.</p></div></div>
+            <div class="card__body stack">
+              <div class="field" data-path="seo_title"><label for="seo_title">SEO title</label><input class="input" id="seo_title" name="seo_title" value={v(page.seo_title)} data-max="60" maxlength="200" placeholder={`${page.title} | ${settings.seo.site_title}`} /><small>About 50–60 characters display fully in Google.</small><p class="field__error" data-error></p></div>
+              <div class="field" data-path="seo_description"><label for="seo_description">Meta description</label><textarea class="textarea" id="seo_description" name="seo_description" data-max="160" maxlength="320" placeholder={settings.seo.default_description}>{v(page.seo_description)}</textarea><small>About 120–160 characters.</small><p class="field__error" data-error></p></div>
+              <div class="field" data-path="seo_keywords"><label for="seo_keywords">Keywords (optional)</label><input class="input" id="seo_keywords" name="seo_keywords" value={v(page.seo_keywords)} maxlength="500" /><p class="field__error" data-error></p></div>
+              <div class="field" data-path="canonical_url"><label for="canonical_url">Canonical URL (only if this content lives elsewhere)</label><input class="input" id="canonical_url" name="canonical_url" value={v(page.canonical_url)} placeholder={`${settings.seo.canonical_domain}${page.path}`} /><p class="field__error" data-error></p></div>
+              <div style="display:flex;gap:1.5rem;flex-wrap:wrap">
+                <label class="switch"><input type="checkbox" name="robots_index" checked={!!page.robots_index} /> Allow indexing</label>
+                <label class="switch"><input type="checkbox" name="robots_follow" checked={!!page.robots_follow} /> Follow links</label>
+              </div>
+            </div>
+            <div class="card__head" style="border-top:1px solid var(--a-line)"><div><h2>Social sharing (Open Graph)</h2><p>Shown when the page is shared on WhatsApp, LinkedIn, Facebook…</p></div></div>
+            <div class="card__body stack">
+              <div class="field" data-path="og_title"><label for="og_title">{page.template === 'article' ? 'Card / sharing title' : 'Sharing title'}</label><input class="input" id="og_title" name="og_title" value={v(page.og_title)} maxlength="200" /><p class="field__error" data-error></p></div>
+              <div class="field" data-path="og_description"><label for="og_description">Sharing description</label><textarea class="textarea" id="og_description" name="og_description" maxlength="320">{v(page.og_description)}</textarea><p class="field__error" data-error></p></div>
+              <div class="field" data-path="og_image_id" data-media-field="Sharing image"><span class="label">Sharing image (1200×630 recommended)</span><input type="hidden" name="og_image_id" value={v(page.og_image_id)} /></div>
+            </div>
+          </div>
+
+          <div class="card" hidden={tab !== 'settings'}>
+            <div class="card__head"><h2>Page settings</h2></div>
+            <div class="card__body form-grid">
+              <div class="field span-2" data-path="title"><label for="title">Title</label><input class="input" id="title" name="title" value={page.title} required maxlength="200" /><p class="field__error" data-error></p></div>
+              <div class="field span-2" data-path="path"><label for="path">URL path</label><input class="input mono" id="path" name="path" value={page.path} readonly={page.template === 'home' || !!property} /><small>{page.template === 'home' ? 'The homepage is always “/”.' : property ? 'Change the slug on the property.' : 'Changing the URL of a live page breaks old links — navigation items using it are updated automatically.'}</small><p class="field__error" data-error></p></div>
+              <div class="field" data-path="visibility"><label for="visibility">Visibility</label><select class="select" id="visibility" name="visibility"><option value="public" selected={page.visibility === 'public'}>Public (listed, in sitemap)</option><option value="hidden" selected={page.visibility === 'hidden'}>Hidden (reachable by link only, noindex)</option></select></div>
+              <div class="field" data-path="sort_order"><label for="sort_order">Sort order (articles)</label><input class="input" type="number" id="sort_order" name="sort_order" value={page.sort_order} min="-999" max="999" /></div>
+            </div>
+          </div>
+          {canEdit && <div style="display:flex;justify-content:flex-end;gap:.5rem"><button class="btn btn--primary" type="submit">Save draft</button></div>}
+        </form>
+      </div>
+
+      <aside class="stack">
+        <div class="card">
+          <div class="card__head"><h2>Status</h2><span data-live-state data-status={page.status} class:list={['badge', live ? (changed ? 'badge--warn' : 'badge--ok') : '']}>{live ? (changed ? 'Unpublished changes' : 'Live') : 'Draft — not public'}</span></div>
+          <div class="card__body">
+            <dl class="kv">
+              <dt>Last published</dt><dd>{page.revision_at ? dt(page.revision_at) : 'Never'}</dd>
+              <dt>Last edited</dt><dd>{dt(page.updated_at)}</dd>
+              <dt>Type</dt><dd>{TEMPLATE[page.template]}</dd>
+            </dl>
+          </div>
+          <div class="card__foot" style="flex-wrap:wrap;justify-content:flex-start">
+            {canPublish && <button class="btn btn--accent btn--sm" type="button" data-action="publish">Publish</button>}
+            {canPublish && live && page.template !== 'home' && !property && <button class="btn btn--sm" type="button" data-action="unpublish">Unpublish</button>}
+            {can(P, 'pages', 'create') && page.template !== 'home' && !property && <button class="btn btn--sm" type="button" data-action="duplicate">Duplicate</button>}
+            {can(P, 'pages', 'delete') && !page.is_system && !property && <button class="btn btn--danger btn--sm" type="button" data-action="delete">Delete</button>}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card__head"><h2>Search preview</h2></div>
+          <div class="card__body" style="font-family:Arial,sans-serif">
+            <p style="color:#1a0dab;font-size:1.05rem;line-height:1.3">{seoTitle.slice(0, 65)}{seoTitle.length > 65 ? '…' : ''}</p>
+            <p style="color:#006621;font-size:.8rem">{settings.seo.canonical_domain.replace(/^https?:\/\//, '')}{page.path}</p>
+            <p style="color:#545454;font-size:.82rem">{seoDesc.slice(0, 160)}{seoDesc.length > 160 ? '…' : ''}</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card__head"><div><h2>Version history</h2><p>Every publish is kept (last 30).</p></div></div>
+          {revisions.length ? (
+            <ul class="list">
+              {revisions.map((r: any, i: number) => (
+                <li>
+                  <span><strong>{i === 0 ? 'Live version' : `Version ${revisions.length - i}`}</strong><br /><small>{dt(r.created_at)} · {r.name ?? 'Migration'}</small></span>
+                  {i > 0 && canEdit && <button class="btn btn--sm" type="button" data-action="restore" data-revision={r.id}>Restore</button>}
+                </li>
+              ))}
+            </ul>
+          ) : <div class="empty"><span>Not published yet.</span></div>}
+        </div>
+      </aside>
+    </div>
+
+    {canEdit && hasSections && (
+      <dialog class="a-dialog a-dialog--wide" data-add-dialog>
+        <div class="a-dialog__head"><h2>Add a section</h2><form method="dialog"><button class="btn btn--ghost btn--icon" aria-label="Close">✕</button></form></div>
+        <div class="a-dialog__body" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">
+          {allowedTypes.map(([k, s]) => (
+            <button type="button" class="card" style="padding:1rem;text-align:left;display:grid;gap:.3rem" data-add-type={k}>
+              <strong style="color:var(--a-ink)">{s.name}</strong><span class="muted" style="font-size:.78rem">{s.hint}</span>
+            </button>
+          ))}
+        </div>
+        <div class="a-dialog__foot"><span class="muted" style="margin-right:auto">New sections are added hidden so you can fill them in before they appear.</span></div>
+      </dialog>
+    )}
+  </div>
+
+  <script type="application/json" id="editor-ctx" set:html={JSON.stringify(editorCtx)} />
+  <script>
+    import '../../../scripts/admin/page-editor';
+  </script>
+  <style is:global>
+    .md-preview { font-size: .9rem; line-height: 1.7; } .md-preview > * + * { margin-top: .8em; } .md-preview h2 { font-size: 1.2rem; margin-top: 1.4em; } .md-preview h3 { font-size: 1rem; } .md-preview img { max-width: 100%; border-radius: 8px; } .md-preview ul, .md-preview ol { padding-left: 1.4rem; } .md-preview blockquote { border-left: 3px solid var(--a-accent); padding-left: 1rem; color: var(--a-muted); } .md-preview a { color: var(--a-accent-ink); text-decoration: underline; }
+  </style>
+</AdminLayout>

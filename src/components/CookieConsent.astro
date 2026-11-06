@@ -1,0 +1,36 @@
+---
+/** Minimal consent banner: analytics only start after “Accept” when consent is required. */
+interface Props { message: string }
+const { message } = Astro.props;
+---
+
+<div class="consent" role="dialog" aria-live="polite" aria-label="Analytics consent" hidden data-consent>
+  <p>{message} <a href="/privacy-policy">Privacy Policy</a></p>
+  <div class="consent__actions">
+    <button type="button" class="btn btn--sm btn--ghost" data-consent-choice="no">Decline</button>
+    <button type="button" class="btn btn--sm" data-consent-choice="yes">Accept</button>
+  </div>
+</div>
+
+<style>
+  .consent {
+    position: fixed;
+    left: clamp(0.75rem, 2vw, 1.5rem);
+    right: clamp(0.75rem, 2vw, 1.5rem);
+    bottom: clamp(0.75rem, 2vw, 1.5rem);
+    z-index: 120;
+    max-width: 640px;
+    display: grid;
+    gap: 1rem;
+    padding: 1.25rem 1.4rem;
+    border-radius: var(--radius-lg);
+    background: rgba(13, 13, 12, 0.94);
+    border: 1px solid var(--line-dark);
+    color: var(--on-dark-muted);
+    font-size: 0.9rem;
+    box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.6);
+  }
+  .consent[hidden] { display: none; }
+  .consent a { color: var(--bronze-light); text-decoration: underline; }
+  .consent__actions { display: flex; gap: 0.6rem; justify-content: flex-end; flex-wrap: wrap; }
+</style>

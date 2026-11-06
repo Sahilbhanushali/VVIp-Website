@@ -1,0 +1,23 @@
+---
+/** Date-range presets + custom range (GET params, so every report is linkable). */
+interface Props { current: string; from?: string; to?: string }
+const { current, from = '', to = '' } = Astro.props;
+const presets: [string, string][] = [['today', 'Today'], ['7d', '7 days'], ['30d', '30 days'], ['90d', '90 days'], ['365d', '12 months']];
+const url = Astro.url;
+const link = (r: string) => { const u = new URL(url); u.searchParams.set('range', r); u.searchParams.delete('from'); u.searchParams.delete('to'); return u.pathname + u.search; };
+const keep = [...url.searchParams.entries()].filter(([k]) => !['range', 'from', 'to'].includes(k));
+---
+
+<div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;max-width:100%;min-width:0">
+  <nav class="seg" aria-label="Date range">
+    {presets.map(([k, l]) => <a href={link(k)} aria-current={current === k ? 'page' : undefined}>{l}</a>)}
+  </nav>
+  <form method="get" style="display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;max-width:100%">
+    {keep.map(([k, v]) => <input type="hidden" name={k} value={v} />)}
+    <input type="hidden" name="range" value="custom" />
+    <label class="sr-only" for="rf">From</label><input id="rf" class="input" style="width:auto;min-width:0;flex:1 1 130px;min-height:32px;padding:.25rem .5rem" type="date" name="from" value={from} required />
+    <span class="muted">→</span>
+    <label class="sr-only" for="rt">To</label><input id="rt" class="input" style="width:auto;min-width:0;flex:1 1 130px;min-height:32px;padding:.25rem .5rem" type="date" name="to" value={to} required />
+    <button class="btn btn--sm" type="submit" aria-current={current === 'custom' ? 'page' : undefined}>Apply</button>
+  </form>
+</div>

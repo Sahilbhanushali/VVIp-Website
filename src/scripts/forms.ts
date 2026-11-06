@@ -1,6 +1,6 @@
 /**
- * Enquiry form submission — a dependency-free port of the original jQuery
- * `.ajax-contact` handler. Talks to the unchanged `mail.php` endpoint.
+ * Enquiry form submission → /api/inquiry (stored in the CMS, then emailed).
+ * Same `{ success, message, errors }` contract as the original mail.php.
  */
 
 type MailResponse = {
@@ -18,6 +18,10 @@ const rules: Record<string, (v: string) => string | null> = {
     !v ? 'Please enter your phone number' : !/^\+?[0-9\s-]{7,15}$/.test(v) ? 'Please enter a valid phone number' : null,
   message: (v) => (!v ? 'Please enter your message' : v.length < 10 ? 'Message must be at least 10 characters' : null),
 };
+
+function safeGet(s: Storage, k: string): string {
+  try { return s.getItem(k) ?? ''; } catch { return ''; }
+}
 
 function setFieldError(form: HTMLFormElement, name: string, msg: string | null) {
   const holder = form.querySelector<HTMLElement>(`[data-error-for="${name}"]`);
@@ -71,7 +75,11 @@ export function initEnquiryForms() {
         const res = await fetch(form.action, {
           method: 'POST',
           body: new URLSearchParams(new FormData(form) as unknown as Record<string, string>),
-          headers: { Accept: 'application/json' },
+          headers: {
+            Accept: 'application/json',
+            'X-Visitor-Id': safeGet(localStorage, 'vvip-vid'),
+            'X-Attribution': safeGet(sessionStorage, 'vvip-attr'),
+          },
         });
         let data: MailResponse | null = null;
         try {
@@ -83,6 +91,7 @@ export function initEnquiryForms() {
         if (data?.success) {
           setStatus(form, 'success', data.message ?? 'Thank you! Your message has been sent successfully.');
           form.reset();
+          window.dispatchEvent(new CustomEvent('vvip:track', { detail: { name: 'form_submit', label: form.closest('dialog') ? 'visit dialog' : location.pathname } }));
           try {
             sessionStorage.setItem('formSubmitted', 'true');
           } catch {

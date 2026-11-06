@@ -1,0 +1,38 @@
+---
+/**
+ * Responsive <img> for a media-library item: WebP srcset from the stored
+ * variants, intrinsic width/height to prevent layout shift.
+ */
+import type { Media } from '../server/media.ts';
+import { mediaUrl, pickVariant, srcset } from '../server/media.ts';
+
+interface Props {
+  media: Media | null | undefined;
+  sizes: string;
+  alt?: string;
+  class?: string;
+  style?: string;
+  loading?: 'lazy' | 'eager';
+  fetchpriority?: 'high' | 'low' | 'auto';
+  /** Preferred fallback width for the src attribute. */
+  width?: number;
+}
+const { media, sizes, alt, class: className, style, loading = 'lazy', fetchpriority, width = 960 } = Astro.props;
+const v = media && media.kind === 'image' ? pickVariant(media, width) : null;
+---
+
+{media && v ? (
+  <img
+    src={mediaUrl(media, v.file)}
+    srcset={srcset(media)}
+    sizes={sizes}
+    width={media.width ?? v.w}
+    height={media.height ?? v.h}
+    alt={alt ?? media.alt}
+    class={className}
+    style={style}
+    loading={loading}
+    fetchpriority={fetchpriority}
+    decoding="async"
+  />
+) : null}

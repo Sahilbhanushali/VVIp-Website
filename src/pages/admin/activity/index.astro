@@ -1,0 +1,48 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import Pager from '../../../components/admin/Pager.astro';
+import { all, one } from '../../../server/db.ts';
+import { can } from '../../../server/permissions.ts';
+import { formatDate } from '../../../server/format.ts';
+
+export const prerender = false;
+const me = Astro.locals.user!;
+if (!can(me.permissions, 'activity', 'read')) return Astro.redirect('/admin');
+const sp = Astro.url.searchParams;
+const f = { user: Number(sp.get('user')) || 0, type: sp.get('type') ?? '', action: sp.get('action') ?? '', page: Math.max(1, Number(sp.get('page') ?? 1)) };
+const w: string[] = []; const p: unknown[] = [];
+if (f.user) { w.push('a.user_id = ?'); p.push(f.user); }
+if (f.type) { w.push('a.entity_type = ?'); p.push(f.type); }
+if (f.action) { w.push('a.action = ?'); p.push(f.action); }
+const where = w.length ? `WHERE ${w.join(' AND ')}` : '';
+const perPage = 50;
+const total = Number((await one<{ n: number }>(`SELECT COUNT(*) n FROM activity_logs a ${where}`, p))?.n ?? 0);
+const rows = await all(`SELECT a.*, u.name user_name, u.email FROM activity_logs a LEFT JOIN admin_users u ON u.id = a.user_id ${where} ORDER BY a.id DESC LIMIT ? OFFSET ?`, [...p, perPage, (f.page - 1) * perPage]);
+const users = await all<{ id: number; name: string }>('SELECT id, name FROM admin_users ORDER BY name');
+const types = (await all<{ t: string }>('SELECT DISTINCT entity_type t FROM activity_logs ORDER BY t')).map((r) => r.t);
+const actions = (await all<{ t: string }>('SELECT DISTINCT action t FROM activity_logs ORDER BY t')).map((r) => r.t);
+const badge: Record<string, string> = { create: 'ok', publish: 'ok', delete: 'err', unpublish: 'warn', update: 'info', login: '', export: 'accent' };
+---
+
+<AdminLayout title="Activity log" crumbs={[{ label: 'Activity log' }]}>
+  <div class="a-head"><div><h1>Activity log</h1><p>Important actions by every admin user: sign-ins, edits, publishing, deletions, exports and settings changes.</p></div></div>
+  <div class="card">
+    <form class="toolbar" method="get">
+      <select class="select" name="user" onchange="this.form.submit()"><option value="">All users</option>{users.map((u) => <option value={u.id} selected={f.user === u.id}>{u.name}</option>)}</select>
+      <select class="select" name="type" onchange="this.form.submit()"><option value="">All areas</option>{types.map((t) => <option selected={f.type === t}>{t}</option>)}</select>
+      <select class="select" name="action" onchange="this.form.submit()"><option value="">All actions</option>{actions.map((t) => <option selected={f.action === t}>{t}</option>)}</select>
+    </form>
+    {rows.length ? (
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>When</th><th>User</th><th>Action</th><th>Area</th><th>Details</th></tr></thead>
+        <tbody>{rows.map((r: any) => (
+          <tr><td class="muted" style="white-space:nowrap">{formatDate(r.created_at, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+            <td>{r.user_name ?? <span class="muted">Deleted user / system</span>}</td>
+            <td><span class={`badge badge--${badge[r.action] ?? ''}`}>{r.action}</span></td>
+            <td>{r.entity_type}</td><td>{r.summary}</td></tr>
+        ))}</tbody>
+      </table></div>
+    ) : <div class="empty"><span>No activity matches.</span></div>}
+    <Pager page={f.page} pages={Math.max(1, Math.ceil(total / perPage))} total={total} perPage={perPage} />
+  </div>
+</AdminLayout>

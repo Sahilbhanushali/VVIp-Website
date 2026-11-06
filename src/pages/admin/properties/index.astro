@@ -1,0 +1,125 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AIcon from '../../../components/admin/AIcon.astro';
+import Pager from '../../../components/admin/Pager.astro';
+import { listProperties, propertyTypes } from '../../../server/admin-properties.ts';
+import { getMediaMany, mediaUrl, pickVariant } from '../../../server/media.ts';
+import { AVAILABILITY_LABEL } from '../../../server/content.ts';
+import { formatPrice, formatDate } from '../../../server/format.ts';
+import { can } from '../../../server/permissions.ts';
+
+export const prerender = false;
+const user = Astro.locals.user!;
+const P = user.permissions;
+if (!can(P, 'properties', 'read')) return Astro.redirect('/admin');
+const sp = Astro.url.searchParams;
+const f = { q: sp.get('q') ?? '', status: sp.get('status') ?? '', type: sp.get('type') ?? '', availability: sp.get('availability') ?? '', featured: sp.get('featured') ?? '', sort: sp.get('sort') ?? 'updated', page: Number(sp.get('page') ?? 1) };
+const data = await listProperties(f);
+const types = await propertyTypes();
+const media = await getMediaMany(data.rows.map((r: any) => r.main_image_id));
+const thumb = (id: number) => { const m = media.get(id); return m ? mediaUrl(m, pickVariant(m, 240)!.file) : null; };
+const exportQs = new URLSearchParams(Object.entries(f).filter(([k, v]) => v && k !== 'page' && k !== 'sort') as [string, string][]).toString();
+const sortLink = (k: string) => { const u = new URL(Astro.url); u.searchParams.set('sort', k); u.searchParams.delete('page'); return u.pathname + u.search; };
+---
+
+<AdminLayout title="Properties" crumbs={[{ label: 'Properties' }]}>
+  <div class="a-head">
+    <div><h1>Properties</h1><p>Published properties appear automatically on the listing page and wherever a section references them.</p></div>
+    <div class="a-head__actions">
+      {can(P, 'properties', 'export') && <a class="btn" href={`/api/admin/properties/export?${exportQs}`}><AIcon name="download" /> Export CSV</a>}
+      {can(P, 'properties', 'create') && <button class="btn btn--accent" type="button" data-new><AIcon name="plus" /> New property</button>}
+    </div>
+  </div>
+
+  <div class="card">
+    <form class="toolbar" method="get">
+      <input class="input grow" type="search" name="q" value={f.q} placeholder="Search title, location or slug" />
+      <select class="select" name="status" onchange="this.form.submit()"><option value="">Any status</option><option value="published" selected={f.status === 'published'}>Published</option><option value="draft" selected={f.status === 'draft'}>Draft</option></select>
+      <select class="select" name="type" onchange="this.form.submit()"><option value="">All types</option>{types.map((t) => <option selected={f.type === t}>{t}</option>)}</select>
+      <select class="select" name="availability" onchange="this.form.submit()"><option value="">Any availability</option>{Object.entries(AVAILABILITY_LABEL).map(([k, v]) => <option value={k} selected={f.availability === k}>{v}</option>)}</select>
+      <label class="check"><input type="checkbox" name="featured" value="1" checked={f.featured === '1'} onchange="this.form.submit()" /> Featured only</label>
+      <input type="hidden" name="sort" value={f.sort} />
+      <button class="btn">Filter</button>
+    </form>
+    <div class="bulkbar" hidden data-bulkbar>
+      <span data-bulk-count>0 selected</span>
+      {can(P, 'properties', 'publish') && <><button class="btn btn--sm" data-bulk="publish">Publish</button><button class="btn btn--sm" data-bulk="unpublish">Unpublish</button></>}
+      {can(P, 'properties', 'update') && <><button class="btn btn--sm" data-bulk="feature">Feature</button><button class="btn btn--sm" data-bulk="unfeature">Unfeature</button></>}
+      {can(P, 'properties', 'delete') && <button class="btn btn--sm btn--danger" data-bulk="delete">Delete</button>}
+    </div>
+    {data.rows.length ? (
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr>
+            <th style="width:36px"><input type="checkbox" aria-label="Select all" data-all /></th>
+            <th><a href={sortLink('title')}>Property {f.sort === 'title' && '↓'}</a></th><th>Type</th><th>Availability</th>
+            <th><a href={sortLink(f.sort === 'price_asc' ? 'price_desc' : 'price_asc')}>Price {f.sort === 'price_asc' ? '↑' : f.sort === 'price_desc' ? '↓' : ''}</a></th>
+            <th>Status</th><th class="num">Images</th><th class="num">Leads</th>
+            <th><a href={sortLink('updated')}>Updated {f.sort === 'updated' && '↓'}</a></th><th></th>
+          </tr></thead>
+          <tbody>
+            {data.rows.map((r: any) => (
+              <tr>
+                <td><input type="checkbox" value={r.id} data-row aria-label={`Select ${r.title}`} /></td>
+                <td><div class="title-cell">{thumb(r.main_image_id) ? <img src={thumb(r.main_image_id)} alt="" /> : <img alt="" />}<div><a href={`/admin/properties/${r.id}`}><strong>{r.title}</strong></a><small>{r.location ?? '—'}</small></div></div></td>
+                <td>{r.property_type}</td>
+                <td>{AVAILABILITY_LABEL[r.availability as keyof typeof AVAILABILITY_LABEL]}</td>
+                <td>{formatPrice(r)}</td>
+                <td>{r.status === 'published' ? <span class="badge badge--ok">Published</span> : <span class="badge">Draft</span>}{!!r.is_featured && <span class="badge badge--accent" style="margin-left:.3rem">★ Featured</span>}</td>
+                <td class="num">{r.image_count}</td>
+                <td class="num">{r.inquiry_count ? <a href={`/admin/inquiries?property=${r.id}`}>{r.inquiry_count}</a> : 0}</td>
+                <td class="muted">{formatDate(r.updated_at)}</td>
+                <td><div class="row-actions">
+                  {r.status === 'published' && r.path && <a class="btn btn--ghost btn--icon" href={r.path} target="_blank" title="View live" aria-label="View live"><AIcon name="external" size={16} /></a>}
+                  <a class="btn btn--sm" href={`/admin/properties/${r.id}`}>Edit</a>
+                </div></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : <div class="empty"><AIcon name="building" size={40} /><strong>No properties match</strong><span>Clear the filters or add a property.</span></div>}
+    <Pager page={data.page} pages={data.pages} total={data.total} perPage={data.perPage} />
+  </div>
+
+  <dialog class="a-dialog" data-new-dialog>
+    <form class="stack" data-new-form>
+      <div class="a-dialog__head"><h2>New property</h2></div>
+      <div class="a-dialog__body">
+        <div class="field"><label for="np-title">Property name</label><input class="input" id="np-title" name="title" required minlength="2" maxlength="160" /><small>A draft is created with its own page at /name.html — nothing is public until you publish.</small><p class="field__error" data-error></p></div>
+      </div>
+      <div class="a-dialog__foot"><button class="btn" type="button" data-cancel>Cancel</button><button class="btn btn--primary" type="submit">Create draft</button></div>
+    </form>
+  </dialog>
+
+  <script>
+    import { api, toast, confirmAction } from '../../../scripts/admin/shell';
+    const d = document.querySelector<HTMLDialogElement>('[data-new-dialog]')!;
+    const form = document.querySelector<HTMLFormElement>('[data-new-form]')!;
+    document.querySelector('[data-new]')?.addEventListener('click', () => d.showModal());
+    d.querySelector('[data-cancel]')!.addEventListener('click', () => d.close());
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try { const r = await api<{ id: number }>('/api/admin/properties', { method: 'POST', json: Object.fromEntries(new FormData(form)) }); location.href = `/admin/properties/${r.id}`; }
+      catch (er) { form.querySelector('[data-error]')!.textContent = (er as Error).message; }
+    });
+    if (new URLSearchParams(location.search).get('new')) d.showModal();
+
+    const rows = [...document.querySelectorAll<HTMLInputElement>('[data-row]')];
+    const bar = document.querySelector<HTMLElement>('[data-bulkbar]')!;
+    const sync = () => {
+      const n = rows.filter((r) => r.checked).length;
+      bar.hidden = n === 0;
+      bar.querySelector('[data-bulk-count]')!.textContent = `${n} selected`;
+    };
+    document.querySelector<HTMLInputElement>('[data-all]')?.addEventListener('change', (e) => { rows.forEach((r) => (r.checked = (e.target as HTMLInputElement).checked)); sync(); });
+    rows.forEach((r) => r.addEventListener('change', sync));
+    bar.querySelectorAll<HTMLButtonElement>('[data-bulk]').forEach((b) => b.addEventListener('click', async () => {
+      const ids = rows.filter((r) => r.checked).map((r) => Number(r.value));
+      const action = b.dataset.bulk!;
+      if (action === 'delete' && !(await confirmAction(`Permanently delete ${ids.length} propert${ids.length === 1 ? 'y' : 'ies'} and their pages?`, 'Delete properties', 'Delete'))) return;
+      try { const r = await api<{ count: number }>('/api/admin/properties/bulk', { method: 'POST', json: { ids, action } }); toast(`${action}: ${r.count} updated`); setTimeout(() => location.reload(), 500); }
+      catch (er) { toast((er as Error).message, 'err'); }
+    }));
+  </script>
+</AdminLayout>

@@ -1,0 +1,28 @@
+---
+import AuthLayout from '../../layouts/AuthLayout.astro';
+export const prerender = false;
+const next = Astro.url.searchParams.get('next') ?? '/admin';
+const safeNext = next.startsWith('/admin') && !next.startsWith('//') ? next : '/admin';
+const reset = Astro.url.searchParams.get('reset') === '1';
+---
+
+<AuthLayout title="Sign in">
+  <div>
+    <h1>Sign in</h1>
+    <p>Content management for the website.</p>
+  </div>
+  {reset && <div class="alert alert--ok">Your password was changed. Sign in with the new password.</div>}
+  <form class="stack" data-auth-form="/api/admin/auth/login" data-redirect={safeNext} novalidate>
+    <div class="field">
+      <label for="email">Email</label>
+      <input class="input" id="email" name="email" type="email" autocomplete="username" required autofocus />
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input class="input" id="password" name="password" type="password" autocomplete="current-password" required />
+    </div>
+    <p class="field__error" role="alert" data-error></p>
+    <button class="btn btn--primary" type="submit">Sign in</button>
+    <a href="/admin/forgot-password" class="muted" style="text-align:center">Forgot your password?</a>
+  </form>
+</AuthLayout>

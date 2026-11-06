@@ -1,0 +1,86 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AIcon from '../../../components/admin/AIcon.astro';
+import { getPropertyForEdit, categories } from '../../../server/admin-properties.ts';
+import { getMediaMany, mediaUrl, pickVariant } from '../../../server/media.ts';
+import { can } from '../../../server/permissions.ts';
+import { formatDate } from '../../../server/format.ts';
+import { one } from '../../../server/db.ts';
+
+export const prerender = false;
+const user = Astro.locals.user!;
+const P = user.permissions;
+if (!can(P, 'properties', 'read')) return Astro.redirect('/admin');
+const p: any = await getPropertyForEdit(Number(Astro.params.id) || 0);
+if (!p) return new Response('Property not found', { status: 404 });
+const cats = await categories();
+const ids = [p.main_image_id, p.og_image_id, ...p.images.map((i: any) => i.media_id), ...p.amenities.map((a: any) => a.media_id)].filter(Boolean);
+const mm = await getMediaMany(ids);
+const media: Record<string, { thumb: string | null; name: string }> = {};
+for (const [k, m] of mm) media[k] = { thumb: mediaUrl(m, pickVariant(m, 240)!.file), name: m.original_name };
+const leads = Number((await one<{ n: number }>('SELECT COUNT(*) n FROM inquiries WHERE property_id = ?', [p.id]))?.n ?? 0);
+const toNum = (v: unknown) => (v == null ? null : Number(v));
+const state = {
+  id: p.id, title: p.title, slug: p.slug, tagline: p.tagline ?? '', summary: p.summary ?? '', description: p.description ?? '', property_type: p.property_type, category_id: p.category_id,
+  developer: p.developer ?? '', location: p.location ?? '', address: p.address ?? '', latitude: toNum(p.latitude), longitude: toNum(p.longitude),
+  price_amount: toNum(p.price_amount), price_label: p.price_label ?? '', bedrooms: p.bedrooms, bathrooms: p.bathrooms, area: toNum(p.area), area_unit: p.area_unit,
+  availability: p.availability, is_featured: !!p.is_featured, status: p.status, main_image_id: p.main_image_id, seo_title: p.seo_title ?? '', seo_description: p.seo_description ?? '', og_image_id: p.og_image_id,
+  images: p.images.map((i: any) => ({ media_id: i.media_id, caption: i.caption ?? '', category: i.category ?? '', shape: i.shape })),
+  amenities: p.amenities.map((a: any) => ({ name: a.name, icon: a.icon ?? '', media_id: a.media_id })),
+  specs: p.specs,
+};
+const canEdit = can(P, 'properties', 'update');
+const canPublish = can(P, 'properties', 'publish');
+---
+
+<AdminLayout title={`Edit · ${p.title}`} crumbs={[{ label: 'Properties', href: '/admin/properties' }, { label: p.title }]}>
+  <div class="a-head">
+    <div><h1>{p.title}</h1><p class="mono">{p.page_path ?? `/${p.slug}.html`}</p></div>
+    <div class="a-head__actions">
+      <a class="btn" href={`${p.page_path}?preview=1`} target="_blank"><AIcon name="eye" /> Preview</a>
+      {p.status === 'published' && <a class="btn btn--ghost" href={p.page_path} target="_blank"><AIcon name="external" /> View live</a>}
+      {p.page_id && can(P, 'pages', 'read') && <a class="btn" href={`/admin/pages/${p.page_id}`}><AIcon name="pages" /> Page sections</a>}
+      {canEdit && <button class="btn btn--primary" type="button" data-save>Save <kbd class="muted" style="font-size:.7rem;margin-left:.3rem">Ctrl S</kbd></button>}
+    </div>
+  </div>
+  <p class="badge badge--warn" hidden data-dirty style="justify-self:start">Unsaved changes</p>
+
+  <div class="split split--wide">
+    <div class="stack" data-groups style="min-width:0"></div>
+    <aside class="stack">
+      <div class="card">
+        <div class="card__head"><h2>Publishing</h2>{p.status === 'published' ? <span class="badge badge--ok">Live</span> : <span class="badge">Draft</span>}</div>
+        <div class="card__body stack">
+          <div class="field"><label for="st">Status</label>
+            <select class="select" id="st" data-bind="status" disabled={!canPublish}><option value="draft">Draft (hidden from the website)</option><option value="published">Published</option></select>
+            {!canPublish && <small>Your role cannot change the publishing status.</small>}
+          </div>
+          <div class="field"><label for="av">Availability</label>
+            <select class="select" id="av" data-bind="availability"><option value="available">Available</option><option value="upcoming">Upcoming</option><option value="on_request">On request</option><option value="sold_out">Sold out</option></select>
+          </div>
+          <label class="switch"><input type="checkbox" data-bind="is_featured" /> Featured property</label>
+          <dl class="kv">
+            <dt>Published</dt><dd>{p.published_at ? formatDate(p.published_at) : 'Never'}</dd>
+            <dt>Updated</dt><dd>{formatDate(p.updated_at, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</dd>
+            <dt>Inquiries</dt><dd>{leads ? <a href={`/admin/inquiries?property=${p.id}`} style="text-decoration:underline">{leads}</a> : 0}</dd>
+          </dl>
+        </div>
+        <div class="card__foot" style="justify-content:flex-start;flex-wrap:wrap">
+          {canEdit && <button class="btn btn--primary btn--sm" type="button" data-save>Save</button>}
+          {can(P, 'properties', 'create') && <button class="btn btn--sm" type="button" data-duplicate>Duplicate</button>}
+          {can(P, 'properties', 'delete') && <button class="btn btn--sm btn--danger" type="button" data-delete>Delete</button>}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card__head"><h2>Categories</h2></div>
+        <div class="card__body"><p class="muted" style="margin-bottom:.6rem">{cats.map((c) => c.name).join(', ') || 'None yet'}</p>{canEdit && <button class="btn btn--sm" type="button" data-add-category>Add category</button>}</div>
+      </div>
+      <div class="alert alert--info"><span>The property page’s additional sections (overview text, tower explorer, FAQ, location points…) are edited under <strong>Page sections</strong>.</span></div>
+    </aside>
+  </div>
+
+  <script type="application/json" id="property-ctx" set:html={JSON.stringify({ property: state, media, categories: cats.map((c) => [String(c.id), c.name]) })} />
+  <script>
+    import '../../../scripts/admin/property-editor';
+  </script>
+</AdminLayout>

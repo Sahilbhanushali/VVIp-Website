@@ -1,0 +1,70 @@
+---
+import SplitText from '../SplitText.astro';
+import Icon from '../Icon.astro';
+import MediaImg from '../MediaImg.astro';
+import type { Media } from '../../server/media.ts';
+import type { SectionData } from '../../server/sections.ts';
+
+interface Props { data: SectionData<'brand_story'>; media: Map<number, Media>; anchor?: string; isHome?: boolean }
+const { data, media, anchor = 'story', isHome = false } = Astro.props;
+const img = data.image.media_id ? media.get(data.image.media_id) : null;
+const local = (h: string) => (isHome && h.startsWith('/#') ? h.slice(1) : h);
+const ratio = img?.width && img?.height ? `${img.width} / ${img.height}` : '1 / 1';
+---
+
+<section id={anchor} class="section symbol" aria-labelledby={`${anchor}-title`}>
+  <div class="container symbol__grid">
+    {img && (
+      <div class="symbol__art" data-reveal="clip" style={`aspect-ratio:${ratio}`}>
+        <MediaImg media={img} alt={data.image.alt || undefined} sizes="(min-width: 992px) 600px, calc(100vw - 2rem)" width={960} />
+      </div>
+    )}
+    <div class="symbol__text">
+      {data.eyebrow && <p class="eyebrow" data-reveal>{data.eyebrow}</p>}
+      <SplitText id={`${anchor}-title`} class="h-section" text={data.title} />
+      {data.lead && <p class="lead" data-reveal style="--d:2">{data.lead}</p>}
+      {data.text && <p data-reveal style="--d:3">{data.text}</p>}
+      {(data.primary.label || data.secondary.label) && (
+        <div class="symbol__actions" data-reveal style="--d:4">
+          {data.primary.label && <a href={local(data.primary.href || '/#contact-sec')} class="btn" data-open-visit={data.primary.opens_visit ? '' : undefined} data-cta={data.primary.label}>{data.primary.label} <Icon name="arrow-right" /></a>}
+          {data.secondary.label && <a href={local(data.secondary.href || '#')} class="link-arrow" data-cta={data.secondary.label}>{data.secondary.label} <Icon name="arrow-right" /></a>}
+        </div>
+      )}
+    </div>
+  </div>
+</section>
+
+<style>
+  .symbol {
+    background: #000;
+    color: var(--on-dark-muted);
+    overflow: hidden;
+  }
+  .symbol::before {
+    content: '';
+    position: absolute;
+    right: -20%;
+    top: 10%;
+    width: 70vw;
+    aspect-ratio: 1;
+    background: radial-gradient(closest-side, rgba(191, 120, 64, 0.14), transparent);
+    pointer-events: none;
+  }
+  .symbol :global(h2) { color: var(--white); max-width: 12ch; }
+  .symbol__grid {
+    position: relative;
+    display: grid;
+    gap: clamp(2.5rem, 5vw, 6rem);
+    align-items: center;
+  }
+  @media (min-width: 992px) { .symbol__grid { grid-template-columns: 1fr 1fr; } }
+  .symbol__art {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .symbol__art :global(img) { width: 100%; height: 100%; object-fit: cover; }
+  .symbol__text { display: grid; gap: 1.5rem; }
+  .symbol__text .lead { color: var(--on-dark); }
+  .symbol__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem 2rem; margin-top: 0.75rem; }
+</style>

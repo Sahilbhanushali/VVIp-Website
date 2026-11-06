@@ -1,0 +1,89 @@
+---
+import SplitText from '../SplitText.astro';
+import MediaImg from '../MediaImg.astro';
+import type { Media } from '../../server/media.ts';
+import type { SectionData } from '../../server/sections.ts';
+
+type Stat = { value: number; decimals: number; suffix: string; label: string };
+interface Props { data: SectionData<'property_overview'>; media: Map<number, Media>; stats: Stat[]; anchor?: string }
+const { data, media, stats, anchor = 'overview' } = Astro.props;
+const a = data.image_a.media_id ? media.get(data.image_a.media_id) : null;
+const b = data.image_b.media_id ? media.get(data.image_b.media_id) : null;
+---
+
+<section id={anchor} class="section section--light overview" aria-labelledby={`${anchor}-title`}>
+  <div class="container overview__grid">
+    <div class="overview__text">
+      {data.eyebrow && <p class="eyebrow" data-reveal>{data.eyebrow}</p>}
+      <SplitText id={`${anchor}-title`} class="h-section" text={data.title} />
+      {data.lead && <p class="lead" data-reveal style="--d:2">{data.lead}</p>}
+      {data.text && <p data-reveal style="--d:3">{data.text}</p>}
+      {data.show_stats && stats.length > 0 && (
+        <dl class="overview__stats">
+          {stats.map((s) => (
+            <div data-reveal>
+              <dd><span data-count={s.value} data-decimals={s.decimals}>{s.value.toFixed(s.decimals)}</span>{s.suffix}</dd>
+              <dt>{s.label}</dt>
+            </div>
+          ))}
+        </dl>
+      )}
+    </div>
+    {(a || b) && (
+      <div class="overview__media">
+        {a && (
+          <div class="overview__img overview__img--a" data-reveal="clip" data-parallax style="--parallax:4">
+            <MediaImg media={a} alt={data.image_a.alt || undefined} sizes="(min-width: 992px) 40vw, 80vw" width={960} />
+          </div>
+        )}
+        {b && (
+          <div class="overview__img overview__img--b" data-reveal="clip" style="--d:2">
+            <MediaImg media={b} alt={data.image_b.alt || undefined} sizes="(min-width: 992px) 22vw, 45vw" width={480} />
+          </div>
+        )}
+        {data.quote && <p class="overview__quote" data-reveal style="--d:3">{data.quote}</p>}
+      </div>
+    )}
+  </div>
+</section>
+
+<style>
+/* Overview */
+  .overview__grid { display: grid; gap: var(--section-head-gap); align-items: center; }
+  @media (min-width: 992px) { .overview__grid { grid-template-columns: 1fr 1fr; gap: clamp(3rem, 6vw, 6rem); } }
+  .overview__text { display: grid; gap: var(--stack); color: #4f5252; }
+  .overview__stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+    margin-top: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+  }
+  @media (min-width: 640px) { .overview__stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .overview__stats div { display: grid; gap: 0.3rem; }
+  .overview__stats dd { font-family: var(--ff-title); font-size: clamp(1.6rem, 1.3rem + 1.2vw, 2.4rem); font-weight: 300; color: var(--ink); line-height: 1; letter-spacing: -0.03em; }
+  .overview__stats dt { font-family: var(--ff-title); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--bronze-ink); }
+  .overview__media { position: relative; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: end; }
+  .overview__img { border-radius: var(--radius-lg); overflow: hidden; background: var(--charcoal); }
+  .overview__img :global(img) { width: 100%; height: 100%; object-fit: cover; }
+  .overview__img--a { grid-column: 1 / 11; grid-row: 1; aspect-ratio: 4 / 5; }
+  .overview__img--b {
+    grid-column: 7 / 13;
+    grid-row: 1;
+    aspect-ratio: 3 / 4;
+    margin-bottom: -2.5rem;
+    border: 6px solid var(--white);
+    box-shadow: 0 30px 60px -30px rgba(13, 13, 12, 0.5);
+  }
+  .overview__quote {
+    grid-column: 1 / 7;
+    grid-row: 2;
+    margin-top: 1.25rem;
+    font-family: var(--ff-title);
+    font-size: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
+    font-weight: 300;
+    color: var(--ink);
+  }
+
+  </style>

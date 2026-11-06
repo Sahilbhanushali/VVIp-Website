@@ -1,0 +1,52 @@
+---
+/** Client testimonials — only shown when genuine quotes have been added. */
+import SplitText from '../SplitText.astro';
+import type { SectionData } from '../../server/sections.ts';
+
+interface Props { data: SectionData<'testimonials'>; anchor?: string }
+const { data, anchor = 'testimonials' } = Astro.props;
+---
+
+{data.items.length > 0 && (
+<section id={anchor} class="section section--ink testimonials" aria-labelledby={`${anchor}-title`}>
+  <div class="container">
+    <header class="section-head">
+      {data.eyebrow && <p class="eyebrow" data-reveal>{data.eyebrow}</p>}
+      <SplitText id={`${anchor}-title`} class="h-section" text={data.title} />
+    </header>
+    <ul class="testimonials__grid" role="list">
+      {data.items.map((t, i) => (
+        <li class="quote" data-reveal style={`--d:${i}`}>
+          <blockquote>
+            <p>“{t.quote}”</p>
+          </blockquote>
+          <p class="quote__by"><strong>{t.name}</strong>{t.role && <span>{t.role}</span>}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+)}
+
+<style>
+  .testimonials__grid { display: grid; gap: var(--grid-gap); grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); }
+  .quote {
+    display: grid;
+    gap: 1.5rem;
+    align-content: space-between;
+    padding: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+    border: 1px solid var(--line-dark);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
+  }
+  .quote blockquote p {
+    font-family: var(--ff-title);
+    font-size: clamp(1.05rem, 0.95rem + 0.5vw, 1.3rem);
+    font-weight: 300;
+    line-height: 1.55;
+    color: var(--white);
+  }
+  .quote__by { display: grid; gap: 0.2rem; padding-top: 1.25rem; border-top: 1px solid var(--line-dark); font-size: 0.9rem; }
+  .quote__by strong { color: var(--white); font-weight: 600; }
+  .quote__by span { color: var(--bronze-light); font-size: 0.8rem; }
+</style>

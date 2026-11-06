@@ -1,0 +1,85 @@
+---
+/**
+ * Renders a page's published (or preview) sections with the matching
+ * predefined component. Default anchors keep legacy deep links working
+ * (#about-sec, #property-sec, #service-sec, #blog-sec, #contact-sec …);
+ * repeated section types get unique ids.
+ */
+import Hero from './Hero.astro';
+import Campaign from './Campaign.astro';
+import About from './About.astro';
+import FeaturedProperty from './FeaturedProperty.astro';
+import Towers from './Towers.astro';
+import Gallery from './Gallery.astro';
+import Amenities from './Amenities.astro';
+import BrandStory from './BrandStory.astro';
+import Insights from './Insights.astro';
+import Contact from './Contact.astro';
+import Faq from './Faq.astro';
+import Location from './Location.astro';
+import PropertyOverview from './PropertyOverview.astro';
+import ExperiencesGrid from './ExperiencesGrid.astro';
+import Testimonials from './Testimonials.astro';
+import RichText from './RichText.astro';
+import PropertyList from './PropertyList.astro';
+import type { SectionSnapshot, PropertyFull, ArticleCard, PropertyCard } from '../../server/content.ts';
+import type { Media } from '../../server/media.ts';
+import type { Settings } from '../../server/settings.ts';
+
+interface Props {
+  sections: SectionSnapshot[];
+  media: Map<number, Media>;
+  settings: Settings;
+  articles: ArticleCard[];
+  properties: PropertyCard[];
+  /** Properties referenced by sections (featured / gallery / amenities), keyed by id. */
+  propertyMap: Map<number, PropertyFull>;
+  /** The page's own property (property template). */
+  pageProperty?: PropertyFull | null;
+  isHome?: boolean;
+}
+const { sections, media, settings, articles, properties, propertyMap, pageProperty = null, isHome = false } = Astro.props;
+
+const DEFAULT_ANCHOR: Record<string, string> = {
+  hero: 'hero', campaign: 'campaign', about: 'about-sec', featured_property: 'property-sec', towers: 'service-sec', gallery: 'gallery',
+  amenities: 'amenities', brand_story: 'story', insights: 'blog-sec', contact: 'contact-sec', faq: 'faq', location: 'location',
+  property_overview: 'overview', experiences_grid: 'experiences', testimonials: 'testimonials', rich_text: 'content', property_list: 'properties',
+};
+const used = new Map<string, number>();
+const anchorFor = (type: string) => {
+  const base = DEFAULT_ANCHOR[type] ?? type;
+  const n = (used.get(base) ?? 0) + 1;
+  used.set(base, n);
+  return n === 1 ? base : `${base}-${n}`;
+};
+const propFor = (id: number | null) => (id ? propertyMap.get(id) ?? null : pageProperty);
+const stats = sections.find((s) => s.type === 'hero')?.data.stats ?? [
+  { value: 26, decimals: 0, suffix: '+', label: 'Years' }, { value: 4.5, decimals: 1, suffix: '', label: 'Million Sq.Ft' },
+  { value: 20, decimals: 0, suffix: '+', label: 'Projects Delivered' }, { value: 2500, decimals: 0, suffix: '+', label: 'Happy Families' },
+];
+---
+
+{sections.map((s) => {
+  const anchor = anchorFor(s.type);
+  const d = s.data;
+  switch (s.type) {
+    case 'hero': return <Hero data={d} media={media} address={settings.contact.address} anchor={anchor} isHome={isHome} />;
+    case 'campaign': return <Campaign data={d} media={media} anchor={anchor} />;
+    case 'about': return <About data={d} media={media} anchor={anchor} isHome={isHome} />;
+    case 'featured_property': return <FeaturedProperty data={d} media={media} property={propFor(d.property_id) ?? (properties[0] ? propertyMap.get(properties[0].id) ?? null : null)} anchor={anchor} isHome={isHome} />;
+    case 'towers': return <Towers data={d} media={media} anchor={anchor} isHome={isHome} />;
+    case 'gallery': return <Gallery data={d} media={media} property={propFor(d.property_id)} anchor={anchor} />;
+    case 'amenities': return <Amenities data={d} media={media} property={propFor(d.property_id)} anchor={anchor} />;
+    case 'brand_story': return <BrandStory data={d} media={media} anchor={anchor} isHome={isHome} />;
+    case 'insights': return <Insights data={d} articles={articles} anchor={anchor} />;
+    case 'contact': return <Contact data={d} settings={settings} anchor={anchor} propertyId={pageProperty?.id ?? null} />;
+    case 'faq': return <Faq data={d} settings={settings} anchor={anchor} />;
+    case 'location': return <Location data={d} settings={settings} address={pageProperty?.address} anchor={anchor} />;
+    case 'property_overview': return <PropertyOverview data={d} media={media} stats={stats} anchor={anchor} />;
+    case 'experiences_grid': return <ExperiencesGrid data={d} media={media} anchor={anchor} />;
+    case 'testimonials': return <Testimonials data={d} anchor={anchor} />;
+    case 'rich_text': return <RichText data={d} anchor={anchor} />;
+    case 'property_list': return <PropertyList data={d} properties={properties} anchor={anchor} />;
+    default: return null;
+  }
+})}

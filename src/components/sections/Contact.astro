@@ -1,0 +1,149 @@
+---
+import SplitText from '../SplitText.astro';
+import ContactForm from '../ContactForm.astro';
+import Icon from '../Icon.astro';
+import type { SectionData } from '../../server/sections.ts';
+import type { Settings } from '../../server/settings.ts';
+
+interface Props { data: SectionData<'contact'>; settings: Settings; anchor?: string; propertyId?: number | null }
+const { data, settings, anchor = 'contact-sec', propertyId = null } = Astro.props;
+const c = settings.contact;
+const formId = anchor === 'contact-sec' ? 'contact' : `${anchor}-form`;
+---
+
+<section id={anchor} class="section section--dark contact" aria-labelledby={`${anchor}-title`}>
+  {anchor === 'contact-sec' && <span id="contact-sec1" class="contact__anchor" aria-hidden="true"></span>}
+
+  <div class="container contact__grid">
+    <div class="contact__info">
+      {data.eyebrow && <p class="eyebrow" data-reveal>{data.eyebrow}</p>}
+      <SplitText id={`${anchor}-title`} class="h-section" text={data.title} />
+      {data.lead && <p class="lead" data-reveal style="--d:2">{data.lead}</p>}
+
+      <ul class="contact__list" role="list">
+        {c.address && (
+          <li data-reveal style="--d:3">
+            <span class="contact__icon"><Icon name="pin" /></span>
+            <div>
+              <p class="contact__label">Address</p>
+              <p class="contact__value">{c.address}</p>
+              {c.maps_url && (
+                <a class="link-arrow contact__dir" href={c.maps_url} target="_blank" rel="noopener noreferrer" data-track="directions_click">
+                  Get directions <Icon name="external" size={14} />
+                </a>
+              )}
+            </div>
+          </li>
+        )}
+        {c.phones.length > 0 && (
+          <li data-reveal style="--d:4">
+            <span class="contact__icon"><Icon name="phone" /></span>
+            <div>
+              <p class="contact__label">Phone</p>
+              {c.phones.map((p) => <a class="contact__value" href={p.href}>{p.label}</a>)}
+            </div>
+          </li>
+        )}
+        {c.whatsapp && (
+          <li data-reveal style="--d:4">
+            <span class="contact__icon"><Icon name="whatsapp" /></span>
+            <div>
+              <p class="contact__label">WhatsApp</p>
+              <a class="contact__value" href={`https://wa.me/${c.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">{c.whatsapp}</a>
+            </div>
+          </li>
+        )}
+        {c.emails.length > 0 && (
+          <li data-reveal style="--d:5">
+            <span class="contact__icon"><Icon name="mail" /></span>
+            <div>
+              <p class="contact__label">Email</p>
+              {c.emails.map((e) => <a class="contact__value" href={e.href}>{e.label}</a>)}
+            </div>
+          </li>
+        )}
+        {c.hours.length > 0 && (
+          <li data-reveal style="--d:6">
+            <span class="contact__icon"><Icon name="clock" /></span>
+            <div>
+              <p class="contact__label">Office hours</p>
+              {c.hours.map((h) => <p class="contact__value">{h.days} · {h.time}</p>)}
+            </div>
+          </li>
+        )}
+      </ul>
+    </div>
+
+    <div class="contact__card" data-reveal style="--d:2">
+      {data.card_title && <h3 class="contact__card-title">{data.card_title}</h3>}
+      <ContactForm idPrefix={formId} tone="light" types={settings.enquiry_types} propertyId={propertyId} />
+    </div>
+  </div>
+
+  {data.show_map && c.map_embed && (
+    <div class="contact__map container" data-reveal>
+      <iframe title="Map showing our location" src={c.map_embed} width="1320" height="460" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+    </div>
+  )}
+</section>
+
+<style>
+  .contact { padding-bottom: clamp(3rem, 2rem + 4vw, 6rem); }
+  .contact__anchor { position: absolute; top: 0; }
+  .contact__grid {
+    display: grid;
+    gap: clamp(3rem, 5vw, 6rem);
+    align-items: start;
+  }
+  @media (min-width: 992px) { .contact__grid { grid-template-columns: 0.9fr 1.1fr; } }
+  .contact__info { display: grid; gap: 1.5rem; }
+  .contact__list { display: grid; gap: 1.75rem; margin-top: 1.5rem; }
+  .contact__list li { display: grid; grid-template-columns: 48px 1fr; gap: 1.25rem; align-items: start; }
+  .contact__icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1px solid rgba(191, 120, 64, 0.45);
+    color: var(--bronze-light);
+  }
+  .contact__label {
+    font-family: var(--ff-title);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+    margin-bottom: 0.35rem;
+  }
+  .contact__value { display: block; color: var(--on-dark); overflow-wrap: anywhere; line-height: 1.6; }
+  a.contact__value { transition: color 300ms ease; width: fit-content; }
+  a.contact__value:hover { color: var(--bronze-light); }
+  .contact__dir { margin-top: 0.6rem; }
+
+  .contact__card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: clamp(1.5rem, 1rem + 3vw, 3.25rem);
+    box-shadow: 0 50px 100px -40px rgba(0, 0, 0, 0.7);
+  }
+  .contact__card-title {
+    color: var(--ink);
+    font-size: clamp(1.4rem, 1.2rem + 0.8vw, 1.9rem);
+    font-weight: 300;
+    margin-bottom: 1rem;
+  }
+
+  .contact__map { margin-top: clamp(3.5rem, 2.5rem + 4vw, 6rem); }
+  .contact__map iframe {
+    width: 100%;
+    height: clamp(320px, 40vw, 460px);
+    border: 0;
+    border-radius: var(--radius-lg);
+    filter: grayscale(0.85) contrast(1.05) brightness(0.92);
+    transition: filter 800ms ease;
+    background: var(--charcoal-2);
+  }
+  .contact__map iframe:hover, .contact__map iframe:focus { filter: none; }
+</style>

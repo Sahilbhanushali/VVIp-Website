@@ -104,7 +104,7 @@ function initVisitDialog() {
       menu?.close();
       dialog.showModal();
       document.body.style.overflow = 'hidden';
-      dialog.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true });
+      dialog.querySelector<HTMLInputElement>('input:not([type="hidden"]):not([tabindex="-1"])')?.focus({ preventScroll: true });
     });
   });
 

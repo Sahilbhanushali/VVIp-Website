@@ -5,13 +5,11 @@
  * prefer reduced motion, and always skippable (button or Esc). It does not
  * wait for the network, so it can never hold the page hostage.
  */
-import { Image } from 'astro:assets';
-import key from '../assets/images/brand/key.png';
 ---
 
 <div class="intro" id="intro" aria-hidden="true">
   <div class="intro__inner">
-    <Image src={key} alt="" width={132} height={132} densities={[1, 2]} format="webp" loading="eager" class="intro__key" />
+    <img src="/brand/key.webp" alt="" width="132" height="132" loading="eager" decoding="async" class="intro__key" />
     <p class="intro__line">The Key To Vapi’s VIP Era.</p>
     <span class="intro__bar"><span></span></span>
   </div>

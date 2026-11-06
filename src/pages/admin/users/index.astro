@@ -1,0 +1,114 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AIcon from '../../../components/admin/AIcon.astro';
+import { all } from '../../../server/db.ts';
+import { can, MODULES, MODULE_ACTIONS, ACTIONS } from '../../../server/permissions.ts';
+import { formatDate } from '../../../server/format.ts';
+
+export const prerender = false;
+const me = Astro.locals.user!;
+const P = me.permissions;
+if (!can(P, 'users', 'read')) return Astro.redirect('/admin');
+const users = await all('SELECT u.id, u.name, u.email, u.is_active, u.last_login_at, u.locked_until, u.role_id, r.name role_name, r.slug role_slug FROM admin_users u JOIN roles r ON r.id = u.role_id ORDER BY r.id, u.name');
+const roles = await all<{ id: number; slug: string; name: string; description: string }>('SELECT id, slug, name, description FROM roles ORDER BY id');
+const rp = await all<{ role_id: number; k: string }>("SELECT rp.role_id, CONCAT(p.module, ':', p.action) k FROM role_permissions rp JOIN permissions p ON p.id = rp.permission_id");
+const has = (roleId: number, k: string) => rp.some((x) => x.role_id === roleId && x.k === k);
+const tab = Astro.url.searchParams.get('tab') ?? 'users';
+const MOD: Record<string, string> = { dashboard: 'Dashboard', pages: 'Pages & articles', properties: 'Properties', media: 'Media', inquiries: 'Inquiries', analytics: 'Analytics', seo: 'SEO', navigation: 'Navigation', settings: 'Settings', users: 'Users & roles', activity: 'Activity log' };
+---
+
+<AdminLayout title="Users & roles" crumbs={[{ label: 'Users & roles' }]}>
+  <div class="a-head"><div><h1>Users & roles</h1><p>No public registration — accounts are created here. Every permission is enforced on the server.</p></div>
+    <div class="a-head__actions">{can(P, 'users', 'create') && tab === 'users' && <button class="btn btn--accent" type="button" data-user-new><AIcon name="plus" /> Invite user</button>}</div></div>
+  <nav class="tabs"><a href="?tab=users" aria-current={tab === 'users' ? 'page' : undefined}>Users ({users.length})</a><a href="?tab=roles" aria-current={tab === 'roles' ? 'page' : undefined}>Roles & permissions</a></nav>
+
+  {tab === 'users' && (
+    <div class="card"><div class="table-wrap"><table class="table">
+      <thead><tr><th>Name</th><th>Role</th><th>Status</th><th>Last sign-in</th><th></th></tr></thead>
+      <tbody>{users.map((u: any) => (
+        <tr>
+          <td><strong>{u.name}</strong>{u.id === me.id && <span class="badge badge--plain" style="margin-left:.4rem">You</span>}<br /><small class="muted">{u.email}</small></td>
+          <td>{u.role_name}</td>
+          <td>{u.is_active ? (u.locked_until && new Date(u.locked_until) > new Date() ? <span class="badge badge--warn">Locked</span> : <span class="badge badge--ok">Active</span>) : <span class="badge">Disabled</span>}</td>
+          <td class="muted">{u.last_login_at ? formatDate(u.last_login_at, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Never'}</td>
+          <td><div class="row-actions">{can(P, 'users', 'update') && <button class="btn btn--sm" type="button" data-user-edit={JSON.stringify({ id: u.id, name: u.name, email: u.email, role_id: u.role_id, is_active: !!u.is_active })}>Edit</button>}</div></td>
+        </tr>
+      ))}</tbody>
+    </table></div></div>
+  )}
+
+  {tab === 'roles' && (
+    <div class="stack">
+      <div class="alert alert--info"><span>The Super Admin role always has full access. Changes apply the next time affected users load a page.</span></div>
+      {roles.map((r) => (
+        <form class="card" data-role={r.id}>
+          <div class="card__head"><div><h2>{r.name}</h2><p>{r.description}</p></div>{r.slug !== 'super_admin' && can(P, 'users', 'manage') && <button class="btn btn--primary btn--sm" type="submit">Save permissions</button>}</div>
+          <div class="table-wrap"><table class="table matrix">
+            <thead><tr><th>Module</th>{ACTIONS.map((a) => <th>{a}</th>)}</tr></thead>
+            <tbody>{MODULES.map((m) => (
+              <tr><td>{MOD[m]}</td>{ACTIONS.map((a) => <td>{MODULE_ACTIONS[m].includes(a) ? <input type="checkbox" name="perm" value={`${m}:${a}`} checked={r.slug === 'super_admin' || has(r.id, `${m}:${a}`)} disabled={r.slug === 'super_admin' || !can(P, 'users', 'manage')} aria-label={`${MOD[m]} ${a}`} /> : <span class="muted">·</span>}</td>)}</tr>
+            ))}</tbody>
+          </table></div>
+        </form>
+      ))}
+    </div>
+  )}
+
+  <dialog class="a-dialog" data-user-dialog>
+    <form class="stack" data-user-form novalidate>
+      <div class="a-dialog__head"><h2 data-user-title>Invite user</h2></div>
+      <div class="a-dialog__body">
+        <input type="hidden" name="id" />
+        <div class="field" data-path="name"><label>Full name</label><input class="input" name="name" required maxlength="120" /><p class="field__error" data-error></p></div>
+        <div class="field" data-path="email"><label>Email</label><input class="input" type="email" name="email" required maxlength="190" /><p class="field__error" data-error></p></div>
+        <div class="field"><label>Role</label><select class="select" name="role_id">{roles.filter((r) => r.slug !== 'super_admin' || me.role_slug === 'super_admin').map((r) => <option value={r.id}>{r.name}</option>)}</select></div>
+        <div class="field" data-path="password"><label data-pw-label>Temporary password</label><input class="input" type="text" name="password" autocomplete="new-password" maxlength="200" /><small>At least 12 characters with upper- and lower-case letters and a number. Share it securely; they can change it under Account.</small><p class="field__error" data-error></p></div>
+        <label class="switch" data-active-wrap><input type="checkbox" name="is_active" checked /> Account active</label>
+      </div>
+      <div class="a-dialog__foot">
+        {can(P, 'users', 'delete') && <button class="btn btn--danger" type="button" style="margin-right:auto" data-user-delete>Delete</button>}
+        <button class="btn" type="button" data-cancel>Cancel</button><button class="btn btn--primary" type="submit">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    import { api, toast, confirmAction } from '../../../scripts/admin/shell';
+    import { showErrors } from '../../../scripts/admin/form-builder';
+    const d = document.querySelector<HTMLDialogElement>('[data-user-dialog]')!;
+    const f = document.querySelector<HTMLFormElement>('[data-user-form]')!;
+    const el = (n: string) => f.elements.namedItem(n) as HTMLInputElement;
+    const open = (u?: { id: number; name: string; email: string; role_id: number; is_active: boolean }) => {
+      f.reset(); showErrors(f, undefined);
+      el('id').value = u ? String(u.id) : '';
+      el('name').value = u?.name ?? '';
+      el('email').value = u?.email ?? ''; el('email').readOnly = !!u;
+      if (u) (f.elements.namedItem('role_id') as HTMLSelectElement).value = String(u.role_id);
+      el('is_active').checked = u ? u.is_active : true;
+      f.querySelector<HTMLElement>('[data-active-wrap]')!.hidden = !u;
+      f.querySelector<HTMLElement>('[data-user-delete]')?.toggleAttribute('hidden', !u);
+      f.querySelector('[data-user-title]')!.textContent = u ? `Edit ${u.name}` : 'Invite user';
+      f.querySelector('[data-pw-label]')!.textContent = u ? 'Reset password (leave empty to keep)' : 'Temporary password';
+      d.showModal();
+    };
+    document.querySelector('[data-user-new]')?.addEventListener('click', () => open());
+    document.querySelectorAll<HTMLElement>('[data-user-edit]').forEach((b) => b.addEventListener('click', () => open(JSON.parse(b.dataset.userEdit!))));
+    f.querySelector('[data-cancel]')!.addEventListener('click', () => d.close());
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = el('id').value;
+      const body = { name: el('name').value, email: el('email').value, role_id: Number((f.elements.namedItem('role_id') as HTMLSelectElement).value), password: el('password').value, is_active: el('is_active').checked };
+      try { await api(id ? `/api/admin/users/${id}` : '/api/admin/users', { method: id ? 'PUT' : 'POST', json: body }); toast('Saved'); setTimeout(() => location.reload(), 400); }
+      catch (er) { showErrors(f, (er as { fields?: Record<string, string> }).fields); toast((er as Error).message, 'err'); }
+    });
+    f.querySelector('[data-user-delete]')?.addEventListener('click', async () => {
+      if (!(await confirmAction('The account is removed and its sessions end immediately. Activity history keeps the entries without a name.', 'Delete user?', 'Delete'))) return;
+      try { await api(`/api/admin/users/${el('id').value}`, { method: 'DELETE' }); location.reload(); } catch (er) { toast((er as Error).message, 'err'); }
+    });
+    document.querySelectorAll<HTMLFormElement>('[data-role]').forEach((form) => form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const permissions = [...form.querySelectorAll<HTMLInputElement>('input[name=perm]:checked')].map((i) => i.value);
+      try { await api('/api/admin/roles', { method: 'PUT', json: { role_id: Number(form.dataset.role), permissions } }); toast('Permissions saved'); } catch (er) { toast((er as Error).message, 'err'); }
+    }));
+  </script>
+</AdminLayout>

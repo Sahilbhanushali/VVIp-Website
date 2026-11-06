@@ -1,0 +1,102 @@
+---
+/** Property detail hero + key facts, rendered from the property record. */
+import SplitText from '../SplitText.astro';
+import Icon from '../Icon.astro';
+import MediaImg from '../MediaImg.astro';
+import { AVAILABILITY_LABEL, type PropertyFull } from '../../server/content.ts';
+import { formatPrice, AREA_UNIT } from '../../server/format.ts';
+
+interface Props { property: PropertyFull; hasGallery: boolean }
+const { property: p, hasGallery } = Astro.props;
+const facts = [
+  p.developer && { label: 'Developer', value: p.developer },
+  p.location && { label: 'Location', value: p.location.replace(/, Gujarat$/, '') },
+  ...p.specs.filter((s) => !/space/i.test(s.label)).map((s) => ({ label: s.label, value: s.value })),
+  p.area && { label: 'Area', value: `${new Intl.NumberFormat('en-IN').format(p.area)} ${AREA_UNIT[p.area_unit] ?? p.area_unit}` },
+  p.bedrooms != null && { label: 'Bedrooms', value: String(p.bedrooms) },
+  p.bathrooms != null && { label: 'Bathrooms', value: String(p.bathrooms) },
+  { label: 'Pricing', value: p.price_label ? p.price_label.replace(/^Price /, '').replace(/^on/, 'On') : formatPrice(p) },
+].filter(Boolean) as { label: string; value: string }[];
+const category = [p.specs.find((s) => /type/i.test(s.label))?.value ?? p.property_type, p.specs.find((s) => /registr/i.test(s.label))?.value].filter(Boolean).join(' · ');
+---
+
+<section class="phero" aria-labelledby="phero-title">
+  <div class="phero__media" data-reveal="zoom">
+    <MediaImg media={p.main_image} sizes="100vw" width={1600} loading="eager" fetchpriority="high" style="object-position:60% 50%" />
+  </div>
+  <div class="phero__shade" aria-hidden="true"></div>
+  <div class="container phero__content">
+    <nav aria-label="Breadcrumb" class="phero__crumbs" data-reveal>
+      <ol role="list">
+        <li><a href="/">Home</a></li>
+        <li><a href="/properties.html">Properties</a></li>
+        <li aria-current="page">{p.title}</li>
+      </ol>
+    </nav>
+    {category && <p class="eyebrow" data-reveal style="--d:1">{category}</p>}
+    <SplitText as="h1" id="phero-title" class="h-display phero__title" text={p.title} delay={1} />
+    {p.address && <p class="phero__loc" data-reveal style="--d:4"><Icon name="pin" size={18} /> {p.address}</p>}
+    <div class="phero__actions" data-reveal style="--d:5">
+      <a href="#contact-sec" class="btn" data-open-visit data-cta="Schedule a visit">Schedule a visit <Icon name="arrow-right" /></a>
+      {hasGallery && <a href="#gallery" class="btn btn--ghost">View gallery</a>}
+    </div>
+  </div>
+</section>
+
+<section class="facts" aria-label="Key facts">
+  <div class="container">
+    <dl class="facts__grid" style={`--cols:${Math.min(6, facts.length)}`}>
+      {facts.map((f, i) => (
+        <div class="facts__item" data-reveal style={`--d:${i}`}>
+          <dt>{f.label}</dt>
+          <dd>{f.value}</dd>
+        </div>
+      ))}
+    </dl>
+  </div>
+</section>
+
+<style>
+/* Hero */
+  .phero {
+    position: relative;
+    min-height: min(92svh, 920px);
+    display: grid;
+    align-items: end;
+    overflow: hidden;
+    isolation: isolate;
+    color: var(--white);
+    background: var(--ink);
+  }
+  .phero__media, .phero__shade { position: absolute; inset: 0; z-index: -1; }
+  .phero__media :global(img) { width: 100%; height: 100%; object-fit: cover; object-position: 60% 50%; }
+  .phero__shade {
+    background:
+      linear-gradient(180deg, rgba(13, 13, 12, 0.55) 0%, transparent 30%, rgba(13, 13, 12, 0.15) 55%, rgba(13, 13, 12, 0.92) 100%),
+      linear-gradient(90deg, rgba(13, 13, 12, 0.55), transparent 65%);
+  }
+  .phero__content { display: grid; gap: var(--stack); padding-top: calc(var(--header-h) + 3rem); padding-bottom: clamp(2.5rem, 2rem + 3vw, 4.5rem); }
+  .phero__content :global(.phero__title) { color: var(--white); font-size: clamp(3.5rem, 2rem + 8vw, 9.5rem); }
+  .phero__crumbs ol { display: flex; gap: 0.5rem; }
+  .phero__crumbs li { font-family: var(--ff-title); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255, 255, 255, 0.65); }
+  .phero__crumbs li + li::before { content: '/'; margin-right: 0.5rem; color: var(--bronze); }
+  .phero__crumbs [aria-current] { color: var(--bronze-light); }
+  .phero__crumbs a:hover { color: var(--white); }
+  .phero__loc { display: flex; align-items: flex-start; gap: 0.6rem; max-width: 36ch; color: rgba(255, 255, 255, 0.85); }
+  .phero__loc :global(svg) { flex: none; margin-top: 0.3rem; color: var(--bronze-light); }
+  .phero__actions { display: flex; flex-wrap: wrap; gap: 0.85rem; margin-top: 0.5rem; }
+
+  /* Facts */
+  .facts { background: var(--ink); color: var(--on-dark-muted); border-top: 1px solid var(--line-dark); }
+  .facts__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 768px) { .facts__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (min-width: 1200px) { .facts__grid { grid-template-columns: repeat(var(--cols, 6), minmax(0, 1fr)); } }
+  .facts__item { padding: 1.4rem 1rem 1.4rem 0; border-bottom: 1px solid var(--line-dark); }
+  @media (min-width: 1200px) {
+    .facts__item { border-bottom: 0; }
+    .facts__item + .facts__item { padding-left: 1.5rem; border-left: 1px solid var(--line-dark); }
+  }
+  .facts__item dt { font-family: var(--ff-title); font-size: 0.64rem; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--bronze); margin-bottom: 0.35rem; }
+  .facts__item dd { color: var(--white); font-family: var(--ff-title); font-size: 0.98rem; font-weight: 500; }
+
+  </style>

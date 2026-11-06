@@ -1,0 +1,26 @@
+---
+import SplitText from '../SplitText.astro';
+import { renderMarkdown } from '../../server/markdown.ts';
+import type { SectionData } from '../../server/sections.ts';
+
+interface Props { data: SectionData<'rich_text'>; anchor?: string }
+const { data, anchor = 'content' } = Astro.props;
+const html = renderMarkdown(data.body);
+---
+
+<section id={anchor} class="section section--light richtext">
+  <div class="container richtext__inner">
+    {(data.eyebrow || data.title) && (
+      <header class="richtext__head">
+        {data.eyebrow && <p class="eyebrow" data-reveal>{data.eyebrow}</p>}
+        {data.title && <SplitText id={`${anchor}-title`} class="h-section" text={data.title} />}
+      </header>
+    )}
+    {html && <div class="prose" set:html={html} />}
+  </div>
+</section>
+
+<style>
+  .richtext__inner { display: grid; gap: var(--section-head-gap); max-width: 860px; }
+  .richtext__head { display: grid; gap: var(--stack); }
+</style>

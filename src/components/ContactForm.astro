@@ -1,23 +1,27 @@
 ---
 /**
- * Enquiry form. Posts to the existing `mail.php` endpoint (PHPMailer/SMTP2Go)
- * exactly like the original jQuery `.ajax-contact` handler did:
- * url-encoded POST of name / email / phone / subject / message, JSON reply
+ * Enquiry form → POST /api/inquiry (saved to the database, then emailed via
+ * Nodemailer). Same fields and JSON contract as the original mail.php:
  * `{ success, message, errors }`. Without JS it falls back to a normal POST.
  */
 import Icon from './Icon.astro';
-import { enquiryTypes } from '../data/site';
 
 interface Props {
   idPrefix: string;
   tone?: 'light' | 'dark';
   submitLabel?: string;
+  types?: readonly string[];
+  propertyId?: number | null;
 }
-const { idPrefix, tone = 'light', submitLabel = 'Submit Message' } = Astro.props;
+const { idPrefix, tone = 'light', submitLabel = 'Submit Message', types = [], propertyId = null } = Astro.props;
+const enquiryTypes = types;
 const id = (name: string) => `${idPrefix}-${name}`;
 ---
 
-<form class:list={['enquiry', `enquiry--${tone}`]} action="/mail.php" method="POST" novalidate data-enquiry>
+<form class:list={['enquiry', `enquiry--${tone}`]} action="/api/inquiry" method="POST" novalidate data-enquiry>
+  {propertyId && <input type="hidden" name="property_id" value={propertyId} />}
+  <input type="hidden" name="source_path" value={Astro.url.pathname} />
+  <div class="enquiry__hp" aria-hidden="true"><label>Leave empty <input type="text" name="website" tabindex="-1" autocomplete="off" /></label></div>
   <div class="enquiry__grid">
     <div class="field">
       <input id={id('name')} name="name" type="text" autocomplete="name" required minlength="2" placeholder=" "
@@ -63,7 +67,8 @@ const id = (name: string) => `${idPrefix}-${name}`;
 </form>
 
 <style>
-  .enquiry {
+  .enquiry__hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .enquiry { position: relative;
     --field-line: rgba(13, 13, 12, 0.18);
     --field-text: var(--ink);
     --field-label: #5c5f5f;

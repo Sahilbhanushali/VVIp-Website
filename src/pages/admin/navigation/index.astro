@@ -1,0 +1,90 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { all } from '../../../server/db.ts';
+import { can } from '../../../server/permissions.ts';
+
+export const prerender = false;
+const user = Astro.locals.user!;
+if (!can(user.permissions, 'navigation', 'read')) return Astro.redirect('/admin');
+const rows = await all('SELECT id, location, parent_id, label, url, position, enabled, new_tab, dropdown FROM navigation_items ORDER BY location, position, id');
+const build = (loc: string) => {
+  const top = rows.filter((r: any) => r.location === loc && !r.parent_id);
+  return top.map((r: any) => ({ label: r.label, url: r.url, enabled: !!r.enabled, new_tab: !!r.new_tab, dropdown: r.dropdown, children: rows.filter((c: any) => c.parent_id === r.id).map((c: any) => ({ label: c.label, url: c.url, enabled: !!c.enabled, new_tab: !!c.new_tab, dropdown: 'none' })) }));
+};
+const menus = { header: build('header'), footer: build('footer'), legal: build('legal') };
+const paths = (await all<{ path: string; title: string }>("SELECT path, title FROM pages WHERE status = 'published' ORDER BY path")).map((p) => p.path);
+const anchors = ['/#hero', '/#about-sec', '/#property-sec', '/#service-sec', '/#gallery', '/#blog-sec', '/#contact-sec'];
+const canEdit = can(user.permissions, 'navigation', 'update');
+const TITLES: Record<string, [string, string]> = {
+  header: ['Header menu', 'Main navigation and the full-screen mobile menu. Dropdowns can list the latest articles or properties automatically, or your own sub-links.'],
+  footer: ['Footer “Explore” links', 'Links in the footer column.'],
+  legal: ['Legal links', 'Shown in the footer bottom bar (Privacy Policy, Terms & Conditions…).'],
+};
+---
+
+<AdminLayout title="Navigation" crumbs={[{ label: 'Navigation' }]}>
+  <div class="a-head"><div><h1>Navigation</h1><p>Changes go live as soon as you save a menu.</p></div></div>
+  <datalist id="nav-links">{[...paths, ...anchors].map((p) => <option value={p} />)}</datalist>
+  {Object.entries(menus).map(([loc, items]) => (
+    <section class="card" data-menu={loc}>
+      <div class="card__head"><div><h2>{TITLES[loc][0]}</h2><p>{TITLES[loc][1]}</p></div>{canEdit && <button class="btn btn--primary btn--sm" type="button" data-save-menu>Save menu</button>}</div>
+      <div class="card__body stack">
+        <script type="application/json" set:html={JSON.stringify(items)} />
+        <div class="repeater" data-items></div>
+        {canEdit && <button class="btn btn--sm" type="button" style="justify-self:start" data-add-item>+ Add link</button>}
+      </div>
+    </section>
+  ))}
+
+  <script>
+    import { api, toast } from '../../../scripts/admin/shell';
+    type Item = { label: string; url: string; enabled: boolean; new_tab: boolean; dropdown: string; children: Item[] };
+    const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+    document.querySelectorAll<HTMLElement>('[data-menu]').forEach((card) => {
+      const loc = card.dataset.menu!;
+      const items: Item[] = JSON.parse(card.querySelector('script')!.textContent!);
+      const host = card.querySelector<HTMLElement>('[data-items]')!;
+      const row = (it: Item, list: Item[], i: number, depth: number): HTMLElement => {
+        const el = document.createElement('div');
+        el.className = 'repeater__item';
+        el.style.marginLeft = depth ? '2rem' : '0';
+        el.innerHTML = `<div class="repeater__body" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));align-items:end">
+          <label class="field"><span class="label">Label</span><input class="input" data-k="label" maxlength="80" value="${esc(it.label)}"></label>
+          <label class="field"><span class="label">Link</span><input class="input mono" data-k="url" list="nav-links" maxlength="255" value="${esc(it.url)}"></label>
+          ${loc === 'header' && !depth ? `<label class="field"><span class="label">Dropdown</span><select class="select" data-k="dropdown"><option value="none">None / own sub-links</option><option value="articles">Latest articles</option><option value="properties">Properties</option></select></label>` : ''}
+          <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
+            <label class="switch"><input type="checkbox" data-k="enabled" ${it.enabled ? 'checked' : ''}> Visible</label>
+            <label class="switch"><input type="checkbox" data-k="new_tab" ${it.new_tab ? 'checked' : ''}> New tab</label>
+          </div>
+          <div style="display:flex;gap:.25rem;justify-content:flex-end">
+            <button type="button" class="btn btn--ghost btn--icon" data-up aria-label="Move up">↑</button>
+            <button type="button" class="btn btn--ghost btn--icon" data-down aria-label="Move down">↓</button>
+            ${loc === 'header' && !depth ? '<button type="button" class="btn btn--ghost btn--sm" data-child>+ Sub-link</button>' : ''}
+            <button type="button" class="btn btn--ghost btn--icon" data-rm aria-label="Remove">✕</button>
+          </div></div>`;
+        const dd = el.querySelector<HTMLSelectElement>('[data-k="dropdown"]');
+        if (dd) dd.value = it.dropdown;
+        el.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-k]').forEach((inp) => inp.addEventListener('input', () => {
+          const k = inp.dataset.k as keyof Item;
+          (it as any)[k] = inp instanceof HTMLInputElement && inp.type === 'checkbox' ? inp.checked : inp.value;
+        }));
+        el.querySelector('[data-up]')!.addEventListener('click', () => { if (i > 0) { [list[i - 1], list[i]] = [list[i], list[i - 1]]; render(); } });
+        el.querySelector('[data-down]')!.addEventListener('click', () => { if (i < list.length - 1) { [list[i + 1], list[i]] = [list[i], list[i + 1]]; render(); } });
+        el.querySelector('[data-rm]')!.addEventListener('click', () => { list.splice(i, 1); render(); });
+        el.querySelector('[data-child]')?.addEventListener('click', () => { it.children.push({ label: '', url: '/', enabled: true, new_tab: false, dropdown: 'none', children: [] }); render(); });
+        return el;
+      };
+      const render = () => {
+        host.innerHTML = '';
+        if (!items.length) host.innerHTML = '<div class="empty"><span>No links. The menu is hidden on the site.</span></div>';
+        items.forEach((it, i) => { host.append(row(it, items, i, 0)); it.children.forEach((ch, j) => host.append(row(ch, it.children, j, 1))); });
+      };
+      render();
+      card.querySelector('[data-add-item]')?.addEventListener('click', () => { items.push({ label: '', url: '/', enabled: true, new_tab: false, dropdown: 'none', children: [] }); render(); host.querySelector<HTMLInputElement>('.repeater__item:last-child input')?.focus(); });
+      card.querySelector('[data-save-menu]')?.addEventListener('click', async () => {
+        try { await api('/api/admin/navigation', { method: 'PUT', json: { location: loc, items } }); toast('Menu saved — live now'); }
+        catch (e) { const f = (e as { fields?: Record<string, string> }).fields; toast(f ? Object.values(f)[0] : (e as Error).message, 'err'); }
+      });
+    });
+  </script>
+</AdminLayout>

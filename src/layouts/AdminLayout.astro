@@ -1,0 +1,151 @@
+---
+import { Font } from 'astro:assets';
+import '../styles/admin.css';
+import AIcon from '../components/admin/AIcon.astro';
+import { can, type Module } from '../server/permissions.ts';
+import { getSettings } from '../server/settings.ts';
+import { getMedia, mediaUrl, pickVariant } from '../server/media.ts';
+import { one } from '../server/db.ts';
+
+interface Props {
+  title: string;
+  crumbs?: { label: string; href?: string }[];
+}
+const { title, crumbs = [] } = Astro.props;
+const user = Astro.locals.user!;
+const path = Astro.url.pathname;
+const settings = await getSettings();
+const logo = settings.site.logo_media_id ? await getMedia(settings.site.logo_media_id) : null;
+const newInquiries = can(user.permissions, 'inquiries', 'read')
+  ? Number((await one<{ n: number }>("SELECT COUNT(*) AS n FROM inquiries WHERE status = 'new'"))?.n ?? 0)
+  : 0;
+
+type Item = { href: string; label: string; icon: string; module: Module; badge?: number };
+const groups: { label: string; items: Item[] }[] = [
+  { label: 'Overview', items: [
+    { href: '/admin', label: 'Dashboard', icon: 'dashboard', module: 'dashboard' },
+    { href: '/admin/analytics', label: 'Analytics', icon: 'chart', module: 'analytics' },
+  ] },
+  { label: 'Content', items: [
+    { href: '/admin/pages', label: 'Pages & articles', icon: 'pages', module: 'pages' },
+    { href: '/admin/properties', label: 'Properties', icon: 'building', module: 'properties' },
+    { href: '/admin/media', label: 'Media library', icon: 'image', module: 'media' },
+    { href: '/admin/navigation', label: 'Navigation', icon: 'nav', module: 'navigation' },
+  ] },
+  { label: 'Leads', items: [
+    { href: '/admin/inquiries', label: 'Inquiries', icon: 'inbox', module: 'inquiries', badge: newInquiries },
+  ] },
+  { label: 'Site', items: [
+    { href: '/admin/seo', label: 'SEO', icon: 'seo', module: 'seo' },
+    { href: '/admin/settings', label: 'Settings', icon: 'settings', module: 'settings' },
+    { href: '/admin/users', label: 'Users & roles', icon: 'users', module: 'users' },
+    { href: '/admin/activity', label: 'Activity log', icon: 'activity', module: 'activity' },
+  ] },
+];
+const visible = groups
+  .map((g) => ({ ...g, items: g.items.filter((i) => can(user.permissions, i.module, 'read')) }))
+  .filter((g) => g.items.length);
+const isActive = (href: string) => (href === '/admin' ? path === '/admin' || path === '/admin/' : path.startsWith(href));
+const initials = user.name.split(/\s+/).map((s) => s[0]).slice(0, 2).join('').toUpperCase();
+const logoSrc = logo ? mediaUrl(logo, pickVariant(logo, 240)!.file) : null;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="csrf-token" content={user.csrf} />
+    <title>{title} · {settings.site.name} CMS</title>
+    <link rel="icon" href="/assets/img/favicons/favicon.ico" sizes="any" />
+    <Font cssVariable="--font-title" preload />
+    <Font cssVariable="--font-body" preload={[{ style: 'normal' }]} />
+    <script is:inline>
+      try { if (localStorage.getItem('vvip-admin-collapsed') === '1') document.documentElement.dataset.collapsed = '1'; } catch (e) {}
+    </script>
+  </head>
+  <body class="admin">
+    <div class="a-shell" data-shell>
+      <aside class="a-side" aria-label="Admin navigation">
+        <a class="a-brand" href="/admin">
+          {logoSrc ? <img src={logoSrc} alt={settings.site.name} /> : <strong style="color:#fff">{settings.site.name}</strong>}
+          <span>CMS</span>
+        </a>
+        <nav class="a-nav">
+          {visible.map((g) => (
+            <>
+              <p class="a-nav__group">{g.label}</p>
+              {g.items.map((i) => (
+                <a href={i.href} aria-current={isActive(i.href) ? 'page' : undefined} title={i.label}>
+                  <AIcon name={i.icon} />
+                  <span>{i.label}</span>
+                  {i.badge ? <b class="a-nav__badge" aria-label={`${i.badge} new`}>{i.badge}</b> : null}
+                </a>
+              ))}
+            </>
+          ))}
+        </nav>
+        <div class="a-side__foot">
+          <a href="/" target="_blank" rel="noopener"><AIcon name="external" /><span>View website</span></a>
+        </div>
+      </aside>
+      <div class="a-scrim" hidden data-scrim></div>
+
+      <div class="a-main">
+        <header class="a-top">
+          <button class="a-icon-btn" type="button" aria-label="Toggle navigation" data-side-toggle><AIcon name="sidebar" /></button>
+          <div class="a-search" data-search>
+            <AIcon name="search" />
+            <label class="sr-only" for="a-search-input">Search the CMS</label>
+            <input id="a-search-input" type="search" placeholder="Search pages, properties, inquiries, media…  ( / )" autocomplete="off" />
+            <div class="a-search__results" hidden role="listbox"></div>
+          </div>
+          <div class="a-top__right">
+            <div class="a-profile">
+              <button type="button" aria-haspopup="menu" aria-expanded="false" data-profile>
+                <span class="a-avatar" aria-hidden="true">{initials}</span>
+                <span class="a-profile__name">{user.name}<small>{user.role_name}</small></span>
+                <AIcon name="chevron-down" size={14} />
+              </button>
+              <div class="a-menu" role="menu" hidden data-profile-menu>
+                <a href="/admin/account" role="menuitem"><AIcon name="lock" size={16} /> Account & password</a>
+                <a href="/" target="_blank" role="menuitem"><AIcon name="external" size={16} /> View website</a>
+                <hr />
+                <button type="button" role="menuitem" data-logout><AIcon name="logout" size={16} /> Sign out</button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main class="a-content" id="main">
+          {crumbs.length > 0 && (
+            <nav aria-label="Breadcrumb">
+              <ol class="a-crumbs">
+                <li><a href="/admin">Dashboard</a></li>
+                {crumbs.map((c) => <li>{c.href ? <a href={c.href}>{c.label}</a> : <span aria-current="page">{c.label}</span>}</li>)}
+              </ol>
+            </nav>
+          )}
+          <slot />
+        </main>
+      </div>
+    </div>
+
+    <div class="toasts" aria-live="polite" data-toasts></div>
+    <dialog class="a-dialog" data-confirm>
+      <form method="dialog">
+        <div class="a-dialog__head"><h2 data-confirm-title>Are you sure?</h2></div>
+        <div class="a-dialog__body"><p data-confirm-text></p></div>
+        <div class="a-dialog__foot">
+          <button class="btn" value="cancel">Cancel</button>
+          <button class="btn btn--danger" value="ok" data-confirm-ok>Confirm</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script>
+      import '../scripts/admin/shell';
+    </script>
+  </body>
+</html>

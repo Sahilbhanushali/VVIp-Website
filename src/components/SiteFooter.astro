@@ -1,13 +1,17 @@
 ---
 import Logo from './Logo.astro';
 import Icon from './Icon.astro';
-import { nav, site } from '../data/site';
+import type { SiteContext } from '../server/site.ts';
 
 interface Props {
   isHome?: boolean;
+  ctx: SiteContext;
 }
-const { isHome = false } = Astro.props;
+const { isHome = false, ctx } = Astro.props;
+const { settings } = ctx;
+const { contact, footer } = settings;
 const href = (h: string) => (isHome && h.startsWith('/#') ? h.slice(1) : h);
+// Always the current year at render time (pages are re-rendered, never frozen at build time).
 const year = new Date().getFullYear();
 ---
 
@@ -15,23 +19,21 @@ const year = new Date().getFullYear();
   <div class="container">
     <div class="footer__cta">
       <p class="footer__statement" data-reveal>
-        Step into NeoVista, the definitive address for Vapi’s most visionary entrepreneurs, thriving enterprises,
-        and{' '}<em>future forward leaders.</em>
+        {footer.statement}{footer.statement_highlight && <>{' '}<em>{footer.statement_highlight}</em></>}
       </p>
-      <a href={href('/#contact-sec')} class="btn" data-open-visit data-reveal style="--d:2">
-        Schedule a visit <Icon name="arrow-right" />
-      </a>
+      {settings.header.cta_enabled && (
+        <a href={href('/#contact-sec')} class="btn" data-open-visit data-reveal style="--d:2">
+          {settings.header.cta_label} <Icon name="arrow-right" />
+        </a>
+      )}
     </div>
 
     <div class="footer__grid">
       <div class="footer__brand">
-        <a href={isHome ? '#hero' : '/'} aria-label="VVIP Properties — home"><Logo height={48} /></a>
-        <p>
-          As a Vapi’s VIP, you’re not just securing a space, you’re unlocking a world of distinction, strategic
-          advantage, and premium amenities designed for high performing businesses.
-        </p>
+        <a href={isHome ? '#hero' : '/'} aria-label={`${settings.site.name} — home`}><Logo media={ctx.logo} height={48} /></a>
+        {footer.about && <p>{footer.about}</p>}
         <ul class="footer__social" role="list">
-          {site.socials.map((s) => (
+          {settings.social.map((s) => (
             <li>
               <a href={s.href} target="_blank" rel="noopener noreferrer" aria-label={`${s.name} (opens in a new tab)`}>
                 <Icon name={s.icon} size={18} />
@@ -44,8 +46,8 @@ const year = new Date().getFullYear();
       <nav class="footer__col" aria-label="Footer">
         <h2 class="footer__title">Explore</h2>
         <ul role="list">
-          {nav.slice(1).map((item) => (
-            <li><a href={href(item.href)}>{item.label}</a></li>
+          {ctx.footer.map((item) => (
+            <li><a href={href(item.url)} target={item.new_tab ? '_blank' : undefined} rel={item.new_tab ? 'noopener' : undefined}>{item.label}</a></li>
           ))}
         </ul>
       </nav>
@@ -53,32 +55,49 @@ const year = new Date().getFullYear();
       <div class="footer__col">
         <h2 class="footer__title">Get in touch</h2>
         <ul role="list" class="footer__contact">
-          <li><Icon name="pin" size={18} /><span>{site.address}</span></li>
-          <li>
-            <Icon name="phone" size={18} />
-            <span>{site.phones.map((p) => <a href={p.href}>{p.label}</a>)}</span>
-          </li>
-          <li>
-            <Icon name="mail" size={18} />
-            <span>{site.emails.map((e) => <a href={e.href}>{e.label}</a>)}</span>
-          </li>
+          {contact.address && <li><Icon name="pin" size={18} /><span>{contact.address}</span></li>}
+          {contact.phones.length > 0 && (
+            <li>
+              <Icon name="phone" size={18} />
+              <span>{contact.phones.map((p) => <a href={p.href}>{p.label}</a>)}</span>
+            </li>
+          )}
+          {contact.whatsapp && (
+            <li>
+              <Icon name="whatsapp" size={18} />
+              <span><a href={`https://wa.me/${contact.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">WhatsApp {contact.whatsapp}</a></span>
+            </li>
+          )}
+          {contact.emails.length > 0 && (
+            <li>
+              <Icon name="mail" size={18} />
+              <span>{contact.emails.map((e) => <a href={e.href}>{e.label}</a>)}</span>
+            </li>
+          )}
         </ul>
       </div>
 
-      <div class="footer__col">
-        <h2 class="footer__title">Office hours</h2>
-        <ul role="list" class="footer__hours">
-          {site.hours.map((h) => (
-            <li><span>{h.days}</span><span>{h.time}</span></li>
-          ))}
-        </ul>
-      </div>
+      {contact.hours.length > 0 && (
+        <div class="footer__col">
+          <h2 class="footer__title">Office hours</h2>
+          <ul role="list" class="footer__hours">
+            {contact.hours.map((h) => (
+              <li><span>{h.days}</span><span>{h.time}</span></li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
 
     <div class="footer__bottom">
       <p>
-        Copyright © {year} <a href={isHome ? '#hero' : '/'}>VapisVIP</a>, All rights reserved By {site.credit}
+        Copyright © {year} <a href={isHome ? '#hero' : '/'}>{footer.copyright_name}</a>, All rights reserved{footer.credit && ` By ${footer.credit}`}
       </p>
+      {ctx.legal.length > 0 && (
+        <ul class="footer__legal" role="list">
+          {ctx.legal.map((l) => <li><a href={l.url}>{l.label}</a></li>)}
+        </ul>
+      )}
       <a href="#top" class="footer__top" data-scroll-top>
         Back to top <Icon name="arrow-up" size={16} />
       </a>
@@ -180,6 +199,9 @@ const year = new Date().getFullYear();
     font-size: 0.85rem;
   }
   .footer__bottom a:hover { color: var(--bronze-light); }
+  .footer__legal { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; }
+  .footer__legal a { color: var(--on-dark-muted); transition: color 300ms ease; }
+  .footer__legal a:hover { color: var(--bronze-light); }
   .footer__top {
     display: inline-flex;
     align-items: center;

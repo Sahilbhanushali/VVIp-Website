@@ -1,0 +1,155 @@
+---
+/**
+ * All published properties with client-side search and filters
+ * (type, availability, sort). Newly published properties appear automatically.
+ */
+import SplitText from '../SplitText.astro';
+import Icon from '../Icon.astro';
+import MediaImg from '../MediaImg.astro';
+import { AVAILABILITY_LABEL, type PropertyCard } from '../../server/content.ts';
+import { formatPrice, AREA_UNIT } from '../../server/format.ts';
+import type { SectionData } from '../../server/sections.ts';
+
+interface Props { data: SectionData<'property_list'>; properties: PropertyCard[]; anchor?: string }
+const { data, properties, anchor = 'properties' } = Astro.props;
+const types = [...new Set(properties.map((p) => p.property_type))].sort();
+const avail = [...new Set(properties.map((p) => p.availability))];
+---
+
+<section id={anchor} class="section section--paper plist" aria-labelledby={`${anchor}-title`} data-plist>
+  <div class="container">
+    <header class="section-head section-head--split plist__head">
+      <div class="section-head__title">
+        {data.eyebrow && <p class="eyebrow" data-reveal>{data.eyebrow}</p>}
+        <SplitText as="h1" id={`${anchor}-title`} class="h-section" text={data.title} />
+      </div>
+      {data.lead && <p class="lead" data-reveal style="--d:2">{data.lead}</p>}
+    </header>
+
+    {data.show_filters && properties.length > 1 && (
+      <form class="plist__filters" role="search" aria-label="Filter properties" data-filters>
+        <label class="plist__search">
+          <span class="sr-only">Search properties</span>
+          <input type="search" name="q" placeholder="Search by name or location" autocomplete="off" />
+        </label>
+        <label>
+          <span class="sr-only">Type</span>
+          <select name="type"><option value="">All types</option>{types.map((t) => <option value={t}>{t}</option>)}</select>
+        </label>
+        <label>
+          <span class="sr-only">Availability</span>
+          <select name="availability"><option value="">Any availability</option>{avail.map((a) => <option value={a}>{AVAILABILITY_LABEL[a]}</option>)}</select>
+        </label>
+        <label>
+          <span class="sr-only">Sort</span>
+          <select name="sort"><option value="featured">Featured first</option><option value="az">Name A–Z</option><option value="price">Price: low to high</option></select>
+        </label>
+      </form>
+    )}
+
+    <p class="plist__count" aria-live="polite" data-count-label>{properties.length} {properties.length === 1 ? 'property' : 'properties'}</p>
+
+    <ul class="plist__grid" role="list" data-grid>
+      {properties.map((p, i) => (
+        <li
+          class="pcard"
+          data-reveal
+          style={`--d:${Math.min(i, 4)}`}
+          data-title={`${p.title} ${p.location ?? ''} ${p.tagline ?? ''}`.toLowerCase()}
+          data-type={p.property_type}
+          data-availability={p.availability}
+          data-featured={p.is_featured ? 1 : 0}
+          data-price={p.price_amount ?? ''}
+          data-order={i}
+        >
+          <a href={p.url} class="pcard__media" tabindex="-1" aria-hidden="true">
+            <MediaImg media={p.main_image} alt="" sizes="(min-width: 1100px) 420px, (min-width: 640px) 45vw, 100vw" width={960} />
+            <span class="pcard__badges">
+              {p.is_featured && <span class="pcard__badge pcard__badge--gold">Featured</span>}
+              <span class="pcard__badge">{AVAILABILITY_LABEL[p.availability]}</span>
+            </span>
+          </a>
+          <div class="pcard__body">
+            {p.location && <p class="pcard__loc"><Icon name="pin" size={14} /> {p.location}</p>}
+            <h2 class="pcard__title"><a href={p.url}>{p.title}</a>{p.tagline && <span> {p.tagline}</span>}</h2>
+            {p.summary && <p class="pcard__text">{p.summary}</p>}
+            <dl class="pcard__meta">
+              <div><dt>Type</dt><dd>{p.category ?? p.property_type}</dd></div>
+              {p.area ? <div><dt>Area</dt><dd>{new Intl.NumberFormat('en-IN').format(p.area)} {AREA_UNIT[p.area_unit]}</dd></div> : null}
+              <div><dt>Price</dt><dd>{formatPrice(p)}</dd></div>
+            </dl>
+          </div>
+        </li>
+      ))}
+    </ul>
+    <p class="plist__empty" hidden data-empty>No properties match these filters.</p>
+  </div>
+</section>
+
+<style>
+  .plist { padding-top: calc(var(--header-h) + var(--section)); }
+  .plist__filters { display: grid; gap: 0.75rem; margin-bottom: 1.5rem; grid-template-columns: 1fr; }
+  @media (min-width: 768px) { .plist__filters { grid-template-columns: 2fr 1fr 1fr 1fr; } }
+  .plist__filters input, .plist__filters select {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.7rem 1rem;
+    border: 1px solid rgba(13, 13, 12, 0.15);
+    border-radius: var(--radius);
+    background: var(--white);
+    color: var(--ink);
+  }
+  .plist__filters input:focus, .plist__filters select:focus { outline: none; border-color: var(--bronze); box-shadow: 0 0 0 3px rgba(191, 120, 64, 0.15); }
+  .plist__count { font-size: 0.85rem; color: var(--body-color); margin-bottom: 1.25rem; }
+  .plist__grid { display: grid; gap: var(--grid-gap); grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); }
+  .pcard { display: grid; grid-template-rows: auto 1fr; background: var(--white); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 30px 60px -45px rgba(13, 13, 12, 0.45); }
+  .pcard[hidden] { display: none; }
+  .pcard__media { position: relative; display: block; aspect-ratio: 16 / 10; overflow: hidden; background: var(--charcoal); }
+  .pcard__media :global(img) { width: 100%; height: 100%; object-fit: cover; transition: transform 1400ms var(--ease-out); }
+  .pcard:hover .pcard__media :global(img) { transform: scale(1.06); }
+  .pcard__badges { position: absolute; top: 1rem; left: 1rem; display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .pcard__badge { padding: 0.35rem 0.75rem; border-radius: 999px; background: rgba(13, 13, 12, 0.7); color: var(--white); font-family: var(--ff-title); font-size: 0.64rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; backdrop-filter: blur(6px); }
+  .pcard__badge--gold { background: var(--bronze); color: var(--ink); }
+  .pcard__body { display: grid; gap: 0.75rem; align-content: start; padding: 1.5rem; }
+  .pcard__loc { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 600; color: var(--bronze-ink); }
+  .pcard__title { font-size: clamp(1.4rem, 1.2rem + 0.8vw, 1.9rem); font-weight: 300; letter-spacing: -0.03em; }
+  .pcard__title span { color: var(--body-color); font-size: 0.7em; }
+  .pcard__title a:hover { color: var(--bronze-ink); }
+  .pcard__text { color: #4f5252; font-size: 0.95rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .pcard__meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr)); gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+  .pcard__meta dt { font-family: var(--ff-title); font-size: 0.6rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--body-color); }
+  .pcard__meta dd { color: var(--ink); font-size: 0.88rem; font-weight: 600; }
+  .plist__empty { padding: 3rem 0; text-align: center; color: var(--body-color); }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-plist]').forEach((root) => {
+    const form = root.querySelector<HTMLFormElement>('[data-filters]');
+    const grid = root.querySelector<HTMLElement>('[data-grid]')!;
+    const cards = Array.from(grid.querySelectorAll<HTMLElement>('.pcard'));
+    const count = root.querySelector<HTMLElement>('[data-count-label]');
+    const empty = root.querySelector<HTMLElement>('[data-empty]');
+    if (!form) return;
+    const apply = () => {
+      const fd = new FormData(form);
+      const q = String(fd.get('q') ?? '').trim().toLowerCase();
+      const type = String(fd.get('type') ?? '');
+      const av = String(fd.get('availability') ?? '');
+      const sort = String(fd.get('sort') ?? 'featured');
+      let shown = 0;
+      cards.forEach((c) => {
+        const ok = (!q || c.dataset.title!.includes(q)) && (!type || c.dataset.type === type) && (!av || c.dataset.availability === av);
+        c.hidden = !ok;
+        c.classList.add('is-in');
+        if (ok) shown++;
+      });
+      const key = (c: HTMLElement) =>
+        sort === 'az' ? c.dataset.title! : sort === 'price' ? Number(c.dataset.price || Infinity) : Number(c.dataset.order);
+      [...cards].sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0)).forEach((c) => grid.appendChild(c));
+      if (count) count.textContent = `${shown} ${shown === 1 ? 'property' : 'properties'}`;
+      if (empty) empty.hidden = shown > 0;
+    };
+    form.addEventListener('input', apply);
+    form.addEventListener('submit', (e) => { e.preventDefault(); apply(); });
+  });
+</script>
